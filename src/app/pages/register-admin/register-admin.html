@@ -1,1 +1,91 @@
-<p>register-admin works!</p>
+<div class="register-container">
+  <div class="card register-card">
+    <div class="logo-section">
+      <h1>INNERA</h1>
+    </div>
+
+    <h2>Créer un Compte Admin</h2>
+
+    <div *ngIf="successMessage" class="success">
+      ✅ {{ successMessage }}
+    </div>
+
+    <div *ngIf="errorMessage" class="error-box">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="register()">
+      <div class="form-group">
+        <label>
+          <span class="icon">📧</span>
+          Email
+        </label>
+        <input 
+          type="email" 
+          formControlName="email"
+          placeholder="admin@innera.com">
+        <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="error">
+          Valid email required
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <span class="icon">🔒</span>
+          Password
+        </label>
+        <div class="password-input">
+          <input 
+            [type]="showPassword ? 'text' : 'password'" 
+            formControlName="password"
+            placeholder="••••••">
+          <button 
+            type="button" 
+            class="toggle-password"
+            (click)="togglePasswordVisibility()">
+            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="error">
+          Min 6 characters
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <span class="icon">🔒</span>
+          Confirm Password
+        </label>
+        <div class="password-input">
+          <input 
+            [type]="showConfirmPassword ? 'text' : 'password'" 
+            formControlName="confirmPassword"
+            placeholder="••••••">
+          <button 
+            type="button" 
+            class="toggle-password"
+            (click)="toggleConfirmPasswordVisibility()">
+            {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div *ngIf="form.get('confirmPassword')?.invalid && form.get('confirmPassword')?.touched" class="error">
+          Confirm password
+        </div>
+        <div *ngIf="form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched" class="error">
+          Passwords don't match
+        </div>
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn-primary btn-register"
+        [disabled]="isLoading || form.invalid">
+        {{ isLoading ? 'Creating...' : 'S\'inscrire' }}
+      </button>
+    </form>
+
+    <div class="switch-login">
+      <p>Already have account? <a (click)="goToLogin()">Login</a></p>
+    </div>
+  </div>
+</div>

@@ -1,1 +1,117 @@
-/* You can add global styles to this file, and also import other style files */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #0f0a1e 0%, #2d1b4e 50%, #4a2c6b 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: #fff;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(255, 182, 77, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(138, 43, 226, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.card {
+  background: rgba(45, 27, 78, 0.8);
+  border: 1px solid rgba(255, 182, 77, 0.2);
+  border-radius: 15px;
+  padding: 30px;
+  backdrop-filter: blur(10px);
+}
+
+button {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #FFB84D 0%, #FF9800 100%);
+  color: #000;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 152, 0, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 182, 77, 0.2);
+  color: #FFB84D;
+  border: 1px solid #FFB84D;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 182, 77, 0.3);
+}
+
+input, textarea {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 182, 77, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  margin: 10px 0;
+  transition: all 0.3s ease;
+}
+
+input::placeholder, textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+input:focus, textarea:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #FFB84D;
+  box-shadow: 0 0 15px rgba(255, 184, 77, 0.2);
+}
+
+h1, h2, h3 {
+  color: #FFB84D;
+}
+
+a {
+  color: #FFB84D;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.error {
+  color: #FF6B6B;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.success {
+  color: #4CAF50;
+  padding: 15px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 8px;
+  margin: 15px 0;
+}

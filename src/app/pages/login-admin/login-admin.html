@@ -1,1 +1,76 @@
-<p>login-admin works!</p>
+<div class="login-container">
+  <div class="card login-card">
+    <!-- Logo -->
+    <div class="logo-section">
+      <h1>INNERA</h1>
+    </div>
+
+    <!-- Title -->
+    <h2>Connexion Admin</h2>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-box">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Login Form -->
+    <form [formGroup]="form" (ngSubmit)="login()">
+      <!-- Email Input -->
+      <div class="form-group">
+        <label>
+          <span class="icon">📧</span>
+          Email
+        </label>
+        <input 
+          type="email" 
+          formControlName="email"
+          placeholder="admin@innera.com">
+        <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="error">
+          Valid email required
+        </div>
+      </div>
+
+      <!-- Password Input -->
+      <div class="form-group">
+        <label>
+          <span class="icon">🔒</span>
+          Password
+        </label>
+        <div class="password-input">
+          <input 
+            [type]="showPassword ? 'text' : 'password'" 
+            formControlName="password"
+            placeholder="••••••">
+          <button 
+            type="button" 
+            class="toggle-password"
+            (click)="togglePasswordVisibility()">
+            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <div *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="error">
+          Min 6 characters
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button 
+        type="submit" 
+        class="btn-primary btn-login"
+        [disabled]="isLoading">
+        {{ isLoading ? 'Connecting...' : 'Se Connecter' }}
+      </button>
+    </form>
+
+    <!-- Links -->
+    <div class="links">
+      <a (click)="goToForgotPassword()">Mot de passe oublié?</a>
+      <a (click)="goToRegister()">Pas encore de compte?</a>
+    </div>
+
+    <!-- Switch to User -->
+    <div class="switch-user">
+      <a (click)="goToUserLogin()">👤 User Login →</a>
+    </div>
+  </div>
+</div>

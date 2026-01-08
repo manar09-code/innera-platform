@@ -1,1 +1,74 @@
-<p>home works!</p>
+<div class="home-wrapper">
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <h1 class="logo">N INNERA</h1>
+      <div class="nav-center">
+        <a href="#" class="nav-link active">Communauté</a>
+        <a href="#" class="nav-link">Tendances</a>
+        <a href="#" class="nav-link">Messages</a>
+      </div>
+      <div class="navbar-right">
+        <button class="nav-icon">🔍</button>
+        <button class="nav-icon">🔔</button>
+        <button class="btn-logout" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="home-content">
+    <!-- Welcome Card -->
+    <div class="card welcome-card">
+      <div class="welcome-image">
+        <div class="mountain-placeholder"></div>
+      </div>
+
+      <div class="welcome-text">
+        <h2 *ngIf="userRole === 'admin'" class="welcome-title">
+          👑 Welcome Admin
+        </h2>
+        <h2 *ngIf="userRole === 'user'" class="welcome-title">
+          👤 Welcome User
+        </h2>
+        <p class="welcome-subtitle">{{ userEmail }}</p>
+
+        <!-- Admin Panel -->
+        <div *ngIf="userRole === 'admin'" class="admin-section">
+          <h3>Admin Controls</h3>
+          <div class="button-group">
+            <button class="btn-primary" (click)="goToAdminPanel()">⚙️ Admin Panel</button>
+            <button class="btn-secondary" (click)="goToFeed()">📰 View Feed</button>
+          </div>
+        </div>
+
+        <!-- User Panel -->
+        <div *ngIf="userRole === 'user'" class="user-section">
+          <div class="button-group">
+            <button class="btn-primary" (click)="goToFeed()">📰 Go to Feed</button>
+            <button class="btn-secondary" (click)="goToSettings()">⚙️ Settings</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="quick-links">
+      <div class="card link-card">
+        <div class="link-icon">👥</div>
+        <h3>Community</h3>
+        <p>Join our community</p>
+      </div>
+      <div class="card link-card">
+        <div class="link-icon">📊</div>
+        <h3>Analytics</h3>
+        <p>View your stats</p>
+      </div>
+      <div class="card link-card">
+        <div class="link-icon">💬</div>
+        <h3>Messages</h3>
+        <p>Chat with others</p>
+      </div>
+    </div>
+  </div>
+</div>

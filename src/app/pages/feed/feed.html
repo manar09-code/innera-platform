@@ -1,1 +1,114 @@
-<p>feed works!</p>
+<div class="feed-wrapper">
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <h1 class="logo">N INNERA</h1>
+      <div class="nav-center">
+        <a href="#" class="nav-link active">Communauté</a>
+        <a href="#" class="nav-link">Tendances</a>
+        <a href="#" class="nav-link">Messages</a>
+      </div>
+      <div class="navbar-right">
+        <button class="nav-icon">🔍</button>
+        <button class="nav-icon">🔔</button>
+        <button class="btn-logout" (click)="goBack()">← Back</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Feed Content -->
+  <div class="feed-content">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="card user-card">
+        <div class="user-avatar">👤</div>
+        <p class="user-name">You</p>
+        <p class="user-role" *ngIf="userRole === 'admin'">👑 Admin</p>
+        <p class="user-role" *ngIf="userRole === 'user'">👤 User</p>
+      </div>
+
+      <div class="card">
+        <h3>Communauté</h3>
+        <a href="#" class="menu-item">👥 Membres</a>
+        <a href="#" class="menu-item">📊 Tendances</a>
+        <a href="#" class="menu-item">💬 Messages</a>
+      </div>
+    </aside>
+
+    <!-- Main Feed -->
+    <main class="main-feed">
+      <!-- Create Post -->
+      <div class="card create-post-card">
+        <div class="post-header">
+          <div class="avatar">👤</div>
+          <textarea 
+            [(ngModel)]="newPostContent"
+            placeholder="What's on your mind?"
+            class="post-input"></textarea>
+        </div>
+        <div class="post-actions">
+          <button class="action-btn">📷 Photo</button>
+          <button class="action-btn">😊 Emoji</button>
+          <button class="btn-primary post-btn" (click)="createPost()">Post</button>
+        </div>
+      </div>
+
+      <!-- Posts Feed -->
+      <div *ngFor="let post of posts" class="card post-card">
+        <!-- Post Header -->
+        <div class="post-header-info">
+          <div class="author-info">
+            <div class="author-avatar">👤</div>
+            <div>
+              <h4 class="author-name">{{ post.author }}</h4>
+              <span class="post-time">{{ post.timestamp }}</span>
+            </div>
+          </div>
+          <div class="post-menu">
+            <button class="menu-btn">⋯</button>
+          </div>
+        </div>
+
+        <!-- Post Content -->
+        <div *ngIf="editingPostId !== post.id" class="post-content">
+          <p>{{ post.content }}</p>
+        </div>
+
+        <!-- Edit Mode -->
+        <div *ngIf="editingPostId === post.id" class="edit-mode">
+          <textarea [(ngModel)]="editContent" class="edit-input"></textarea>
+          <div class="edit-actions">
+            <button class="btn-primary" (click)="saveEdit(post)">Save</button>
+            <button class="btn-secondary" (click)="cancelEdit()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Post Stats -->
+        <div class="post-stats">
+          <span>❤️ {{ post.likes }} Likes</span>
+          <span>💬 {{ post.comments }} Comments</span>
+        </div>
+
+        <!-- Post Actions -->
+        <div class="post-actions-bar">
+          <button class="action-btn" (click)="likePost(post)">❤️ Like</button>
+          <button class="action-btn">💬 Comment</button>
+          <button class="action-btn" *ngIf="userRole === 'admin'" (click)="startEdit(post)">✏️ Edit</button>
+          <button class="action-btn delete-btn" *ngIf="userRole === 'admin'" (click)="deletePost(post.id)">🗑️ Delete</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Sidebar -->
+    <aside class="sidebar-right">
+      <div class="card trending-card">
+        <h3>Trending Now</h3>
+        <a href="#" class="trending-item">#Football</a>
+        <a href="#" class="trending-item">#Voyage</a>
+        <a href="#" class="trending-item">#Mensage</a>
+        <a href="#" class="trending-item">#Musique</a>
+        <a href="#" class="trending-item">#Cusire</a>
+      </div>
+    </aside>
+  </div>
+</div>
