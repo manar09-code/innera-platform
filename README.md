@@ -1,59 +1,59 @@
-# InneraPlatform
+# Innera Platform
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.5.
+![Angular](https://img.shields.io/badge/Angular-DD0031?style=flat&logo=angular&logoColor=white) ![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat&logo=firebase&logoColor=black) ![MIT License](https://img.shields.io/badge/License-MIT-green)
 
-## Development server
+Innera Platform is a **private community web app** where users and admins can share posts, like, comment, and manage profiles. Built with **Angular** and **Firebase**, it provides a secure and responsive environment for community interaction.
 
-To start a local development server, run:
+---
 
-```bash
-ng serve
-```
+## Features
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+- **Users:** Register/login, post, like, comment, manage profile, reset password  
+- **Admins:** Full access to post, like, comment, and manage users  
+- **General:** Responsive design, Firebase integration, optional AI automation
 
-## Code scaffolding
+---
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Tech Stack
 
-```bash
-ng generate component component-name
-```
+- **Frontend:** Angular, TypeScript, HTML, CSS  
+- **Backend/Database:** Firebase (Firestore & Auth)  
+- **Hosting:** Firebase Hosting  
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+---
 
-```bash
-ng generate --help
-```
+## Project Structure
 
-## Building
+- Components: login, register, feed, profile, etc.  
+- Services: auth, user, post, Firebase integration  
+- Assets: images, logos, icons  
+- Environments: Firebase config  
+- Angular configuration and dependencies  
 
-To build the project run:
+---
 
-```bash
-ng build
-```
+## Setup
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+1. Clone the repository  
+2. Install dependencies  
+3. Configure Firebase in the environment file  
+4. Run locally with Angular  
+5. Open the app in the browser at localhost
 
-## Running unit tests
+---
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Contributing
 
-```bash
-ng test
-```
+Fork → Branch → Commit → Push → Pull Request
 
-## Running end-to-end tests
+---
 
-For end-to-end (e2e) testing, run:
+## License
 
-```bash
-ng e2e
-```
+MIT License
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+---
 
-## Additional Resources
+## Contact
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+**Manar Degachi** – manardg09@gmail.com – +216 50416574
