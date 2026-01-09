@@ -34,11 +34,8 @@ export class HomeComponent implements OnInit {
     this.router.navigate(['/login-admin']);
   }
 
-  goToAdminPanel() {
-    alert('Admin Panel - Coming Soon');
+  goToUserRegister() {
+    this.router.navigate(['/register-user']);
   }
-
-  goToSettings() {
-    alert('Settings - Coming Soon');
-  }
-}
+  goToAdminRegister() {
+    this.router.navigate(['/register-admin']);}}

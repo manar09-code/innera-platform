@@ -11,6 +11,7 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="login()">
+      <!-- Email Field -->
       <div class="form-group">
         <label>
           <span class="icon">📧</span>
@@ -25,6 +26,22 @@
         </div>
       </div>
 
+    <!--community name field-->
+    <div class="form-group">
+        <label>
+          <span class="icon">🏢</span>
+          Community Name
+        </label>
+        <input 
+          type="text" 
+          formControlName="communityName"
+          placeholder="Enter your community name">
+        <div *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched" class="error">
+          Community name is required
+        </div>
+      </div>
+
+      <!-- Password Field -->
       <div class="form-group">
         <label>
           <span class="icon">🔒</span>

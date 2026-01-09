@@ -15,6 +15,23 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="register()">
+
+    <!--admin name filed--> 
+      <div class="form-group">
+        <label>
+          <span class="icon">👤</span>
+          Admin Name
+        </label>
+        <input 
+          type="text" 
+          formControlName="adminName"
+          placeholder="Enter your admin name">
+        <div *ngIf="form.get('adminName')?.invalid && form.get('adminName')?.touched" class="error">
+          Admin name is required
+        </div>
+      </div>
+
+      <!--email field-->
       <div class="form-group">
         <label>
           <span class="icon">📧</span>
@@ -29,6 +46,22 @@
         </div>
       </div>
 
+      <!--community name creation section-->
+      <div class="form-group">
+        <label>
+          <span class="icon">🏢</span>
+          Community Name
+        </label>
+        <input 
+          type="text" 
+          formControlName="communityName"
+          placeholder="Enter your community name">
+        <div *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched" class="error">
+          Community name is required
+        </div>
+      </div>
+
+      <!--password field-->
       <div class="form-group">
         <label>
           <span class="icon">🔒</span>

@@ -42,7 +42,7 @@ export class LoginAdminComponent {
       if (email === 'admin@innera.com' && password === 'admin123') {
         localStorage.setItem('userRole', 'admin');
         localStorage.setItem('userEmail', email);
-        this.router.navigate(['/home']);
+        this.router.navigate(['/feed']);
       } else {
         this.errorMessage = 'Invalid credentials. Try: admin@innera.com / admin123';
       }
