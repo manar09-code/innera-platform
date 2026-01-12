@@ -6,26 +6,20 @@
 
     <h2>Créer un Compte Admin</h2>
 
-    <div *ngIf="successMessage" class="success">
-      ✅ {{ successMessage }}
-    </div>
+    <div *ngIf="successMessage" class="success">✅ {{ successMessage }}</div>
 
     <div *ngIf="errorMessage" class="error-box">
       {{ errorMessage }}
     </div>
 
     <form [formGroup]="form" (ngSubmit)="register()">
-
-    <!--admin name filed--> 
+      <!--admin name filed-->
       <div class="form-group">
         <label>
           <span class="icon">👤</span>
           Admin Name
         </label>
-        <input 
-          type="text" 
-          formControlName="adminName"
-          placeholder="Enter your admin name">
+        <input type="text" formControlName="adminName" placeholder="Enter your admin name" />
         <div *ngIf="form.get('adminName')?.invalid && form.get('adminName')?.touched" class="error">
           Admin name is required
         </div>
@@ -37,10 +31,7 @@
           <span class="icon">📧</span>
           Email
         </label>
-        <input 
-          type="email" 
-          formControlName="email"
-          placeholder="admin@innera.com">
+        <input type="email" formControlName="email" placeholder="admin@innera.com" />
         <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="error">
           Valid email required
         </div>
@@ -52,11 +43,15 @@
           <span class="icon">🏢</span>
           Community Name
         </label>
-        <input 
-          type="text" 
+        <input
+          type="text"
           formControlName="communityName"
-          placeholder="Enter your community name">
-        <div *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched" class="error">
+          placeholder="Enter your community name"
+        />
+        <div
+          *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched"
+          class="error"
+        >
           Community name is required
         </div>
       </div>
@@ -68,14 +63,12 @@
           Password
         </label>
         <div class="password-input">
-          <input 
-            [type]="showPassword ? 'text' : 'password'" 
+          <input
+            [type]="showPassword ? 'text' : 'password'"
             formControlName="password"
-            placeholder="••••••">
-          <button 
-            type="button" 
-            class="toggle-password"
-            (click)="togglePasswordVisibility()">
+            placeholder="••••••"
+          />
+          <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
             {{ showPassword ? '👁️' : '👁️‍🗨️' }}
           </button>
         </div>
@@ -90,30 +83,31 @@
           Confirm Password
         </label>
         <div class="password-input">
-          <input 
-            [type]="showConfirmPassword ? 'text' : 'password'" 
+          <input
+            [type]="showConfirmPassword ? 'text' : 'password'"
             formControlName="confirmPassword"
-            placeholder="••••••">
-          <button 
-            type="button" 
-            class="toggle-password"
-            (click)="toggleConfirmPasswordVisibility()">
+            placeholder="••••••"
+          />
+          <button type="button" class="toggle-password" (click)="toggleConfirmPasswordVisibility()">
             {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
           </button>
         </div>
-        <div *ngIf="form.get('confirmPassword')?.invalid && form.get('confirmPassword')?.touched" class="error">
+        <div
+          *ngIf="form.get('confirmPassword')?.invalid && form.get('confirmPassword')?.touched"
+          class="error"
+        >
           Confirm password
         </div>
-        <div *ngIf="form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched" class="error">
+        <div
+          *ngIf="form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched"
+          class="error"
+        >
           Passwords don't match
         </div>
       </div>
 
-      <button 
-        type="submit" 
-        class="btn-primary btn-register"
-        [disabled]="isLoading || form.invalid">
-        {{ isLoading ? 'Creating...' : 'S\'inscrire' }}
+      <button type="submit" class="btn-primary btn-register" [disabled]="isLoading || form.invalid">
+        {{ isLoading ? 'Creating...' : "S'inscrire" }}
       </button>
     </form>
 

@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login-admin',
@@ -16,10 +17,11 @@ export class LoginAdminComponent {
   errorMessage = '';
   isLoading = false;
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor(private fb: FormBuilder, private router: Router, private authService: AuthService) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
+      communityName: ['', Validators.required],
     });
   }
 
@@ -38,13 +40,15 @@ export class LoginAdminComponent {
     setTimeout(() => {
       const email = this.form.get('email')?.value;
       const password = this.form.get('password')?.value;
+      const communityName = this.form.get('communityName')?.value;
 
-      if (email === 'admin@innera.com' && password === 'admin123') {
-        localStorage.setItem('userRole', 'admin');
-        localStorage.setItem('userEmail', email);
+      const success = this.authService.loginAdmin(email, password, communityName);
+      if (success) {
+        this.errorMessage = '';
         this.router.navigate(['/feed']);
       } else {
-        this.errorMessage = 'Invalid credentials. Try: admin@innera.com / admin123';
+        this.errorMessage =
+          'Invalid credentials. Please check your email, password, and community name.';
       }
       this.isLoading = false;
     }, 1000);
@@ -60,5 +64,9 @@ export class LoginAdminComponent {
 
   goToUserLogin() {
     this.router.navigate(['/login-user']);
+  }
+
+  goBack() {
+    this.router.navigate(['/register-admin']);
   }
 }

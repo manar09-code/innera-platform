@@ -1,213 +1,200 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
+
+interface Comment {
+  username: string;
+  text: string;
+  time: string;
+}
 
 interface Post {
   id: number;
   author: string;
   avatar: string;
-  time: string;
   content: string;
-  tags: string[];
+  time: string;
   likes: number;
-  comments: number;
+  comments: Comment[];
+  tags: string[];
+  type: string;
+  likedBy: string[];
 }
 
 @Component({
   selector: 'app-feed',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './feed.html',
   styleUrls: ['./feed.css'],
-  standalone: true,
-  imports: [CommonModule]
 })
-export class FeedComponent implements OnInit, AfterViewInit {
-  @ViewChild('postInput') postInput!: ElementRef<HTMLTextAreaElement>;
-  @ViewChild('postBtn') postBtn!: ElementRef<HTMLButtonElement>;
-  @ViewChild('postsFeed') postsFeed!: ElementRef<HTMLDivElement>;
+export class FeedComponent implements OnInit {
+  // Removed unimplemented methods unrelated to comments
+  communityName: string = '';
+  adminName: string = '';
+  userName: string = '';
+  userRole: string = '';
+  newCommentText: { [postId: number]: string } = {};
 
-  posts: Post[] = [];
-  trendingTags: string[] = ['#Football', '#Voyage', '#Message', '#Musique', '#Cuisine'];
-  private postIdCounter: number = 3;
-  currentTab: string = 'post';
+  posts: Post[] = [
+    {
+      id: 1,
+      author: 'Ahmed Ben Ali',
+      avatar: '👨',
+      content:
+        'Exploring the beautiful beaches of Hammamet this weekend! The Mediterranean sea is calling. 🏖️',
+      time: '2 hours ago',
+      likes: 15,
+      comments: [],
+      tags: ['#Tunisia', '#Hammamet', '#BeachLife'],
+      type: 'text',
+      likedBy: [],
+    },
+    {
+      id: 2,
+      author: 'Fatima Trabelsi',
+      avatar: '👩',
+      content:
+        'Just tried the most amazing couscous at a local restaurant in Tunis. Traditional flavors never disappoint! 🍲',
+      time: '1 hour ago',
+      likes: 22,
+      comments: [],
+      tags: ['#TunisianFood', '#Couscous', '#Culture'],
+      type: 'text',
+      likedBy: [],
+    },
+    {
+      id: 3,
+      author: 'Mohamed Saidi',
+      avatar: '🧑',
+      content:
+        'The architecture in Sidi Bou Said is absolutely stunning. White and blue everywhere! 🏛️',
+      time: '3 hours ago',
+      likes: 18,
+      comments: [],
+      tags: ['#SidiBouSaid', '#Architecture', '#Travel'],
+      type: 'text',
+      likedBy: [],
+    },
+  ];
 
-  constructor() {}
+  trendingTags: string[] = [
+    '#Tunisia',
+    '#TunisianCulture',
+    '#Hammamet',
+    '#Couscous',
+    '#SidiBouSaid',
+    '#TunisianFood',
+    '#BeachLife',
+  ];
 
-  ngOnInit(): void {
-    this.initializePosts();
+  isAdmin: boolean = false;
+  popularPosts: Post[] = [];
+  activeMembers: any[] = [];
+
+  constructor(private router: Router, private authService: AuthService) {}
+
+  ngOnInit() {
+    this.communityName = this.authService.getCommunityName() || 'Innera Platform';
+    this.adminName = this.authService.getAdminNameForCommunity(this.communityName);
+    this.userName = localStorage.getItem('userName') || '';
+    this.userRole = localStorage.getItem('userRole') || '';
+    this.initializePopularPosts();
+    this.initializeActiveMembers();
   }
 
-  ngAfterViewInit(): void {
-    this.attachEventListeners();
-    this.updatePostButtonState();
+  navigateToWritePost(): void {
+    // TODO: Navigate to write post page
+    console.log('Navigate to write post');
   }
 
-  private initializePosts(): void {
-    this.posts = [
-      {
-        id: 1,
-        author: 'Sophie Durand',
-        avatar: '👩',
-        time: '3h',
-        content: 'Quel match incroyable ce soir ! Brave à notre équipe pour cette victoire !',
-        tags: ['#Football', '#Victoire'],
-        likes: 218,
-        comments: 38
-      },
-      {
-        id: 2,
-        author: 'Sophie Durand',
-        avatar: '👩',
-        time: '3m',
-        content: 'Je viens de publier mon nouveau shoot photo sur les hauteurs. Venez découvrir !',
-        tags: ['#Photography', '#Art'],
-        likes: 145,
-        comments: 23
-      },
-      {
-        id: 3,
-        author: 'Marc Pierre',
-        avatar: '👨',
-        time: '1h',
-        content: 'Nouveau voyage en Italie, les paysages sont absolument magnifiques !',
-        tags: ['#Voyage', '#Italie'],
-        likes: 392,
-        comments: 67
-      }
-    ];
+  navigateToImagePost(): void {
+    // TODO: Navigate to image post page
+    console.log('Navigate to image post');
   }
 
-  private attachEventListeners(): void {
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const postInput = document.getElementById('postInput') as HTMLTextAreaElement;
+  navigateToMessage(): void {
+    // TODO: Navigate to message page
+    console.log('Navigate to message');
+  }
 
-    tabBtns.forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        const target = e.currentTarget as HTMLElement;
-        this.switchTabUI(target.getAttribute('data-tab') || 'post');
-      });
-    });
-
-    if (postInput) {
-      postInput.addEventListener('input', () => {
-        this.updatePostButtonState();
-      });
+  onPostOptionsClick(post: Post): void {
+    if (post.type === 'text') {
+      this.navigateToWritePost();
+    } else if (post.type === 'image') {
+      this.navigateToImagePost();
     }
-  }
-
-  handlePostSubmit(): void {
-    const postInput = document.getElementById('postInput') as HTMLTextAreaElement;
-    const content = postInput?.value.trim();
-
-    if (!content) {
-      this.showNotification('Please write something before posting!', 'error');
-      return;
-    }
-
-    const newPost: Post = {
-      id: ++this.postIdCounter,
-      author: 'Alex Martin',
-      avatar: '👤',
-      time: 'just now',
-      content: content,
-      tags: this.extractHashtags(content),
-      likes: 0,
-      comments: 0
-    };
-
-    this.posts.unshift(newPost);
-    postInput.value = '';
-    this.updatePostButtonState();
-    this.showNotification('Post published successfully!', 'success');
-  }
-
-  private extractHashtags(content: string): string[] {
-    const hashtagRegex = /#\w+/g;
-    return content.match(hashtagRegex) || [];
-  }
-
-  updatePostButtonState(): void {
-    const postBtn = document.getElementById('postBtn') as HTMLButtonElement;
-    const postInput = document.getElementById('postInput') as HTMLTextAreaElement;
-
-    if (postBtn && postInput) {
-      postBtn.disabled = !postInput.value.trim();
-    }
-  }
-
-  switchTabUI(tabName: string): void {
-    this.currentTab = tabName;
-    const tabBtns = document.querySelectorAll('.tab-btn');
-
-    tabBtns.forEach((btn) => {
-      btn.classList.remove('active');
-      if (btn.getAttribute('data-tab') === tabName) {
-        btn.classList.add('active');
-      }
-    });
-
-    console.log(`Switched to ${tabName} tab`);
-  }
-
-  private filterByHashtag(hashtag: string): void {
-    console.log(`Filtering posts by ${hashtag}`);
-  }
-
-  private showNotification(message: string, type: 'success' | 'error' = 'success'): void {
-    const notification = document.createElement('div');
-    const bgColor = type === 'success' 
-      ? 'linear-gradient(135deg, #FFB84D 0%, #FF9800 100%)' 
-      : 'linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%)';
-
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: ${bgColor};
-      color: white;
-      padding: 15px 25px;
-      border-radius: 8px;
-      font-weight: 600;
-      z-index: 1000;
-      animation: slideIn 0.3s ease-out;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    `;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-      notification.style.animation = 'slideOut 0.3s ease-out';
-      setTimeout(() => notification.remove(), 300);
-    }, 3000);
-  }
-
-  onPostInput(): void {
-    this.updatePostButtonState();
-  }
-
-  onHashtagClick(hashtag: string): void {
-    this.filterByHashtag(hashtag);
   }
 
   onLikePost(post: Post): void {
-    post.likes++;
+    if (!this.userName || this.userName.trim() === '') {
+      return; // Only allow likes for logged-in users
+    }
+    const index = post.likedBy.indexOf(this.userName);
+    if (index === -1) {
+      // User hasn't liked, so like it
+      post.likedBy.push(this.userName);
+      post.likes++;
+    } else {
+      // User has liked, so unlike it
+      post.likedBy.splice(index, 1);
+      post.likes--;
+    }
   }
 
   onCommentPost(post: Post): void {
-    this.showNotification('Comment feature coming soon!', 'error');
+    // Toggle comment input visibility (for now, just focus or something, but since it's always visible, maybe do nothing or scroll)
+    // For simplicity, since input is always there, perhaps no action needed
   }
 
-  getPosts(): Post[] {
-    return this.posts;
+  submitComment(post: Post): void {
+    const text = this.newCommentText[post.id]?.trim();
+    if (text) {
+      const newComment: Comment = {
+        username: this.userName || 'Anonymous',
+        text: text,
+        time: new Date().toLocaleString(),
+      };
+      post.comments.push(newComment);
+      this.newCommentText[post.id] = ''; // Clear the input
+    }
   }
 
-  getPostCount(): number {
-    return this.posts.length;
+  onHashtagClick(tag: string): void {
+    console.log('Clicked hashtag:', tag);
   }
 
-  getTotalLikes(): number {
-    return this.posts.reduce((sum, post) => sum + post.likes, 0);
+  goBack(): void {
+    this.router.navigate(['/home']);
   }
 
-  getTotalComments(): number {
-    return this.posts.reduce((sum, post) => sum + post.comments, 0);
+  deletePost(post: Post): void {
+    if (this.isAdmin) {
+      this.posts = this.posts.filter((p) => p.id !== post.id);
+      this.showNotification('Post deleted successfully', 'success');
+    }
+  }
+
+  private initializePopularPosts(): void {
+    // Sort posts by likes and take top 3
+    this.popularPosts = [...this.posts].sort((a, b) => b.likes - a.likes).slice(0, 3);
+  }
+
+  private initializeActiveMembers(): void {
+    // Mock active members data with Tunisian names
+    this.activeMembers = [
+      { avatar: '👨', name: 'Ahmed Ben Ali', activity: 250 },
+      { avatar: '👩', name: 'Fatima Trabelsi', activity: 220 },
+      { avatar: '🧑', name: 'Mohamed Saidi', activity: 200 },
+      { avatar: '👨', name: 'Youssef Gharbi', activity: 180 },
+      { avatar: '👩', name: 'Leila Mansouri', activity: 160 },
+    ];
+  }
+
+  private showNotification(message: string, type: string): void {
+    // TODO: Implement notification system
+    alert(message);
   }
 }

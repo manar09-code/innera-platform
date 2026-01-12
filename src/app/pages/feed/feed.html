@@ -1,123 +1,180 @@
 <div class="feed-wrapper">
   <!-- User Profile Header -->
   <div class="user-header">
+    <div class="logo">INNERA</div>
+    <button class="btn-back" (click)="goBack()">← Back</button>
     <div class="user-profile">
       <div class="user-avatar">👤</div>
       <div class="user-info">
-        <h3 class="user-name">Alex Martin</h3>
+        <h3 class="user-name">{{ userName }}</h3>
         <p class="user-status">Active Now</p>
       </div>
     </div>
   </div>
 
-  <div class="feed-content">
-    <!-- Welcome Card Section -->
-    <div class="welcome-card">
-      <div class="welcome-image">
-        <div class="mountain-placeholder"></div>
-        <div class="welcome-overlay">
-          <h1 class="welcome-title">Communauté Innera</h1>
-          <p class="welcome-subtitle">Connectez-vous et partagez vos passions</p>
-        </div>
+  <div class="feed-grid">
+    <!-- Left Column: AI Assistant -->
+    <div class="ai-assistant-column">
+      <div class="ai-assistant-placeholder">
+        <div class="ai-icon">🤖</div>
+        <h3 class="ai-title">AI Assistant</h3>
+        <p class="ai-description">Coming soon...</p>
       </div>
     </div>
 
-    <!-- Create Post Section -->
-    <div class="create-post-card">
-      <div class="create-post-header">
-        <h2 class="section-title">Partager vos pensées</h2>
-      </div>
-      
-      <div class="post-input-container">
-        <textarea 
-          #postInput
-          id="postInput" 
-          class="post-textarea" 
-          placeholder="What's on your mind?"
-          rows="4"
-          (input)="onPostInput()"></textarea>
-      </div>
-
-      <div class="post-tabs">
-        <button 
-          class="tab-btn active" 
-          data-tab="post"
-          (click)="switchTabUI('post')">
-          <span class="tab-icon">📷</span>
-          Post
-        </button>
-        <button 
-          class="tab-btn" 
-          data-tab="message"
-          (click)="switchTabUI('message')">
-          <span class="tab-icon">💬</span>
-          Message
-        </button>
-      </div>
-
-      <button 
-        #postBtn
-        id="postBtn" 
-        class="btn-primary post-button"
-        (click)="handlePostSubmit()">
-        Post Now
-      </button>
-    </div>
-
-    <!-- Trending Hashtags Section -->
-    <div class="trending-section">
-      <h2 class="section-title">Posts populaires</h2>
-      <div class="hashtags-container">
-        <button 
-          class="hashtag-btn"
-          *ngFor="let tag of trendingTags"
-          (click)="onHashtagClick(tag)">
-          {{ tag }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Posts Feed -->
-    <div class="posts-feed" #postsFeed id="postsFeed">
-      <div class="post-card" *ngFor="let post of posts">
-        <!-- Post Header -->
-        <div class="post-header">
-          <div class="post-avatar">{{ post.avatar }}</div>
-          <div class="post-meta">
-            <h3 class="post-author">{{ post.author }}</h3>
-            <p class="post-time">{{ post.time }}</p>
+    <!-- Center Column: Feed Content -->
+    <div class="feed-center-column">
+      <!-- Welcome Card Section -->
+      <div class="welcome-card">
+        <div class="welcome-image">
+          <div class="mountain-placeholder"></div>
+          <div class="welcome-overlay">
+            <h1 class="welcome-title">{{ communityName }}</h1>
+            <p class="welcome-admin">Admin: Admin</p>
+            <p class="welcome-subtitle">Connect and share your passions</p>
           </div>
-          <button class="post-options">⋯</button>
         </div>
+      </div>
 
-        <!-- Post Content -->
-        <p class="post-content">{{ post.content }}</p>
+      <!-- Create Post Row: Create Post -->
+      <div class="create-post-row">
+        <!-- Create Post Section -->
+        <div class="create-post-card">
+          <div class="create-post-header">
+            <h2 class="section-title">Share your thoughts</h2>
+          </div>
 
-        <!-- Post Tags -->
-        <div class="post-tags" *ngIf="post.tags.length > 0">
-          <span 
-            class="post-tag" 
-            *ngFor="let tag of post.tags"
-            (click)="onHashtagClick(tag)">
+          <div class="create-post-blocks">
+            <div class="post-block" (click)="navigateToWritePost()">
+              <div class="block-icon">✍️</div>
+              <div class="block-text">Write Something</div>
+            </div>
+            <div class="post-block" (click)="navigateToImagePost()">
+              <div class="block-icon">📷</div>
+              <div class="block-text">Post an Image</div>
+            </div>
+            <div class="post-block" (click)="navigateToMessage()">
+              <div class="block-icon">💬</div>
+              <div class="block-text">Send a Message</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Posts Feed -->
+      <div class="posts-feed" #postsFeed id="postsFeed">
+        <div class="post-card" *ngFor="let post of posts">
+          <!-- Post Header -->
+          <div class="post-header">
+            <div class="post-avatar">{{ post.avatar }}</div>
+            <div class="post-meta">
+              <h3 class="post-author">{{ post.author }}</h3>
+              <p class="post-time">{{ post.time }}</p>
+            </div>
+            <button class="post-options" (click)="onPostOptionsClick(post)">⋯</button>
+          </div>
+
+          <!-- Post Content -->
+          <p class="post-content">{{ post.content }}</p>
+
+          <!-- Post Tags -->
+          <div class="post-tags" *ngIf="post.tags.length > 0">
+            <span class="post-tag" *ngFor="let tag of post.tags" (click)="onHashtagClick(tag)">
+              {{ tag }}
+            </span>
+          </div>
+
+          <!-- Post Footer -->
+          <div class="post-footer">
+            <button class="post-action" (click)="onLikePost(post)">
+              <span class="action-icon">❤️</span>
+              <span class="action-count">{{ post.likes }}</span>
+            </button>
+            <button class="post-action" (click)="onCommentPost(post)">
+              <span class="action-icon">💬</span>
+              <span class="action-count">{{ post.comments.length }}</span>
+            </button>
+            <button class="post-action delete-btn" *ngIf="isAdmin" (click)="deletePost(post)">
+              <span class="action-icon">🗑️</span>
+            </button>
+          </div>
+
+          <!-- Comments Section -->
+          <div class="comments-section">
+            <!-- Comment Input -->
+            <div class="comment-input">
+              <input
+                type="text"
+                placeholder="Write a comment..."
+                [(ngModel)]="newCommentText[post.id]"
+                (keyup.enter)="submitComment(post)"
+                class="comment-input-field"
+              />
+              <button
+                class="comment-submit-btn"
+                (click)="submitComment(post)"
+                [disabled]="!newCommentText[post.id]?.trim()"
+              >
+                Post
+              </button>
+            </div>
+
+            <!-- Display Comments -->
+            <div class="comments-list" *ngIf="post.comments.length > 0">
+              <div class="comment" *ngFor="let comment of post.comments">
+                <div class="comment-header">
+                  <strong>{{ comment.username }}</strong>
+                  <span class="comment-time">{{ comment.time }}</span>
+                </div>
+                <p class="comment-text">{{ comment.text }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Trends -->
+    <div class="trends-column">
+      <!-- Trending Hashtags Section -->
+      <div class="trending-section">
+        <h2 class="section-title">Trending Hashtags</h2>
+        <div class="hashtags-container">
+          <button
+            class="hashtag-btn"
+            *ngFor="let tag of trendingTags"
+            (click)="onHashtagClick(tag)"
+          >
             {{ tag }}
-          </span>
+          </button>
         </div>
+      </div>
 
-        <!-- Post Footer -->
-        <div class="post-footer">
-          <button class="post-action" (click)="onLikePost(post)">
-            <span class="action-icon">❤️</span>
-            <span class="action-count">{{ post.likes }}</span>
-          </button>
-          <button class="post-action" (click)="onCommentPost(post)">
-            <span class="action-icon">💬</span>
-            <span class="action-count">{{ post.comments }}</span>
-          </button>
-          <button class="post-action">
-            <span class="action-icon">🔄</span>
-          </button>
+      <!-- Popular Posts Section -->
+      <div class="trending-section">
+        <h2 class="section-title">Popular Posts</h2>
+        <div class="popular-posts">
+          <div class="popular-post" *ngFor="let post of popularPosts">
+            <p class="popular-post-content">{{ post.content }}</p>
+            <span class="popular-post-likes">{{ post.likes }} likes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Most Active Members Section -->
+      <div class="trending-section">
+        <h2 class="section-title">Most Active Members</h2>
+        <div class="active-members">
+          <div class="active-member" *ngFor="let member of activeMembers">
+            <div class="member-avatar">{{ member.avatar }}</div>
+            <div class="member-info">
+              <h4 class="member-name">{{ member.name }}</h4>
+              <p class="member-activity">{{ member.activity }} activity points</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+v

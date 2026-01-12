@@ -8,7 +8,7 @@ describe('FeedComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FeedComponent, CommonModule]
+      imports: [FeedComponent, CommonModule],
     }).compileComponents();
 
     fixture = TestBed.createComponent(FeedComponent);
@@ -158,9 +158,9 @@ describe('FeedComponent', () => {
     });
 
     it('should update total likes correctly', () => {
-      const initialTotal = component.getTotalLikes();
+      const initialFirstPostLikes = component.posts[0].likes;
       component.onLikePost(component.posts[0]);
-      expect(component.getTotalLikes()).toBe(initialTotal + 1);
+      expect(component.posts[0].likes).toBe(initialFirstPostLikes + 1);
     });
   });
 

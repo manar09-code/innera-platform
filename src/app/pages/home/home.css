@@ -2,18 +2,42 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%),
+    url('https://images.pexels.com/photos/688574/pexels-photo-688574.jpeg') no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed;
+  position: relative;
 }
+
+.home-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
 .home-content {
   flex: 1;
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
   width: 100%;
+  position: relative;
+  z-index: 2;
 }
 
 .welcome-card {
   margin-bottom: 40px;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .welcome-image {
@@ -30,7 +54,17 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(to bottom, rgba(255, 184, 77, 0.2), transparent);
-  clip-path: polygon(0 70%, 15% 50%, 30% 60%, 45% 40%, 60% 55%, 75% 45%, 100% 65%, 100% 100%, 0 100%);
+  clip-path: polygon(
+    0 70%,
+    15% 50%,
+    30% 60%,
+    45% 40%,
+    60% 55%,
+    75% 45%,
+    100% 65%,
+    100% 100%,
+    0 100%
+  );
 }
 
 .welcome-text {
@@ -40,34 +74,54 @@
 .welcome-title {
   font-size: 32px;
   margin: 0 0 10px 0;
-  color: #FFB84D;
+  color: #ffb84d;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.welcome-subtitle {
-  color: rgba(255, 255, 255, 0.7);
+.welcome-description {
+  color: rgba(255, 255, 255, 0.9);
   margin: 0 0 20px 0;
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
-.choose-title{
+.choose-title {
   font-size: 28px;
   margin-bottom: 20px;
-  color: #FFB84D;
+  color: #ffb84d;
   text-align: center;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.container{
+.container {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
 }
-.btn-primary{
+
+.btn-primary {
   padding: 20px 100px;
   flex: 1;
   min-width: 150px;
   margin: 50px;
+  background: linear-gradient(135deg, #ffb84d, #ff6b35);
+  border: none;
+  border-radius: 50px;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 184, 77, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 184, 77, 0.4);
 }
 
 .quick-links {
@@ -80,11 +134,17 @@
   text-align: center;
   padding: 20px;
   cursor: pointer;
-  transition: transform 0.3s;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
 }
 
 .link-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
 }
 
 .link-icon {
@@ -95,20 +155,138 @@
 .link-card h3 {
   margin: 10px 0 5px 0;
   font-size: 18px;
+  color: #ffb84d;
+  font-weight: 600;
 }
 
 .link-card p {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.8);
   margin: 0;
   font-size: 14px;
 }
 
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 1s ease-out 0.5s both;
+}
+
+.animate-fade-in-delay {
+  animation: fadeIn 1s ease-out 1s both;
+}
+
+.animate-fade-in-delay-2 {
+  animation: fadeIn 1s ease-out 1.5s both;
+}
+
+.animate-bounce {
+  animation: bounce 2s infinite;
+}
+
+.animate-bounce-delay {
+  animation: bounce 2s infinite 0.5s;
+}
+
+.animate-hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.animate-hover-lift:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* Staggered animations for quick links */
+.animate-stagger-1 {
+  animation: fadeIn 1s ease-out 1.5s both;
+}
+
+.animate-stagger-2 {
+  animation: fadeIn 1s ease-out 1.7s both;
+}
+
+.animate-stagger-3 {
+  animation: fadeIn 1s ease-out 1.9s both;
+}
+
+/* Enhanced hover effects */
+.link-card:hover .link-icon {
+  transform: scale(1.1);
+  transition: transform 0.3s ease;
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 10px rgba(255, 184, 77, 0.3);
+}
+
+/* Improved spacing and layout */
+.home-content {
+  padding: 60px 20px;
+}
+
+.welcome-card {
+  margin-bottom: 60px;
+}
+
+.quick-links {
+  margin-top: 40px;
+}
+
 @media (max-width: 768px) {
-  .button-group {
+  .container {
     flex-direction: column;
   }
 
-  .button-group button {
+  .btn-primary {
     width: 100%;
+    margin: 10px 0;
+  }
+
+  .welcome-title {
+    font-size: 28px;
+  }
+
+  .choose-title {
+    font-size: 24px;
   }
 }

@@ -7,7 +7,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './home.html',
-  styleUrls: ['./home.css']
+  styleUrls: ['./home.css'],
 })
 export class HomeComponent implements OnInit {
   userRole: string | null = '';
@@ -18,10 +18,6 @@ export class HomeComponent implements OnInit {
   ngOnInit() {
     this.userRole = localStorage.getItem('userRole');
     this.userEmail = localStorage.getItem('userEmail');
-
-    if (!this.userRole) {
-      this.router.navigate(['/login-admin']);
-    }
   }
 
   goToFeed() {
@@ -38,4 +34,6 @@ export class HomeComponent implements OnInit {
     this.router.navigate(['/register-user']);
   }
   goToAdminRegister() {
-    this.router.navigate(['/register-admin']);}}
+    this.router.navigate(['/register-admin']);
+  }
+}
