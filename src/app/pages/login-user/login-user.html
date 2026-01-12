@@ -17,26 +17,27 @@
           <span class="icon">📧</span>
           Email
         </label>
-        <input 
-          type="email" 
-          formControlName="email"
-          placeholder="user@innera.com">
+        <input type="email" formControlName="email" placeholder="user@innera.com" />
         <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="error">
           Valid email required
         </div>
       </div>
 
-    <!--community name field-->
-    <div class="form-group">
+      <!--community name field-->
+      <div class="form-group">
         <label>
           <span class="icon">🏢</span>
           Community Name
         </label>
-        <input 
-          type="text" 
+        <input
+          type="text"
           formControlName="communityName"
-          placeholder="Enter your community name">
-        <div *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched" class="error">
+          placeholder="Enter your community name"
+        />
+        <div
+          *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched"
+          class="error"
+        >
           Community name is required
         </div>
       </div>
@@ -48,14 +49,12 @@
           Password
         </label>
         <div class="password-input">
-          <input 
-            [type]="showPassword ? 'text' : 'password'" 
+          <input
+            [type]="showPassword ? 'text' : 'password'"
             formControlName="password"
-            placeholder="••••••">
-          <button 
-            type="button" 
-            class="toggle-password"
-            (click)="togglePasswordVisibility()">
+            placeholder="••••••"
+          />
+          <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
             {{ showPassword ? '👁️' : '👁️‍🗨️' }}
           </button>
         </div>
@@ -64,17 +63,14 @@
         </div>
       </div>
 
-      <button 
-        type="submit" 
-        class="btn-primary btn-login"
-        [disabled]="isLoading">
-        {{ isLoading ? 'Connecting...' : 'Se Connecter' }}
+      <button type="submit" class="btn-primary btn-login" [disabled]="isLoading">
+        {{ isLoading ? 'Connecting...' : 'Log In' }}
       </button>
     </form>
 
     <div class="links">
-      <a (click)="goToForgotPassword()">Mot de passe oublié?</a>
-      <a (click)="goToRegister()">Pas encore de compte?</a>
+      <a (click)="goToForgotPassword()">Forgot Password?</a>
+      <a (click)="goToRegister()">Don't have an account yet?</a>
     </div>
 
     <div class="switch-user">

@@ -1,4 +1,123 @@
-<div class="profile-wrapper">
-  <h1>User Profile</h1>
-  <p>This is a placeholder for the user profile page.</p>
+<div class="profile-container">
+  <!-- Top Section -->
+  <div class="top-section" [style.background-image]="backgroundImage">
+    <div class="community-info">
+      <div class="community-picture">{{ profilePicture }}</div>
+      <h1 class="community-name">{{ communityName }}</h1>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Center: Profile Info -->
+    <div class="profile-info">
+      <div class="profile-picture-large">{{ profilePicture }}</div>
+      <div class="user-details">
+        <div class="detail-row">
+          <span class="label">Username:</span>
+          <span *ngIf="!editingUsername" class="value">{{ userName }}</span>
+          <input
+            *ngIf="editingUsername"
+            [(ngModel)]="tempUsername"
+            type="text"
+            class="edit-input"
+          />
+          <a *ngIf="!editingUsername" href="#" (click)="startEdit('Username')" class="edit-link"
+            >Edit</a
+          >
+          <button *ngIf="editingUsername" (click)="saveEdit('Username')" class="save-btn">
+            Save
+          </button>
+          <button *ngIf="editingUsername" (click)="cancelEdit('Username')" class="cancel-btn">
+            Cancel
+          </button>
+        </div>
+        <div class="detail-row">
+          <span class="label">Email:</span>
+          <span *ngIf="!editingEmail" class="value">{{ userEmail }}</span>
+          <input *ngIf="editingEmail" [(ngModel)]="tempEmail" type="email" class="edit-input" />
+          <a *ngIf="!editingEmail" href="#" (click)="startEdit('Email')" class="edit-link">Edit</a>
+          <button *ngIf="editingEmail" (click)="saveEdit('Email')" class="save-btn">Save</button>
+          <button *ngIf="editingEmail" (click)="cancelEdit('Email')" class="cancel-btn">
+            Cancel
+          </button>
+        </div>
+        <div class="detail-row">
+          <span class="label">Community:</span>
+          <span *ngIf="!editingCommunity" class="value">{{ communityName }}</span>
+          <input
+            *ngIf="editingCommunity"
+            [(ngModel)]="tempCommunity"
+            type="text"
+            class="edit-input"
+          />
+          <a *ngIf="!editingCommunity" href="#" (click)="startEdit('Community')" class="edit-link"
+            >Edit</a
+          >
+          <button *ngIf="editingCommunity" (click)="saveEdit('Community')" class="save-btn">
+            Save
+          </button>
+          <button *ngIf="editingCommunity" (click)="cancelEdit('Community')" class="cancel-btn">
+            Cancel
+          </button>
+        </div>
+        <div class="detail-row">
+          <span class="label">Password:</span>
+          <span *ngIf="!editingPassword" class="value">{{ userPassword }}</span>
+          <input
+            *ngIf="editingPassword"
+            [(ngModel)]="tempPassword"
+            type="password"
+            class="edit-input"
+          />
+          <a *ngIf="!editingPassword" href="#" (click)="startEdit('Password')" class="edit-link"
+            >Edit</a
+          >
+          <button *ngIf="editingPassword" (click)="saveEdit('Password')" class="save-btn">
+            Save
+          </button>
+          <button *ngIf="editingPassword" (click)="cancelEdit('Password')" class="cancel-btn">
+            Cancel
+          </button>
+        </div>
+        <button (click)="logout()" class="logout-btn">Logout</button>
+      </div>
+    </div>
+
+    <!-- Right Side -->
+    <div class="right-sidebar">
+      <a href="#" (click)="navigateToHistory()" class="history-link">History</a>
+      <a *ngIf="isAdmin" href="#" (click)="navigateToStats()" class="stats-link">Stats</a>
+    </div>
+  </div>
+
+  <!-- Profile Content Section -->
+  <div class="profile-content">
+    <div class="content-section">
+      <h2>Likes</h2>
+      <div *ngFor="let post of userLikes" class="content-item">
+        <p>{{ post.content }}</p>
+        <small>{{ post.time }}</small>
+      </div>
+      <p *ngIf="userLikes.length === 0" class="no-content">No likes yet.</p>
+    </div>
+
+    <div class="content-section">
+      <h2>Comments</h2>
+      <div *ngFor="let comment of userComments" class="content-item">
+        <p>{{ comment.text }}</p>
+        <small>{{ comment.time }}</small>
+      </div>
+      <p *ngIf="userComments.length === 0" class="no-content">No comments yet.</p>
+    </div>
+
+    <div class="content-section">
+      <h2>Posts</h2>
+      <div *ngFor="let post of userPosts" class="content-item">
+        <p>{{ post.content }}</p>
+        <small>{{ post.time }}</small>
+      </div>
+      <p *ngIf="userPosts.length === 0" class="no-content">No posts yet.</p>
+    </div>
+  </div>
 </div>

@@ -1,126 +1,124 @@
 <div class="feed-wrapper">
   <!-- User Profile Header -->
   <div class="user-header">
-    <div class="logo">INNERA</div>
-    <button class="btn-back" (click)="goBack()">← Back</button>
     <div class="user-profile">
-      <div class="user-avatar">👤</div>
+      <div class="user-avatar">{{ userName.charAt(0).toUpperCase() }}</div>
       <div class="user-info">
-        <h3 class="user-name">{{ userName }}</h3>
-        <p class="user-status">Active Now</p>
+        <h2 class="user-name">{{ userName || 'Guest' }}</h2>
+        <p class="user-email">{{ userEmail }}</p>
+        <p class="user-status">
+          <span>{{ userRole || 'User' }}</span> • <span>{{ communityName }}</span>
+        </p>
       </div>
+      <button class="btn-back" (click)="goBack()">← Back</button>
     </div>
+    <app-navbar></app-navbar>
   </div>
 
-  <div class="feed-grid">
-    <!-- Left Column: AI Assistant -->
-    <div class="ai-assistant-column">
-      <div class="ai-assistant-placeholder">
-        <div class="ai-icon">🤖</div>
-        <h3 class="ai-title">AI Assistant</h3>
-        <p class="ai-description">Coming soon...</p>
-      </div>
-    </div>
-
-    <!-- Center Column: Feed Content -->
-    <div class="feed-center-column">
-      <!-- Welcome Card Section -->
-      <div class="welcome-card">
-        <div class="welcome-image">
-          <div class="mountain-placeholder"></div>
-          <div class="welcome-overlay">
-            <h1 class="welcome-title">{{ communityName }}</h1>
-            <p class="welcome-admin">Admin: Admin</p>
-            <p class="welcome-subtitle">Connect and share your passions</p>
-          </div>
+  <!-- Main Feed Content -->
+  <div class="feed-content">
+    <div class="feed-grid">
+      <!-- Left Column: AI Assistant -->
+      <div class="ai-assistant-column">
+        <div class="ai-assistant-placeholder" (click)="navigateToAiAssistant()">
+          <div class="ai-icon">🤖</div>
+          <h3 class="ai-title">AI Assistant</h3>
+          <p class="ai-description">Ask me anything!</p>
         </div>
       </div>
 
-      <!-- Create Post Row: Create Post -->
-      <div class="create-post-row">
-        <!-- Create Post Section -->
+      <!-- Center Column: Main Feed -->
+      <div class="feed-center-column">
+        <!-- Welcome Card -->
+        <div class="welcome-card">
+          <div class="welcome-image">
+            <div class="mountain-placeholder"></div>
+            <div class="welcome-overlay">
+              <h1 class="welcome-title">Welcome to {{ communityName }}, {{ userName }}</h1>
+              <p class="welcome-subtitle">Share your thoughts and connect with the community</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Create Post Card -->
         <div class="create-post-card">
           <div class="create-post-header">
-            <h2 class="section-title">Share your thoughts</h2>
+            <h2 class="section-title">Create a Post</h2>
           </div>
 
-          <div class="create-post-blocks">
-            <div class="post-block" (click)="navigateToWritePost()">
-              <div class="block-icon">✍️</div>
-              <div class="block-text">Write Something</div>
-            </div>
-            <div class="post-block" (click)="navigateToImagePost()">
-              <div class="block-icon">📷</div>
-              <div class="block-text">Post an Image</div>
-            </div>
-            <div class="post-block" (click)="navigateToMessage()">
-              <div class="block-icon">💬</div>
-              <div class="block-text">Send a Message</div>
-            </div>
+          <!-- Post Tabs -->
+          <div class="post-tabs">
+            <button
+              class="tab-btn"
+              [class.active]="currentTab === 'post'"
+              (click)="switchTabUI('post')"
+            >
+              <span class="tab-icon">📝</span>
+              Text Post
+            </button>
+            <button
+              class="tab-btn"
+              [class.active]="currentTab === 'image'"
+              (click)="switchTabUI('image')"
+            >
+              <span class="tab-icon">🖼️</span>
+              Image Post
+            </button>
           </div>
+
+          <!-- Post Input -->
+          <div class="post-input-container">
+            <textarea
+              class="post-textarea"
+              placeholder="What's on your mind?"
+              rows="4"
+              (input)="onPostInput()"
+            ></textarea>
+          </div>
+
+          <!-- Post Button -->
+          <button class="post-button" (click)="handlePostSubmit()">
+            {{ currentTab === 'post' ? 'Post' : 'Upload Image' }}
+          </button>
         </div>
-      </div>
 
-      <!-- Posts Feed -->
-      <div class="posts-feed" #postsFeed id="postsFeed">
-        <div class="post-card" *ngFor="let post of posts">
-          <!-- Post Header -->
-          <div class="post-header">
-            <div class="post-avatar">{{ post.avatar }}</div>
-            <div class="post-meta">
-              <h3 class="post-author">{{ post.author }}</h3>
-              <p class="post-time">{{ post.time }}</p>
+        <!-- Posts Feed -->
+        <div class="posts-feed">
+          <div class="post-card" *ngFor="let post of posts; trackBy: trackByPostId">
+            <!-- Post Header -->
+            <div class="post-header">
+              <div class="post-avatar">{{ post.avatar }}</div>
+              <div class="post-meta">
+                <h3 class="post-author">{{ post.author }}</h3>
+                <p class="post-time">{{ post.time }}</p>
+              </div>
+              <button class="post-options" *ngIf="isAdmin" (click)="deletePost(post)">×</button>
             </div>
-            <button class="post-options" (click)="onPostOptionsClick(post)">⋯</button>
-          </div>
 
-          <!-- Post Content -->
-          <p class="post-content">{{ post.content }}</p>
+            <!-- Post Content -->
+            <p class="post-content">{{ post.content }}</p>
 
-          <!-- Post Tags -->
-          <div class="post-tags" *ngIf="post.tags.length > 0">
-            <span class="post-tag" *ngFor="let tag of post.tags" (click)="onHashtagClick(tag)">
-              {{ tag }}
-            </span>
-          </div>
+            <!-- Post Tags -->
+            <div class="post-tags">
+              <span class="post-tag" *ngFor="let tag of post.tags" (click)="onHashtagClick(tag)">
+                {{ tag }}
+              </span>
+            </div>
 
-          <!-- Post Footer -->
-          <div class="post-footer">
-            <button class="post-action" (click)="onLikePost(post)">
-              <span class="action-icon">❤️</span>
-              <span class="action-count">{{ post.likes }}</span>
-            </button>
-            <button class="post-action" (click)="onCommentPost(post)">
-              <span class="action-icon">💬</span>
-              <span class="action-count">{{ post.comments.length }}</span>
-            </button>
-            <button class="post-action delete-btn" *ngIf="isAdmin" (click)="deletePost(post)">
-              <span class="action-icon">🗑️</span>
-            </button>
-          </div>
-
-          <!-- Comments Section -->
-          <div class="comments-section">
-            <!-- Comment Input -->
-            <div class="comment-input">
-              <input
-                type="text"
-                placeholder="Write a comment..."
-                [(ngModel)]="newCommentText[post.id]"
-                (keyup.enter)="submitComment(post)"
-                class="comment-input-field"
-              />
-              <button
-                class="comment-submit-btn"
-                (click)="submitComment(post)"
-                [disabled]="!newCommentText[post.id]?.trim()"
-              >
-                Post
+            <!-- Post Footer -->
+            <div class="post-footer">
+              <button class="post-action" (click)="onLikePost(post)">
+                <span class="action-icon">{{ post.likedBy.includes(userName) ? '❤️' : '🤍' }}</span>
+                <span class="action-count">{{ post.likes }}</span>
+              </button>
+              <button class="post-action" (click)="onCommentPost(post)">
+                <span class="action-icon">💬</span>
+                <span class="action-count">{{ post.comments.length }}</span>
               </button>
             </div>
 
-            <!-- Display Comments -->
-            <div class="comments-list" *ngIf="post.comments.length > 0">
+            <!-- Comments Section -->
+            <div class="comments-section" *ngIf="post.comments.length > 0">
               <div class="comment" *ngFor="let comment of post.comments">
                 <div class="comment-header">
                   <strong>{{ comment.username }}</strong>
@@ -129,47 +127,60 @@
                 <p class="comment-text">{{ comment.text }}</p>
               </div>
             </div>
+
+            <!-- Add Comment -->
+            <div class="add-comment">
+              <textarea
+                class="comment-input"
+                placeholder="Write a comment..."
+                [(ngModel)]="newCommentText[post.id]"
+                rows="2"
+              ></textarea>
+              <button
+                class="comment-submit-btn"
+                (click)="submitComment(post)"
+                [disabled]="!newCommentText[post.id]?.trim()"
+              >
+                Comment
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Right Column: Trends -->
-    <div class="trends-column">
-      <!-- Trending Hashtags Section -->
-      <div class="trending-section">
-        <h2 class="section-title">Trending Hashtags</h2>
-        <div class="hashtags-container">
-          <button
-            class="hashtag-btn"
-            *ngFor="let tag of trendingTags"
-            (click)="onHashtagClick(tag)"
-          >
-            {{ tag }}
-          </button>
+      <!-- Right Column: Trends -->
+      <div class="trends-column">
+        <!-- Trending Tags -->
+        <div class="trending-section">
+          <h3 class="section-title">Trending</h3>
+          <div class="hashtags-container">
+            <button
+              class="hashtag-btn"
+              *ngFor="let tag of trendingTags"
+              (click)="onHashtagClick(tag)"
+            >
+              {{ tag }}
+            </button>
+          </div>
         </div>
-      </div>
 
-      <!-- Popular Posts Section -->
-      <div class="trending-section">
-        <h2 class="section-title">Popular Posts</h2>
+        <!-- Popular Posts -->
         <div class="popular-posts">
+          <h3 class="section-title">Popular Posts</h3>
           <div class="popular-post" *ngFor="let post of popularPosts">
-            <p class="popular-post-content">{{ post.content }}</p>
-            <span class="popular-post-likes">{{ post.likes }} likes</span>
+            <p class="popular-post-content">{{ post.content.substring(0, 100) }}...</p>
+            <p class="popular-post-likes">{{ post.likes }} likes</p>
           </div>
         </div>
-      </div>
 
-      <!-- Most Active Members Section -->
-      <div class="trending-section">
-        <h2 class="section-title">Most Active Members</h2>
+        <!-- Active Members -->
         <div class="active-members">
+          <h3 class="section-title">Active Members</h3>
           <div class="active-member" *ngFor="let member of activeMembers">
             <div class="member-avatar">{{ member.avatar }}</div>
             <div class="member-info">
               <h4 class="member-name">{{ member.name }}</h4>
-              <p class="member-activity">{{ member.activity }} activity points</p>
+              <p class="member-activity">{{ member.activity }} posts</p>
             </div>
           </div>
         </div>
@@ -177,4 +188,3 @@
     </div>
   </div>
 </div>
-v

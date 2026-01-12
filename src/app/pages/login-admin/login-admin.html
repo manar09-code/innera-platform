@@ -21,10 +21,7 @@
           <span class="icon">📧</span>
           Email
         </label>
-        <input 
-          type="email" 
-          formControlName="email"
-          placeholder="admin@innera.com">
+        <input type="email" formControlName="email" placeholder="admin@innera.com" />
         <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="error">
           Valid email required
         </div>
@@ -37,14 +34,12 @@
           Password
         </label>
         <div class="password-input">
-          <input 
-            [type]="showPassword ? 'text' : 'password'" 
+          <input
+            [type]="showPassword ? 'text' : 'password'"
             formControlName="password"
-            placeholder="••••••">
-          <button 
-            type="button" 
-            class="toggle-password"
-            (click)="togglePasswordVisibility()">
+            placeholder="••••••"
+          />
+          <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
             {{ showPassword ? '👁️' : '👁️‍🗨️' }}
           </button>
         </div>
@@ -53,11 +48,23 @@
         </div>
       </div>
 
+      <!-- Community Name Input -->
+      <div class="form-group">
+        <label>
+          <span class="icon">🏘️</span>
+          Community Name
+        </label>
+        <input type="text" formControlName="communityName" placeholder="e.g., Tunisia Hood" />
+        <div
+          *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched"
+          class="error"
+        >
+          Community name required
+        </div>
+      </div>
+
       <!-- Submit Button -->
-      <button 
-        type="submit" 
-        class="btn-primary btn-login"
-        [disabled]="isLoading">
+      <button type="submit" class="btn-primary btn-login" [disabled]="isLoading">
         {{ isLoading ? 'Connecting...' : 'Se Connecter' }}
       </button>
     </form>

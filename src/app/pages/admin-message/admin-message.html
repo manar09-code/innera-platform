@@ -1,0 +1,58 @@
+<div class="admin-message-container">
+  <!-- Left Section: List of Conversations -->
+  <div class="conversations-list">
+    <h3>Conversations</h3>
+    <div
+      class="conversation-item"
+      *ngFor="let conv of conversations"
+      (click)="selectConversation(conv)"
+      [class.selected]="selectedConversation === conv"
+    >
+      <div class="user-info">
+        <strong>{{ conv.userName }}</strong>
+        <small>{{ conv.userEmail }}</small>
+      </div>
+      <p class="last-message">{{ conv.lastMessage }}</p>
+      <small class="timestamp">{{ conv.lastTimestamp | date : 'short' }}</small>
+    </div>
+    <p *ngIf="conversations.length === 0">No conversations yet.</p>
+  </div>
+
+  <!-- Right Section: Chat Interface -->
+  <div class="chat-section" *ngIf="selectedConversation">
+    <div class="chat-header">
+      <h3>{{ selectedConversation.userName }} ({{ selectedConversation.userEmail }})</h3>
+    </div>
+    <div class="messages-list">
+      <div
+        class="message"
+        *ngFor="let msg of selectedConversation.messages"
+        [class.admin]="msg.sender === 'admin'"
+        [class.user]="msg.sender !== 'admin'"
+      >
+        <div class="message-content">
+          <p>{{ msg.content }}</p>
+          <small>{{ msg.timestamp | date : 'short' }}</small>
+        </div>
+      </div>
+    </div>
+    <div class="message-input-section">
+      <textarea
+        [(ngModel)]="newMessage"
+        placeholder="Type your reply..."
+        rows="3"
+        class="message-input"
+      ></textarea>
+      <button (click)="sendMessage()" [disabled]="!newMessage.trim()" class="send-button">
+        Send Reply
+      </button>
+    </div>
+  </div>
+
+  <!-- Placeholder if no conversation selected -->
+  <div class="no-selection" *ngIf="!selectedConversation">
+    <p>Select a conversation to start chatting.</p>
+  </div>
+
+  <button class="back-button" (click)="goBack()">Back to Dashboard</button>
+</div>

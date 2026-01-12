@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { NavbarComponent } from '../../components/navbar/navbar';
 
 interface Comment {
   username: string;
@@ -26,7 +27,7 @@ interface Post {
 @Component({
   selector: 'app-feed',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   templateUrl: './feed.html',
   styleUrls: ['./feed.css'],
 })
@@ -35,8 +36,10 @@ export class FeedComponent implements OnInit {
   communityName: string = '';
   adminName: string = '';
   userName: string = '';
+  userEmail: string = '';
   userRole: string = '';
   newCommentText: { [postId: number]: string } = {};
+  currentTab: string = 'post';
 
   posts: Post[] = [
     {
@@ -100,24 +103,42 @@ export class FeedComponent implements OnInit {
     this.communityName = this.authService.getCommunityName() || 'Innera Platform';
     this.adminName = this.authService.getAdminNameForCommunity(this.communityName);
     this.userName = localStorage.getItem('userName') || '';
+    this.userEmail = localStorage.getItem('userEmail') || '';
     this.userRole = localStorage.getItem('userRole') || '';
     this.initializePopularPosts();
     this.initializeActiveMembers();
   }
 
   navigateToWritePost(): void {
-    // TODO: Navigate to write post page
-    console.log('Navigate to write post');
+    this.router.navigate(['/write-post']);
   }
 
   navigateToImagePost(): void {
-    // TODO: Navigate to image post page
-    console.log('Navigate to image post');
+    this.router.navigate(['/image-post']);
   }
 
   navigateToMessage(): void {
-    // TODO: Navigate to message page
-    console.log('Navigate to message');
+    this.router.navigate(['/message']);
+  }
+
+  navigateToAiAssistant(): void {
+    this.router.navigate(['/ai-assistant']);
+  }
+
+  navigateToHistory(): void {
+    this.router.navigate(['/history']);
+  }
+
+  navigateToProfile(): void {
+    this.router.navigate(['/profile']);
+  }
+
+  navigateToConfigAi(): void {
+    this.router.navigate(['/config-ai']);
+  }
+
+  navigateToStats(): void {
+    this.router.navigate(['/stats']);
   }
 
   onPostOptionsClick(post: Post): void {
@@ -196,5 +217,33 @@ export class FeedComponent implements OnInit {
   private showNotification(message: string, type: string): void {
     // TODO: Implement notification system
     alert(message);
+  }
+
+  getPostCount(): number {
+    return this.posts.length;
+  }
+
+  getTotalLikes(): number {
+    return this.posts.reduce((total, post) => total + post.likes, 0);
+  }
+
+  getTotalComments(): number {
+    return this.posts.reduce((total, post) => total + post.comments.length, 0);
+  }
+
+  handlePostSubmit(): void {
+    this.navigateToWritePost();
+  }
+
+  onPostInput(): void {
+    // Stub for input handling
+  }
+
+  switchTabUI(tab: string): void {
+    this.currentTab = tab;
+  }
+
+  trackByPostId(index: number, post: Post): number {
+    return post.id;
   }
 }

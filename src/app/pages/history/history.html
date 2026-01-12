@@ -1,0 +1,71 @@
+<div class="history-container">
+  <h1>User History</h1>
+
+  <div class="history-section">
+    <h2>My Posts</h2>
+    <div class="posts-list">
+      <div class="post-item" *ngFor="let post of getPostsForCurrentPage()">
+        <div class="post-header">
+          <span class="avatar">{{ post.avatar }}</span>
+          <span class="author">{{ post.author }}</span>
+          <span class="time">{{ post.time }}</span>
+        </div>
+        <div class="post-content">{{ post.content }}</div>
+        <div class="post-type">{{ post.type }}</div>
+        <div class="post-stats">
+          <span>{{ post.likes }} likes</span>
+          <span>{{ post.comments.length }} comments</span>
+        </div>
+      </div>
+    </div>
+    <div class="pagination" *ngIf="postsTotalPages > 1">
+      <button (click)="prevPostsPage()" [disabled]="postsCurrentPage === 1">Previous</button>
+      <span>Page {{ postsCurrentPage }} of {{ postsTotalPages }}</span>
+      <button (click)="nextPostsPage()" [disabled]="postsCurrentPage === postsTotalPages">
+        Next
+      </button>
+    </div>
+    <p *ngIf="userPosts.length === 0" class="no-content">No posts yet.</p>
+  </div>
+
+  <div class="history-section">
+    <h2>My Likes</h2>
+    <div class="likes-list">
+      <div class="like-item" *ngFor="let like of getLikesForCurrentPage()">
+        <span class="avatar">{{ like.avatar }}</span>
+        <span class="author">{{ like.author }}</span>
+        <span class="text">{{ like.content }}</span>
+        <span class="time">{{ like.time }}</span>
+      </div>
+    </div>
+    <div class="pagination" *ngIf="likesTotalPages > 1">
+      <button (click)="prevLikesPage()" [disabled]="likesCurrentPage === 1">Previous</button>
+      <span>Page {{ likesCurrentPage }} of {{ likesTotalPages }}</span>
+      <button (click)="nextLikesPage()" [disabled]="likesCurrentPage === likesTotalPages">
+        Next
+      </button>
+    </div>
+    <p *ngIf="userLikes.length === 0" class="no-content">No likes yet.</p>
+  </div>
+
+  <div class="history-section">
+    <h2>My Comments</h2>
+    <div class="comments-list">
+      <div class="comment-item" *ngFor="let comment of getCommentsForCurrentPage()">
+        <span class="username">{{ comment.username }}</span>
+        <span class="text">{{ comment.text }}</span>
+        <span class="time">{{ comment.time }}</span>
+      </div>
+    </div>
+    <div class="pagination" *ngIf="commentsTotalPages > 1">
+      <button (click)="prevCommentsPage()" [disabled]="commentsCurrentPage === 1">Previous</button>
+      <span>Page {{ commentsCurrentPage }} of {{ commentsTotalPages }}</span>
+      <button (click)="nextCommentsPage()" [disabled]="commentsCurrentPage === commentsTotalPages">
+        Next
+      </button>
+    </div>
+    <p *ngIf="userComments.length === 0" class="no-content">No comments yet.</p>
+  </div>
+
+  <button class="back-btn" (click)="goBack()">Back to Profile</button>
+</div>

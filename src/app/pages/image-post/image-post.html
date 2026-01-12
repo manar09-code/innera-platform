@@ -1,0 +1,48 @@
+<div class="image-post-container">
+  <h2>Image Post</h2>
+
+  <!-- Main Section -->
+  <div class="main-section">
+    <h3>Main Section</h3>
+    <div class="upload-options">
+      <input type="file" id="fileInput" accept="image/*" (change)="onFileSelected($event)" />
+      <label for="fileInput">
+        <button type="button">Upload Image</button>
+      </label>
+      <button type="button" (click)="takePhoto()">Take Photo</button>
+    </div>
+    <div class="image-preview" *ngIf="imagePreview">
+      <img [src]="imagePreview" alt="Preview" />
+    </div>
+    <textarea [(ngModel)]="caption" placeholder="Add a caption..." rows="3"></textarea>
+  </div>
+
+  <!-- Action Section -->
+  <div class="action-section">
+    <h3>Actions</h3>
+    <button (click)="createPost()" [disabled]="!imagePreview || !caption.trim()" *ngIf="!isEditing">
+      Create Image Post
+    </button>
+    <button (click)="updatePost()" [disabled]="!imagePreview || !caption.trim()" *ngIf="isEditing">
+      Update Image Post
+    </button>
+    <button (click)="deletePost()" *ngIf="isEditing">Delete Image Post</button>
+    <button (click)="resetForm()" *ngIf="isEditing">Cancel</button>
+  </div>
+
+  <!-- History Section -->
+  <div class="history-section">
+    <h3>History</h3>
+    <div class="post-list">
+      <div class="post-item" *ngFor="let post of posts" (click)="selectPost(post)">
+        <img [src]="post.imageData" alt="Post image" />
+        <div>
+          <p>{{ post.caption }}</p>
+          <small>{{ post.createdAt | date : 'short' }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="back-button" (click)="goBack()">Back to Feed</button>
+</div>

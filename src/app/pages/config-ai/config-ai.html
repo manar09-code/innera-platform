@@ -1,0 +1,69 @@
+<div class="config-ai-container">
+  <h2>Configure AI Assistant & Community</h2>
+
+  <!-- Community Information Section -->
+  <div class="section">
+    <h3>Community Information</h3>
+    <form [formGroup]="communityForm" (ngSubmit)="saveCommunityInfo()">
+      <div class="form-group">
+        <label for="communityDescription">Community Description:</label>
+        <textarea
+          id="communityDescription"
+          formControlName="description"
+          rows="4"
+          placeholder="Describe your community..."
+        ></textarea>
+      </div>
+      <div class="form-group">
+        <label for="communityRules">Community Rules:</label>
+        <textarea
+          id="communityRules"
+          formControlName="rules"
+          rows="6"
+          placeholder="List the rules for your community..."
+        ></textarea>
+      </div>
+      <div class="form-group">
+        <label for="memberCount">Member Count:</label>
+        <input
+          id="memberCount"
+          type="number"
+          formControlName="memberCount"
+          placeholder="Enter current member count"
+        />
+      </div>
+      <button type="submit" [disabled]="!communityForm.valid">Save Community Info</button>
+    </form>
+  </div>
+
+  <!-- AI Instructions Section -->
+  <div class="section">
+    <h3>AI Assistant Instructions</h3>
+    <form [formGroup]="configForm" (ngSubmit)="saveInstructions()">
+      <div class="form-group">
+        <label for="instructions">AI Instructions:</label>
+        <textarea
+          id="instructions"
+          formControlName="instructions"
+          rows="10"
+          placeholder="Enter instructions or updates for the AI Assistant..."
+        ></textarea>
+      </div>
+      <button type="submit" [disabled]="!configForm.valid">Save Instructions</button>
+    </form>
+  </div>
+
+  <!-- Saved Information Display -->
+  <div class="saved-info">
+    <div class="saved-instructions" *ngIf="savedInstructions">
+      <h3>Current AI Instructions:</h3>
+      <p>{{ savedInstructions }}</p>
+    </div>
+    <div class="saved-community" *ngIf="savedCommunityInfo">
+      <h3>Current Community Info:</h3>
+      <p><strong>Description:</strong> {{ savedCommunityInfo.description }}</p>
+      <p><strong>Rules:</strong> {{ savedCommunityInfo.rules }}</p>
+      <p><strong>Member Count:</strong> {{ savedCommunityInfo.memberCount }}</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,60 @@
+<div class="message-container">
+  <!-- Left Section: History of last sent messages -->
+  <div class="left-section">
+    <h3>Last Sent Messages</h3>
+    <div class="message-history">
+      <div class="message-item" *ngFor="let message of lastSentMessages">
+        <p>{{ message.content }}</p>
+        <small>{{ message.createdAt | date : 'short' }}</small>
+      </div>
+      <p *ngIf="lastSentMessages.length === 0">No messages sent yet.</p>
+    </div>
+  </div>
+
+  <!-- Center Section: CRUD actions -->
+  <div class="center-section">
+    <h2>Messages</h2>
+    <div class="message-list">
+      <div class="message-item" *ngFor="let message of messages" (click)="selectMessage(message)">
+        <p>{{ message.content }}</p>
+        <small>{{ message.createdAt | date : 'short' }}</small>
+      </div>
+      <p *ngIf="messages.length === 0">No messages yet.</p>
+    </div>
+
+    <div class="crud-actions">
+      <textarea
+        [(ngModel)]="messageContent"
+        placeholder="Type your message..."
+        rows="4"
+        class="message-input"
+      ></textarea>
+      <div class="action-buttons">
+        <button (click)="createMessage()" [disabled]="!messageContent.trim()" *ngIf="!isEditing">
+          Create Message
+        </button>
+        <button (click)="updateMessage()" [disabled]="!messageContent.trim()" *ngIf="isEditing">
+          Update Message
+        </button>
+        <button (click)="deleteMessage()" *ngIf="isEditing">Delete Message</button>
+        <button (click)="cancelEdit()" *ngIf="isEditing">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom/Center Section: Message input to contact Admin -->
+  <div class="bottom-section">
+    <h3>Contact Admin</h3>
+    <textarea
+      [(ngModel)]="messageContent"
+      placeholder="Send a message to the Admin..."
+      rows="3"
+      class="admin-message-input"
+    ></textarea>
+    <button (click)="sendMessage()" [disabled]="!messageContent.trim()" class="send-button">
+      Send Message
+    </button>
+  </div>
+
+  <button class="back-button" (click)="goBack()">Back to Feed</button>
+</div>

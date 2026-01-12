@@ -1,18 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RegisterAdmin } from './register-admin';
+import { RegisterAdminComponent } from './register-admin';
 
-describe('RegisterAdmin', () => {
-  let component: RegisterAdmin;
-  let fixture: ComponentFixture<RegisterAdmin>;
+describe('RegisterAdminComponent', () => {
+  let component: RegisterAdminComponent;
+  let fixture: ComponentFixture<RegisterAdminComponent>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [RegisterAdmin]
-    })
-    .compileComponents();
+    const store: { [key: string]: string } = {};
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: (key: string) => store[key] || null,
+        setItem: (key: string, value: string) => (store[key] = value),
+        removeItem: (key: string) => delete store[key],
+        clear: () => Object.keys(store).forEach((key) => delete store[key]),
+      },
+      writable: true,
+    });
 
-    fixture = TestBed.createComponent(RegisterAdmin);
+    await TestBed.configureTestingModule({
+      imports: [RegisterAdminComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(RegisterAdminComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

@@ -1,0 +1,51 @@
+<div class="write-post-container">
+  <h2>Write a Post</h2>
+
+  <div class="post-form">
+    <textarea
+      [(ngModel)]="postContent"
+      placeholder="What's on your mind?"
+      rows="4"
+      class="post-textarea"
+    ></textarea>
+
+    <div class="form-buttons">
+      <button
+        *ngIf="!isEditing"
+        (click)="createPost()"
+        [disabled]="!postContent.trim()"
+        class="btn btn-primary"
+      >
+        Post
+      </button>
+
+      <button
+        *ngIf="isEditing"
+        (click)="updatePost()"
+        [disabled]="!postContent.trim()"
+        class="btn btn-primary"
+      >
+        Update
+      </button>
+
+      <button *ngIf="isEditing" (click)="cancelEdit()" class="btn btn-secondary">Cancel</button>
+
+      <button *ngIf="isEditing" (click)="deletePost()" class="btn btn-danger">Delete</button>
+    </div>
+  </div>
+
+  <div class="posts-list" *ngIf="posts.length > 0">
+    <h3>Your Posts</h3>
+    <div class="post-item" *ngFor="let post of posts">
+      <div class="post-content">{{ post.content }}</div>
+      <div class="post-meta">
+        <small>{{ post.author }} - {{ post.createdAt | date : 'short' }}</small>
+        <button (click)="selectPost(post)" class="btn btn-sm btn-edit">Edit</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="back-button">
+    <button (click)="goBack()" class="btn btn-secondary">Back to Feed</button>
+  </div>
+</div>
