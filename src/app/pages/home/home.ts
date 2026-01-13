@@ -36,4 +36,9 @@ export class HomeComponent implements OnInit {
   goToAdminRegister() {
     this.router.navigate(['/register-admin']);
   }
+
+  goBack() {
+    // Since home is the root, perhaps navigate to login or stay
+    this.router.navigate(['/login-admin']);
+  }
 }

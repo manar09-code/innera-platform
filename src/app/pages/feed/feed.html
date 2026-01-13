@@ -88,8 +88,8 @@
           <div class="post-card" *ngFor="let post of posts; trackBy: trackByPostId">
             <!-- Post Header -->
             <div class="post-header">
-              <div class="post-avatar">{{ post.avatar }}</div>
-              <div class="post-meta">
+              <div class="post-avatar" (click)="navigateToProfile()">{{ post.avatar }}</div>
+              <div class="post-meta" (click)="navigateToProfile()">
                 <h3 class="post-author">{{ post.author }}</h3>
                 <p class="post-time">{{ post.time }}</p>
               </div>

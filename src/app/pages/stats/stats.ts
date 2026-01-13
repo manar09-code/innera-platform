@@ -16,6 +16,8 @@ export class StatsComponent implements OnInit {
   totalImagePosts: number = 0;
   totalTextPosts: number = 0;
 
+  constructor(private router: Router) {}
+
   ngOnInit() {
     this.loadStats();
   }
@@ -28,5 +30,9 @@ export class StatsComponent implements OnInit {
     this.totalPosts = 320; // Mock total posts
     this.totalImagePosts = 120; // Mock image posts
     this.totalTextPosts = 200; // Mock text posts
+  }
+
+  goBack(): void {
+    this.router.navigate(['/dashboard']);
   }
 }

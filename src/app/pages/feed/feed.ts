@@ -106,8 +106,18 @@ export class FeedComponent implements OnInit {
     this.userName = localStorage.getItem('userName') || '';
     this.userEmail = localStorage.getItem('userEmail') || '';
     this.userRole = localStorage.getItem('userRole') || '';
+    this.loadPostsFromStorage();
     this.initializePopularPosts();
     this.initializeActiveMembers();
+  }
+
+  loadPostsFromStorage() {
+    const userEmail = localStorage.getItem('userEmail') || '';
+    const feedPostsKey = `feed_posts_${userEmail}`;
+    const storedPosts = localStorage.getItem(feedPostsKey);
+    if (storedPosts) {
+      this.posts = JSON.parse(storedPosts);
+    }
   }
 
   navigateToWritePost(): void {
@@ -253,7 +263,14 @@ export class FeedComponent implements OnInit {
       this.posts.unshift(newPost); // Add to the beginning of the array
       this.postText = ''; // Clear the input
       this.initializePopularPosts(); // Update popular posts
+      this.savePostsToStorage(); // Save to localStorage
     }
+  }
+
+  savePostsToStorage(): void {
+    const userEmail = localStorage.getItem('userEmail') || '';
+    const feedPostsKey = `feed_posts_${userEmail}`;
+    localStorage.setItem(feedPostsKey, JSON.stringify(this.posts));
   }
 
   onPostInput(): void {

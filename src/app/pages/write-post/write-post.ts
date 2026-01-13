@@ -57,9 +57,32 @@ export class WritePostComponent implements OnInit {
 
     this.posts.unshift(newPost);
     this.savePosts();
+    this.updateFeedWithNewPost(newPost);
     this.postContent = '';
     this.selectedPost = null;
     this.isEditing = false;
+  }
+
+  updateFeedWithNewPost(post: TextPost) {
+    const userEmail = localStorage.getItem('userEmail') || '';
+    const feedPostsKey = `feed_posts_${userEmail}`;
+    let feedPosts = JSON.parse(localStorage.getItem(feedPostsKey) || '[]');
+
+    const feedPost = {
+      id: post.id,
+      author: post.author,
+      avatar: post.author.charAt(0).toUpperCase(),
+      content: post.content,
+      time: 'Just now',
+      likes: 0,
+      comments: [],
+      tags: [],
+      type: 'text',
+      likedBy: [],
+    };
+
+    feedPosts.unshift(feedPost);
+    localStorage.setItem(feedPostsKey, JSON.stringify(feedPosts));
   }
 
   selectPost(post: TextPost) {
