@@ -11,11 +11,13 @@ import { CommonModule } from '@angular/common';
 })
 export class NavbarComponent implements OnInit {
   userRole: string = '';
+  userName: string = '';
 
   constructor(private router: Router) {}
 
   ngOnInit() {
     this.userRole = localStorage.getItem('userRole') || '';
+    this.userName = localStorage.getItem('userName') || '';
   }
 
   navigateToProfile(): void {

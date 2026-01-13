@@ -39,11 +39,6 @@ export class ProfileComponent implements OnInit {
   backgroundImage: string = 'url(https://via.placeholder.com/800x200)'; // Placeholder background
   isAdmin: boolean = false;
 
-  // Mock data for likes, comments, posts (in real app, fetch from service)
-  userLikes: Post[] = [];
-  userComments: Comment[] = [];
-  userPosts: Post[] = [];
-
   // Edit modes
   editingUsername: boolean = false;
   editingEmail: boolean = false;
@@ -59,11 +54,15 @@ export class ProfileComponent implements OnInit {
   // Success feedback
   successMessage: string = '';
 
+  // Mock data for likes, comments, posts (in real app, fetch from service)
+  userLikes: Post[] = [];
+  userComments: Comment[] = [];
+  userPosts: Post[] = [];
+
   constructor(private router: Router, private authService: AuthService) {}
 
   ngOnInit() {
     this.loadUserData();
-    this.loadUserActivity();
   }
 
   loadUserData() {
@@ -74,32 +73,6 @@ export class ProfileComponent implements OnInit {
     this.tempUsername = this.userName;
     this.tempEmail = this.userEmail;
     this.tempCommunity = this.communityName;
-  }
-
-  loadUserActivity() {
-    // Mock data - in real app, fetch from backend or shared service
-    const mockPosts: Post[] = [
-      {
-        id: 1,
-        author: this.userName,
-        avatar: this.profilePicture,
-        content: 'My first post!',
-        time: '1 day ago',
-        likes: 5,
-        comments: [],
-        tags: [],
-        type: 'text',
-        likedBy: [],
-      },
-    ];
-
-    this.userPosts = mockPosts.filter((p) => p.author === this.userName);
-
-    // Mock likes and comments
-    this.userLikes = mockPosts.filter((p) => p.likedBy.includes(this.userName));
-    this.userComments = mockPosts.flatMap((p) =>
-      p.comments.filter((c) => c.username === this.userName)
-    );
   }
 
   startEdit(field: string) {
@@ -177,18 +150,21 @@ export class ProfileComponent implements OnInit {
     const currentEmail = localStorage.getItem('userEmail');
     const currentRole = localStorage.getItem('userRole');
 
+    // For admins, map 'username' to 'adminName'
+    const actualField = currentRole === 'admin' && field === 'username' ? 'adminName' : field;
+
     if (currentRole === 'user') {
       const users = this.authService['getRegisteredUsers']();
       const userIndex = users.findIndex((u: any) => u.email === currentEmail);
       if (userIndex !== -1) {
-        (users[userIndex] as any)[field] = value;
+        (users[userIndex] as any)[actualField] = value;
         this.authService['setRegisteredUsers'](users);
       }
     } else if (currentRole === 'admin') {
       const admins = this.authService['getRegisteredAdmins']();
       const adminIndex = admins.findIndex((a: any) => a.email === currentEmail);
       if (adminIndex !== -1) {
-        (admins[adminIndex] as any)[field] = value;
+        (admins[adminIndex] as any)[actualField] = value;
         this.authService['setRegisteredAdmins'](admins);
       }
     }
@@ -230,5 +206,9 @@ export class ProfileComponent implements OnInit {
 
   navigateToDashboard() {
     this.router.navigate(['/dashboard']);
+  }
+
+  navigateToFeed() {
+    this.router.navigate(['/feed']);
   }
 }

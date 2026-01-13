@@ -34,7 +34,7 @@
           <div class="welcome-image">
             <div class="mountain-placeholder"></div>
             <div class="welcome-overlay">
-              <h1 class="welcome-title">Welcome to {{ communityName }}, {{ userName }}</h1>
+              <h1 class="welcome-title">Welcome to {{ communityName }} Community</h1>
               <p class="welcome-subtitle">Share your thoughts and connect with the community</p>
             </div>
           </div>
@@ -72,6 +72,7 @@
               class="post-textarea"
               placeholder="What's on your mind?"
               rows="4"
+              [(ngModel)]="postText"
               (input)="onPostInput()"
             ></textarea>
           </div>

@@ -52,8 +52,16 @@
 
     <!-- Right Sidebar -->
     <div class="right-sidebar">
-      <a href="#" (click)="navigateToHistory()" class="history-link">History</a>
-      <a *ngIf="isAdmin" href="#" (click)="navigateToStats()" class="stats-link">Stats</a>
+      <a href="#" (click)="$event.preventDefault(); navigateToHistory()" class="history-link"
+        >History</a
+      >
+      <a
+        *ngIf="isAdmin"
+        href="#"
+        (click)="$event.preventDefault(); navigateToStats()"
+        class="stats-link"
+        >Stats</a
+      >
     </div>
   </div>
 

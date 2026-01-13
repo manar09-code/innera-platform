@@ -40,6 +40,7 @@ export class FeedComponent implements OnInit {
   userRole: string = '';
   newCommentText: { [postId: number]: string } = {};
   currentTab: string = 'post';
+  postText: string = '';
 
   posts: Post[] = [
     {
@@ -130,7 +131,11 @@ export class FeedComponent implements OnInit {
   }
 
   navigateToProfile(): void {
-    this.router.navigate(['/profile']);
+    if (this.userRole === 'admin') {
+      this.router.navigate(['/profile']);
+    } else {
+      this.router.navigate(['/user-profile']);
+    }
   }
 
   navigateToConfigAi(): void {
@@ -232,7 +237,23 @@ export class FeedComponent implements OnInit {
   }
 
   handlePostSubmit(): void {
-    this.navigateToWritePost();
+    if (this.postText.trim()) {
+      const newPost: Post = {
+        id: this.posts.length + 1,
+        author: this.userName || 'Anonymous',
+        avatar: this.userName.charAt(0).toUpperCase(),
+        content: this.postText,
+        time: 'Just now',
+        likes: 0,
+        comments: [],
+        tags: [],
+        type: this.currentTab === 'post' ? 'text' : 'image',
+        likedBy: [],
+      };
+      this.posts.unshift(newPost); // Add to the beginning of the array
+      this.postText = ''; // Clear the input
+      this.initializePopularPosts(); // Update popular posts
+    }
   }
 
   onPostInput(): void {

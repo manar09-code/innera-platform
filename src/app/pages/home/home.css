@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%),
-    url('https://images.pexels.com/photos/688574/pexels-photo-688574.jpeg') no-repeat center center;
+    url('/homepage.jpg') no-repeat center center;
   background-size: cover;
   background-attachment: fixed;
   position: relative;
@@ -186,6 +186,28 @@
   }
 }
 
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes bounce {
   0%,
   20%,
@@ -216,6 +238,18 @@
 
 .animate-fade-in-delay-2 {
   animation: fadeIn 1s ease-out 1.5s both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 1s ease-out 1.2s both;
+}
+
+.animate-slide-in-up {
+  animation: slideUp 1s ease-out 1.4s both;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 1s ease-out 1.6s both;
 }
 
 .animate-bounce {

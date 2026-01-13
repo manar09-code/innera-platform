@@ -65,4 +65,9 @@ export class DashboardComponent implements OnInit {
       alert('Join link copied to clipboard!');
     });
   }
+
+  inviteMember() {
+    // Logic to invite member, e.g., send email or generate invite link
+    alert('Invite functionality not implemented yet. Member invited via email or link.');
+  }
 }

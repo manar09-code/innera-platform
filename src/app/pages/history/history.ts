@@ -33,6 +33,9 @@ export class HistoryComponent implements OnInit {
   userPosts: Post[] = [];
   userLikes: Post[] = [];
   userComments: Comment[] = [];
+  profilePicture: string = '👤';
+  backgroundImage: string = 'url(https://via.placeholder.com/800x200)';
+  userRole: string = '';
 
   // Pagination for posts
   postsCurrentPage: number = 1;
@@ -52,10 +55,11 @@ export class HistoryComponent implements OnInit {
   constructor(private router: Router, private authService: AuthService) {}
 
   ngOnInit() {
-    this.loadUserHistory();
+    this.userRole = localStorage.getItem('userRole') || '';
+    this.loadHistory();
   }
 
-  loadUserHistory() {
+  loadHistory() {
     const userName = localStorage.getItem('userName') || '';
     const userEmail = localStorage.getItem('userEmail') || '';
 
@@ -102,7 +106,11 @@ export class HistoryComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/profile']);
+    if (this.userRole === 'admin') {
+      this.router.navigate(['/profile']);
+    } else {
+      this.router.navigate(['/user-profile']);
+    }
   }
 
   // Pagination methods for posts
