@@ -5,12 +5,11 @@
       <div class="user-avatar">{{ userName.charAt(0).toUpperCase() }}</div>
       <div class="user-info">
         <h2 class="user-name">{{ userName || 'Guest' }}</h2>
-        <p class="user-email">{{ userEmail }}</p>
         <p class="user-status">
           <span>{{ userRole || 'User' }}</span> • <span>{{ communityName }}</span>
         </p>
       </div>
-      <button class="btn-back" (click)="goBack()">← Back</button>
+      <button class="btn-back" (click)="goBack()">Logout</button>
     </div>
     <app-navbar></app-navbar>
   </div>
@@ -18,15 +17,6 @@
   <!-- Main Feed Content -->
   <div class="feed-content">
     <div class="feed-grid">
-      <!-- Left Column: AI Assistant -->
-      <div class="ai-assistant-column">
-        <div class="ai-assistant-placeholder" (click)="navigateToAiAssistant()">
-          <div class="ai-icon">🤖</div>
-          <h3 class="ai-title">AI Assistant</h3>
-          <p class="ai-description">Ask me anything!</p>
-        </div>
-      </div>
-
       <!-- Center Column: Main Feed -->
       <div class="feed-center-column">
         <!-- Welcome Card -->

@@ -1,3 +1,37 @@
-<button class="send-btn" (click)="sendMessage()" [disabled]="!newMessageText.trim()">Send</button>
-=======
-<button class="send-btn" (click)="sendMessage()" [disabled]="!newMessageText.trim()">Send</button>
+<div class="ai-assistant-wrapper">
+  <div class="ai-header">
+    <button class="btn-back" (click)="goBack()">← Back</button>
+    <div class="ai-title">
+      <span class="ai-icon">🤖</span>
+      <h1>AI Assistant</h1>
+    </div>
+  </div>
+
+  <div class="chat-container">
+    <div class="messages-list">
+      <div
+        class="message"
+        [ngClass]="{ 'user-message': msg.sender === 'user', 'ai-message': msg.sender === 'ai' }"
+        *ngFor="let msg of messages"
+      >
+        <div class="message-content">
+          <p class="message-text">{{ msg.text }}</p>
+          <span class="message-time">{{ msg.timestamp | date : 'shortTime' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <input
+      type="text"
+      class="message-input"
+      placeholder="Type your message..."
+      [(ngModel)]="newMessageText"
+      (keyup.enter)="sendMessage()"
+    />
+    <button class="send-btn" (click)="sendMessage()" [disabled]="!newMessageText.trim()">
+      Send
+    </button>
+  </div>
+</div>

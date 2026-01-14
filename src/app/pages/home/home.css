@@ -30,6 +30,12 @@
   z-index: 2;
 }
 
+.welcome-card-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 60px;
+}
+
 .welcome-card {
   margin-bottom: 40px;
   overflow: hidden;

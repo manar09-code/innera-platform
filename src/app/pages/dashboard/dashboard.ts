@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
@@ -22,11 +23,21 @@ export class DashboardComponent implements OnInit {
   newMemberEmail: string = '';
   communityName: string = '';
   joinLink: string = '';
+  userRole!: string;
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit() {
+    this.userRole = localStorage.getItem('userRole') || 'user';
     this.loadMockData();
+  }
+
+  goBack() {
+    if (this.userRole === 'admin') {
+      this.router.navigate(['/profile']);
+    } else {
+      this.router.navigate(['/user-profile']);
+    }
   }
 
   loadMockData() {

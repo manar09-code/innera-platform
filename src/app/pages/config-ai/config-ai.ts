@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
@@ -14,8 +15,9 @@ export class ConfigAiComponent implements OnInit {
   communityForm: FormGroup;
   savedInstructions: string | null = null;
   savedCommunityInfo: any = null;
+  userRole!: string;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private router: Router) {
     this.configForm = this.fb.group({
       instructions: ['', Validators.required],
     });
@@ -27,8 +29,17 @@ export class ConfigAiComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.userRole = localStorage.getItem('userRole') || 'user';
     this.loadInstructions();
     this.loadCommunityInfo();
+  }
+
+  goBack(): void {
+    if (this.userRole === 'admin') {
+      this.router.navigate(['/profile']);
+    } else {
+      this.router.navigate(['/user-profile']);
+    }
   }
 
   loadInstructions(): void {

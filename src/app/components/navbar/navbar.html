@@ -1,16 +1,13 @@
 <!-- Admin Navigation Menu -->
 <div class="navbar" *ngIf="userRole === 'admin'">
-  <button class="nav-btn" (click)="navigateToHistory()">📚 History</button>
   <button class="nav-btn" (click)="navigateToProfile()">👤 Profile</button>
   <button class="nav-btn" (click)="navigateToWritePost()">📝 Write Post</button>
   <button class="nav-btn" (click)="navigateToImagePost()">🖼️ Image Post</button>
   <button class="nav-btn" (click)="navigateToConfigAi()">⚙️ Config AI</button>
-  <button class="nav-btn" (click)="navigateToStats()">📊 Stats</button>
 </div>
 
 <!-- User Navigation Menu -->
 <div class="navbar" *ngIf="userRole === 'user'">
-  <button class="nav-btn" (click)="navigateToHistory()">📚 History</button>
   <button class="nav-btn" (click)="navigateToProfile()">👤 Profile</button>
   <button class="nav-btn" (click)="navigateToWritePost()">📝 Write Post</button>
   <button class="nav-btn" (click)="navigateToImagePost()">🖼️ Image Post</button>

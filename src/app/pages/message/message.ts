@@ -23,7 +23,8 @@ export class MessageComponent implements OnInit {
   messages: Message[] = [];
   lastSentMessages: Message[] = [];
   selectedMessage: Message | null = null;
-  messageContent: string = '';
+  createMessageContent: string = '';
+  sendMessageContent: string = '';
   isEditing: boolean = false;
 
   constructor(private router: Router, private authService: AuthService) {}
@@ -48,11 +49,11 @@ export class MessageComponent implements OnInit {
   }
 
   createMessage() {
-    if (!this.messageContent.trim()) return;
+    if (!this.createMessageContent.trim()) return;
 
     const newMessage: Message = {
       id: Date.now(),
-      content: this.messageContent.trim(),
+      content: this.createMessageContent.trim(),
       author: localStorage.getItem('userName') || 'Anonymous',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -60,21 +61,21 @@ export class MessageComponent implements OnInit {
 
     this.messages.unshift(newMessage);
     this.saveMessages();
-    this.messageContent = '';
+    this.createMessageContent = '';
     this.selectedMessage = null;
     this.isEditing = false;
   }
 
   selectMessage(message: Message) {
     this.selectedMessage = message;
-    this.messageContent = message.content;
+    this.createMessageContent = message.content;
     this.isEditing = true;
   }
 
   updateMessage() {
-    if (!this.selectedMessage || !this.messageContent.trim()) return;
+    if (!this.selectedMessage || !this.createMessageContent.trim()) return;
 
-    this.selectedMessage.content = this.messageContent.trim();
+    this.selectedMessage.content = this.createMessageContent.trim();
     this.selectedMessage.updatedAt = new Date().toISOString();
     this.saveMessages();
     this.cancelEdit();
@@ -89,31 +90,34 @@ export class MessageComponent implements OnInit {
   }
 
   cancelEdit() {
-    this.messageContent = '';
+    this.createMessageContent = '';
     this.selectedMessage = null;
     this.isEditing = false;
   }
 
   sendMessage() {
-    if (!this.messageContent.trim()) return;
+    if (!this.sendMessageContent.trim()) return;
 
-    // In real app, send to admin via service
-    console.log('Sending message to admin:', this.messageContent);
-    alert('Message sent to Admin!');
+    // Send to admin by saving to shared localStorage
+    const adminMessages = JSON.parse(localStorage.getItem('admin_messages') || '[]');
+    const userEmail = localStorage.getItem('userEmail') || '';
+    const userName = localStorage.getItem('userName') || 'Anonymous';
 
-    // Add to messages list
-    const newMessage: Message = {
+    const adminMessage = {
       id: Date.now(),
-      content: this.messageContent.trim(),
-      author: localStorage.getItem('userName') || 'Anonymous',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      content: this.sendMessageContent.trim(),
+      sender: userEmail,
+      senderName: userName,
+      timestamp: new Date().toISOString(),
     };
 
-    this.messages.unshift(newMessage);
-    this.saveMessages();
-    this.lastSentMessages = this.messages.slice(-5);
-    this.messageContent = '';
+    adminMessages.unshift(adminMessage);
+    localStorage.setItem('admin_messages', JSON.stringify(adminMessages));
+
+    console.log('Message sent to admin:', this.sendMessageContent);
+    alert('Message sent to Admin!');
+
+    this.sendMessageContent = '';
   }
 
   goBack() {

@@ -24,16 +24,24 @@
 
     <div class="crud-actions">
       <textarea
-        [(ngModel)]="messageContent"
+        [(ngModel)]="createMessageContent"
         placeholder="Type your message..."
         rows="4"
         class="message-input"
       ></textarea>
       <div class="action-buttons">
-        <button (click)="createMessage()" [disabled]="!messageContent.trim()" *ngIf="!isEditing">
+        <button
+          (click)="createMessage()"
+          [disabled]="!createMessageContent.trim()"
+          *ngIf="!isEditing"
+        >
           Create Message
         </button>
-        <button (click)="updateMessage()" [disabled]="!messageContent.trim()" *ngIf="isEditing">
+        <button
+          (click)="updateMessage()"
+          [disabled]="!createMessageContent.trim()"
+          *ngIf="isEditing"
+        >
           Update Message
         </button>
         <button (click)="deleteMessage()" *ngIf="isEditing">Delete Message</button>
@@ -46,12 +54,12 @@
   <div class="bottom-section">
     <h3>Contact Admin</h3>
     <textarea
-      [(ngModel)]="messageContent"
+      [(ngModel)]="sendMessageContent"
       placeholder="Send a message to the Admin..."
       rows="3"
       class="admin-message-input"
     ></textarea>
-    <button (click)="sendMessage()" [disabled]="!messageContent.trim()" class="send-button">
+    <button (click)="sendMessage()" [disabled]="!sendMessageContent.trim()" class="send-button">
       Send Message
     </button>
   </div>

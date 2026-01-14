@@ -20,6 +20,7 @@ export class NavbarComponent implements OnInit {
     this.userName = localStorage.getItem('userName') || '';
   }
 
+  
   navigateToProfile(): void {
     const userRole = localStorage.getItem('userRole') || '';
     if (userRole === 'admin') {
@@ -39,14 +40,6 @@ export class NavbarComponent implements OnInit {
 
   navigateToConfigAi(): void {
     this.router.navigate(['/config-ai']);
-  }
-
-  navigateToStats(): void {
-    this.router.navigate(['/stats']);
-  }
-
-  navigateToHistory(): void {
-    this.router.navigate(['/history']);
   }
 
   navigateToMessage(): void {

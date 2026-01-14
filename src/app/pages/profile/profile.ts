@@ -58,6 +58,7 @@ export class ProfileComponent implements OnInit {
   userLikes: Post[] = [];
   userComments: Comment[] = [];
   userPosts: Post[] = [];
+  userRole!: string;
 
   constructor(private router: Router, private authService: AuthService) {}
 
@@ -65,6 +66,14 @@ export class ProfileComponent implements OnInit {
     this.loadUserData();
   }
 
+  goBack() {
+    if (this.userRole === 'admin') {
+      this.router.navigate(['/feed']);
+    } else {
+      this.router.navigate(['/feed']);
+    }
+  }
+  
   loadUserData() {
     this.userName = localStorage.getItem('userName') || '';
     this.userEmail = localStorage.getItem('userEmail') || '';

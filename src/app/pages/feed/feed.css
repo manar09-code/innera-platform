@@ -179,7 +179,7 @@
 
 .feed-grid {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 20px;
   width: 100%;
 }
@@ -245,7 +245,7 @@
 }
 
 .welcome-image {
-  height: 250px;
+  height: 200px;
   background: linear-gradient(135deg, rgba(255, 184, 77, 0.15) 0%, rgba(138, 43, 226, 0.15) 100%);
   display: flex;
   align-items: center;

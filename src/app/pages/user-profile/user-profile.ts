@@ -55,6 +55,7 @@ export class UserProfileComponent implements OnInit {
   tempEmail: string = '';
   tempCommunity: string = '';
   tempPassword: string = '';
+  userRole!: string;
 
   constructor(private router: Router, private authService: AuthService) {}
 
@@ -63,7 +64,14 @@ export class UserProfileComponent implements OnInit {
     this.loadUserActivity();
   }
 
-  loadUserData() {
+goBack(){  
+  if (this.userRole === 'admin') {
+      this.router.navigate(['/feed']);
+    } else {
+      this.router.navigate(['/feed']);
+    }
+  }
+    loadUserData() {
     this.userName = localStorage.getItem('userName') || '';
     this.userEmail = localStorage.getItem('userEmail') || '';
     this.communityName = this.authService.getCommunityName() || '';

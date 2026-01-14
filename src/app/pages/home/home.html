@@ -1,29 +1,29 @@
 <div class="home-wrapper">
-  <!-- Back Button -->
-  <button class="btn-back" (click)="goBack()">← Back</button>
   <!-- Main Content -->
   <div class="home-content">
-    <!-- Welcome Card -->
-    <div class="card welcome-card animate-fade-in">
-      <div class="welcome-image">
-        <div class="mountain-placeholder"></div>
-      </div>
+    <div class="welcome-card-container">
+      <div class="card welcome-card animate-fade-in">
+        <div class="welcome-image">
+          <div class="mountain-placeholder"></div>
+        </div>
 
-      <div class="welcome-text">
-        <h2 class="welcome-title">Welcome to your favorite community platform!</h2>
-        <p class="welcome-description">Connect, share, and grow with like-minded individuals.</p>
-      </div>
+        <div class="welcome-text">
+          <h2 class="welcome-title">Welcome to your favorite community platform!</h2>
+          <p class="welcome-description">Connect, share, and grow with like-minded individuals.</p>
+        </div>
 
-      <!--choose section-->
-      <div class="choose-section animate-slide-up">
-        <h2 class="choose-title">Choose Your Path</h2>
-        <div class="container">
-          <button class="btn-primary" (click)="goToAdminRegister()">Admin</button>
+        <!--choose section-->
+        <div class="choose-section animate-slide-up">
+          <h2 class="choose-title">Choose Your Path</h2>
+          <div class="container">
+            <button class="btn-primary" (click)="goToAdminRegister()">Admin</button>
 
-          <button class="btn-primary" (click)="goToUserRegister()">User</button>
+            <button class="btn-primary" (click)="goToUserRegister()">User</button>
+          </div>
         </div>
       </div>
     </div>
+
     <!-- Quick Links -->
     <div class="quick-links animate-fade-in-delay">
       <div class="card link-card animate-slide-in-left">
