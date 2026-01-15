@@ -73,7 +73,7 @@ export class ProfileComponent implements OnInit {
       this.router.navigate(['/feed']);
     }
   }
-  
+
   loadUserData() {
     this.userName = localStorage.getItem('userName') || '';
     this.userEmail = localStorage.getItem('userEmail') || '';
@@ -219,5 +219,9 @@ export class ProfileComponent implements OnInit {
 
   navigateToFeed() {
     this.router.navigate(['/feed']);
+  }
+
+  navigateToConfigAi() {
+    this.router.navigate(['/config-ai']);
   }
 }

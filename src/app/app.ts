@@ -1,10 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { AiAssistantComponent } from './pages/ai-assistant/ai-assistant';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, AiAssistantComponent],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

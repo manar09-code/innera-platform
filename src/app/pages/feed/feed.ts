@@ -279,6 +279,11 @@ export class FeedComponent implements OnInit {
 
   switchTabUI(tab: string): void {
     this.currentTab = tab;
+    if (tab === 'post') {
+      this.navigateToWritePost();
+    } else if (tab === 'image') {
+      this.navigateToImagePost();
+    }
   }
 
   trackByPostId(index: number, post: Post): number {

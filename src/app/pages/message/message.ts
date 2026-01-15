@@ -102,13 +102,20 @@ export class MessageComponent implements OnInit {
     const adminMessages = JSON.parse(localStorage.getItem('admin_messages') || '[]');
     const userEmail = localStorage.getItem('userEmail') || '';
     const userName = localStorage.getItem('userName') || 'Anonymous';
+    const userRole = localStorage.getItem('userRole') || 'user';
 
     const adminMessage = {
       id: Date.now(),
       content: this.sendMessageContent.trim(),
       sender: userEmail,
       senderName: userName,
+      senderRole: userRole,
       timestamp: new Date().toISOString(),
+      contactInfo: {
+        email: userEmail,
+        name: userName,
+        role: userRole,
+      },
     };
 
     adminMessages.unshift(adminMessage);

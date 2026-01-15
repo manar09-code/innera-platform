@@ -10,7 +10,7 @@ import { ResetPasswordComponent } from './pages/reset-password/reset-password';
 import { WritePostComponent } from './pages/write-post/write-post';
 import { ImagePostComponent } from './pages/image-post/image-post';
 import { MessageComponent } from './pages/message/message';
-import { AiAssistantComponent } from './pages/ai-assistant/ai-assistant';
+
 import { ConfigAiComponent } from './pages/config-ai/config-ai';
 import { DashboardComponent } from './pages/dashboard/dashboard';
 import { StatsComponent } from './pages/stats/stats';
@@ -38,7 +38,7 @@ export const routes: Routes = [
   { path: 'write-post', component: WritePostComponent, canActivate: [AuthGuard] },
   { path: 'image-post', component: ImagePostComponent, canActivate: [AuthGuard] },
   { path: 'message', component: MessageComponent, canActivate: [AuthGuard] },
-  { path: 'ai-assistant', component: AiAssistantComponent, canActivate: [AuthGuard] },
+
   { path: 'config-ai', component: ConfigAiComponent, canActivate: [AdminGuard] },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password', component: ResetPasswordComponent },

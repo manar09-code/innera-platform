@@ -1,37 +1,32 @@
-<div class="ai-assistant-wrapper">
-  <div class="ai-header">
-    <button class="btn-back" (click)="goBack()">← Back</button>
-    <div class="ai-title">
-      <span class="ai-icon">🤖</span>
-      <h1>AI Assistant</h1>
-    </div>
-  </div>
+<!-- Floating AI Assistant Button -->
+<button class="ai-floating-btn" (click)="toggleChat()" [class.open]="isOpen">
+  <span class="ai-icon">🤖</span>
+</button>
 
-  <div class="chat-container">
-    <div class="messages-list">
-      <div
-        class="message"
-        [ngClass]="{ 'user-message': msg.sender === 'user', 'ai-message': msg.sender === 'ai' }"
-        *ngFor="let msg of messages"
-      >
-        <div class="message-content">
-          <p class="message-text">{{ msg.text }}</p>
-          <span class="message-time">{{ msg.timestamp | date : 'shortTime' }}</span>
-        </div>
+<!-- Chat Panel -->
+<div class="ai-chat-panel" [class.open]="isOpen">
+  <div class="ai-chat-header">
+    <h3>AI Assistant</h3>
+    <button class="close-btn" (click)="toggleChat()">×</button>
+  </div>
+  <div class="ai-chat-messages" #messagesContainer>
+    <div class="message ai" *ngFor="let message of messages">
+      <div class="message-content">
+        <p class="message-text">{{ message.text }}</p>
+        <small class="message-time">{{ message.time | date : 'shortTime' }}</small>
       </div>
     </div>
   </div>
-
-  <div class="input-area">
+  <div class="ai-chat-input">
     <input
       type="text"
-      class="message-input"
-      placeholder="Type your message..."
-      [(ngModel)]="newMessageText"
+      [(ngModel)]="userMessage"
       (keyup.enter)="sendMessage()"
+      placeholder="Ask me anything..."
+      [disabled]="isLoading"
     />
-    <button class="send-btn" (click)="sendMessage()" [disabled]="!newMessageText.trim()">
-      Send
+    <button (click)="sendMessage()" [disabled]="isLoading || !userMessage.trim()">
+      {{ isLoading ? '...' : 'Send' }}
     </button>
   </div>
 </div>
