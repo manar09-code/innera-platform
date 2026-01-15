@@ -51,6 +51,18 @@ export const aiChat = functions.https.onRequest((req, res) => {
         completion.choices[0]?.message?.content?.trim() ||
         'Sorry, I could not generate a response.';
 
+      // If user is sending message, save to admin messages
+      if (context.role === 'user') {
+        await admin
+          .firestore()
+          .collection('adminMessages')
+          .add({
+            message,
+            userEmail: context.userEmail || 'unknown',
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          });
+      }
+
       console.log(`Request received: ${req.method} ${req.path}`);
       res.status(200).json({ reply });
     } catch (error) {
