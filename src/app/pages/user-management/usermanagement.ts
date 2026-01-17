@@ -15,8 +15,8 @@ interface Member {
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.css'],
+  templateUrl: './usermanagement.html',
+  styleUrls: ['./usermanagement.css'],
 })
 export class UserManagementComponent implements OnInit {
   members: Member[] = [];

@@ -12,7 +12,7 @@ import { ImagePostComponent } from './pages/image-post/image-post';
 import { MessageComponent } from './pages/message/message';
 
 import { ConfigAiComponent } from './pages/config-ai/config-ai';
-import { UserManagementComponent } from './pages/dashboard/dashboard';
+import { UserManagementComponent } from './pages/user-management/usermanagement';
 import { StatsComponent } from './pages/stats/stats';
 import { AdminMessageComponent } from './pages/admin-message/admin-message';
 import { ProfileComponent } from './pages/profile/profile';
