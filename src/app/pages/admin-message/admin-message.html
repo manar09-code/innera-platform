@@ -1,4 +1,10 @@
-<div class="admin-message-container">
+<div class="admin-message-wrapper">
+  <div class="admin-message-header">
+    <button class="btn-back" (click)="goBack()">Back</button>
+    <h1 class="page-title">Admin Messages</h1>
+  </div>
+  
+  <div class="admin-message-container">
   <!-- Left Section: List of Conversations -->
   <div class="conversations-list">
     <h3>Conversations</h3>
@@ -54,5 +60,5 @@
     <p>Select a conversation to start chatting.</p>
   </div>
 
-  <button class="back-button" (click)="goBack()">Back to Dashboard</button>
+  </div>
 </div>

@@ -8,6 +8,7 @@ interface Member {
   id: number;
   name: string;
   email: string;
+  isBlocked?: boolean;
 }
 
 @Component({
@@ -17,7 +18,7 @@ interface Member {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css'],
 })
-export class DashboardComponent implements OnInit {
+export class UserManagementComponent implements OnInit {
   members: Member[] = [];
   newMemberName: string = '';
   newMemberEmail: string = '';
@@ -69,6 +70,15 @@ export class DashboardComponent implements OnInit {
 
   deleteMember(memberId: number) {
     this.members = this.members.filter((member) => member.id !== memberId);
+  }
+
+  blockMember(memberId: number) {
+    const member = this.members.find((m) => m.id === memberId);
+    if (member) {
+      member.isBlocked = !member.isBlocked;
+      // Here you would typically update the backend/database
+      // For now, we're just toggling the state locally
+    }
   }
 
   copyJoinLink() {

@@ -1,7 +1,12 @@
-<div class="profile-container">
-  <!-- Top Section -->
-  <div class="top-section" [style.background-image]="backgroundImage">
-    <button class="back-btn" (click)="goBack()">Back</button>
+<div class="history-wrapper">
+  <div class="history-header">
+    <button class="btn-back" (click)="goBack()">Back</button>
+    <h1 class="page-title">History</h1>
+  </div>
+  
+  <div class="profile-container">
+    <!-- Top Section -->
+    <div class="top-section" [style.background-image]="backgroundImage">
     <div class="community-info">
       <div class="community-picture">{{ profilePicture }}</div>
       <h1 class="community-name">History</h1>
@@ -80,5 +85,6 @@
       </div>
       <p *ngIf="userComments.length === 0" class="no-content">No comments yet.</p>
     </div>
+  </div>
   </div>
 </div>

@@ -1,0 +1,49 @@
+<div class="user-management-wrapper">
+  <div class="user-management-header">
+    <button class="btn-back" (click)="goBack()">Back</button>
+    <h1 class="page-title">User Management</h1>
+  </div>
+  
+  <div class="user-management-container">
+    <!-- Top Section: Community Members List -->
+    <div class="top-section">
+      <h2 class="section-title">Community Members</h2>
+      <ul class="members-list">
+        <li *ngFor="let member of members" class="member-item" [class.blocked]="member.isBlocked">
+          <div class="member-info">
+            <span class="member-name">{{ member.name }}</span>
+            <span class="member-email">({{ member.email }})</span>
+            <span class="blocked-badge" *ngIf="member.isBlocked">Blocked</span>
+          </div>
+          <div class="member-actions">
+            <button (click)="blockMember(member.id)" [class.block-btn]="!member.isBlocked" [class.unblock-btn]="member.isBlocked" class="action-btn">
+              {{ member.isBlocked ? 'Unblock' : 'Block' }}
+            </button>
+            <button (click)="deleteMember(member.id)" class="delete-btn">Delete</button>
+          </div>
+        </li>
+      </ul>
+      <div class="add-member">
+        <input [(ngModel)]="newMemberName" placeholder="Member Name" type="text" class="member-input" />
+        <input [(ngModel)]="newMemberEmail" placeholder="Member Email" type="email" class="member-input" />
+        <button (click)="addMember()" class="add-btn">Add Member</button>
+      </div>
+    </div>
+
+    <!-- Middle Section: Horizontal Separator -->
+    <hr class="separator" />
+
+    <!-- Bottom Section: Divided into 2 vertical sections -->
+    <div class="bottom-section">
+      <div class="bottom-left">
+        <h3 class="section-title">Community Name</h3>
+        <p class="section-content">{{ communityName }}</p>
+      </div>
+      <div class="bottom-right">
+        <h3 class="section-title">Join Link / Invite Code</h3>
+        <p class="section-content">{{ joinLink }}</p>
+        <button (click)="copyJoinLink()" class="copy-btn">Copy Link</button>
+      </div>
+    </div>
+  </div>
+</div>

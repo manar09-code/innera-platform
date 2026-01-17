@@ -12,7 +12,7 @@ import { ImagePostComponent } from './pages/image-post/image-post';
 import { MessageComponent } from './pages/message/message';
 
 import { ConfigAiComponent } from './pages/config-ai/config-ai';
-import { DashboardComponent } from './pages/dashboard/dashboard';
+import { UserManagementComponent } from './pages/dashboard/dashboard';
 import { StatsComponent } from './pages/stats/stats';
 import { AdminMessageComponent } from './pages/admin-message/admin-message';
 import { ProfileComponent } from './pages/profile/profile';
@@ -32,7 +32,7 @@ export const routes: Routes = [
   { path: 'profile', component: ProfileComponent, canActivate: [AdminGuard] },
   { path: 'user-profile', component: UserProfileComponent, canActivate: [AuthGuard] },
   { path: 'history', component: HistoryComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [AdminGuard] },
+  { path: 'dashboard', component: UserManagementComponent, canActivate: [AdminGuard] },
   { path: 'home', component: HomeComponent },
   { path: 'feed', component: FeedComponent, canActivate: [AuthGuard] },
   { path: 'write-post', component: WritePostComponent, canActivate: [AuthGuard] },

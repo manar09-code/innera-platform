@@ -282,6 +282,34 @@
   margin: 0;
 }
 
+.welcome-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 32px;
+  height: 32px;
+  background: rgba(20, 10, 40, 0.7);
+  border: 1px solid rgba(255, 184, 77, 0.3);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+  line-height: 1;
+}
+
+.welcome-close-btn:hover {
+  background: rgba(255, 184, 77, 0.3);
+  border-color: #ffb84d;
+  color: #ffb84d;
+  transform: rotate(90deg);
+}
+
 .welcome-title {
   font-size: 48px;
   margin: 0 0 10px 0;
@@ -583,6 +611,12 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
+.post-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .post-options {
   background: none;
   border: none;
@@ -594,7 +628,30 @@
 }
 
 .post-options:hover {
+  color: #ff6b6b;
+}
+
+.pin-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 5px;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+}
+
+.pin-btn:hover {
   color: #ffb84d;
+  background: rgba(255, 184, 77, 0.1);
+}
+
+.pinned-badge {
+  font-size: 12px;
+  color: #ffb84d;
+  margin-left: 8px;
+  font-weight: 600;
 }
 
 /* Post Content */
@@ -603,6 +660,19 @@
   color: rgba(255, 255, 255, 0.85);
   font-size: 15px;
   line-height: 1.6;
+}
+
+.post-image {
+  margin: 15px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.post-image img {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+  display: block;
 }
 
 /* Post Tags */

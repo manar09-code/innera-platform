@@ -1,25 +1,79 @@
-/* Basic styles for stats page */
+.stats-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(30, 15, 60, 0.5) 0%, rgba(20, 10, 40, 0.5) 100%);
+}
+
+.stats-header {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.15) 0%, rgba(100, 30, 200, 0.1) 100%);
+  border-bottom: 1px solid rgba(255, 184, 77, 0.2);
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.btn-back {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #ffb84d, #ff6b35);
+  border: none;
+  border-radius: 25px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 184, 77, 0.3);
+  margin-bottom: 15px;
+}
+
+.btn-back:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 184, 77, 0.4);
+}
+
+.page-title {
+  font-size: 32px;
+  margin: 0;
+  color: #ffb84d;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 .stats-container {
+  flex: 1;
   max-width: 1200px;
   margin: 0 auto;
-  background-color: #f0f2f5;
-  min-height: 100vh;
-  padding: 20px;
+  padding: 40px 20px;
+  width: 100%;
 }
 
 .stats-row {
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .stat-card {
   flex: 1;
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 250px;
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(100, 30, 200, 0.08) 100%);
+  border: 1px solid rgba(255, 184, 77, 0.2);
+  border-radius: 12px;
+  padding: 30px;
   text-align: center;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: #ffb84d;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(255, 184, 77, 0.2);
 }
 
 .stat-card.centered {
@@ -28,10 +82,20 @@
   margin: 0 auto;
 }
 
+.stat-card h2 {
+  font-size: 18px;
+  margin: 0 0 15px 0;
+  color: #ffb84d;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 .stat-number {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #007bff;
+  font-size: 48px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
 }
 
 /* Animations */
@@ -41,12 +105,6 @@
 
 .animate-card {
   animation: slideUp 0.8s ease-out;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.animate-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes fadeIn {
@@ -66,5 +124,16 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stats-row {
+    flex-direction: column;
+  }
+
+  .stat-card {
+    width: 100%;
   }
 }

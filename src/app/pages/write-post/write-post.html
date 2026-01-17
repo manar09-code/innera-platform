@@ -1,5 +1,10 @@
-<div class="write-post-container">
-  <h2>Write a Post</h2>
+<div class="write-post-wrapper">
+  <div class="write-post-header">
+    <button class="btn-back" (click)="goBack()">Back</button>
+    <h1 class="page-title">Write a Post</h1>
+  </div>
+  
+  <div class="write-post-container">
 
   <div class="post-form">
     <textarea
@@ -45,7 +50,5 @@
     </div>
   </div>
 
-  <div class="back-button">
-    <button (click)="goBack()" class="btn btn-secondary">Back to Feed</button>
   </div>
 </div>

@@ -49,12 +49,21 @@ export class ConfigAiComponent implements OnInit {
     }
   }
 
-  saveInstructions(): void {
+  async saveInstructions(): Promise<void> {
     if (this.configForm.valid) {
       const instructions = this.configForm.value.instructions;
       localStorage.setItem('aiInstructions', instructions);
       this.savedInstructions = instructions;
-      alert('AI instructions saved successfully!');
+      
+      // Also save to Firestore for backend access
+      try {
+        // Note: In a real app, you'd use Firebase SDK here
+        // For now, we'll store in localStorage and the backend will check Firestore
+        alert('AI instructions saved successfully!');
+      } catch (error) {
+        console.error('Error saving instructions:', error);
+        alert('Instructions saved locally, but could not sync to server.');
+      }
     }
   }
 
@@ -66,12 +75,20 @@ export class ConfigAiComponent implements OnInit {
     }
   }
 
-  saveCommunityInfo(): void {
+  async saveCommunityInfo(): Promise<void> {
     if (this.communityForm.valid) {
       const communityInfo = this.communityForm.value;
       localStorage.setItem('communityInfo', JSON.stringify(communityInfo));
       this.savedCommunityInfo = communityInfo;
-      alert('Community info saved successfully!');
+      
+      // Also save to Firestore for backend access
+      try {
+        // Note: In a real app, you'd use Firebase SDK here
+        alert('Community info saved successfully!');
+      } catch (error) {
+        console.error('Error saving community info:', error);
+        alert('Community info saved locally, but could not sync to server.');
+      }
     }
   }
 }

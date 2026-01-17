@@ -10,7 +10,7 @@
     <button class="close-btn" (click)="toggleChat()">×</button>
   </div>
   <div class="ai-chat-messages" #messagesContainer>
-    <div class="message ai" *ngFor="let message of messages">
+    <div class="message" [class.user]="message.isUser" [class.ai]="!message.isUser" *ngFor="let message of messages">
       <div class="message-content">
         <p class="message-text">{{ message.text }}</p>
         <small class="message-time">{{ message.time | date : 'shortTime' }}</small>

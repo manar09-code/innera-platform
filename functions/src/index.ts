@@ -26,13 +26,49 @@ export const aiChat = functions.https.onRequest((req, res) => {
         return;
       }
 
-      const systemPrompt =
-        data.instructions ||
-        `You are the AI assistant of the Innera Platform. You help users understand features, profiles, feeds, authentication, and dashboard. Be short, clear, and friendly.`;
+      // Load AI instructions and community info from Firestore or use defaults
+      let aiInstructions = '';
+      let communityInfo = null;
+      
+      try {
+        // Try to get AI instructions from Firestore (stored by admin)
+        const instructionsDoc = await admin.firestore().collection('aiConfig').doc('instructions').get();
+        if (instructionsDoc.exists) {
+          aiInstructions = instructionsDoc.data()?.instructions || '';
+        }
+        
+        // Try to get community info
+        const communityDoc = await admin.firestore().collection('aiConfig').doc('community').get();
+        if (communityDoc.exists) {
+          communityInfo = communityDoc.data();
+        }
+      } catch (error) {
+        console.log('Could not load AI config from Firestore, using defaults');
+      }
+      
+      // Also check if instructions/community info are passed in context (from localStorage)
+      if (context?.aiInstructions) {
+        aiInstructions = context.aiInstructions;
+      }
+      if (context?.communityInfo) {
+        communityInfo = context.communityInfo;
+      }
+
+      let systemPrompt = `You are the AI assistant of the Innera Platform. You help users understand features, profiles, feeds, authentication, and user management. Be short, clear, and friendly.`;
+      
+      // Add custom instructions if available
+      if (aiInstructions) {
+        systemPrompt = `${aiInstructions}\n\nBase context: ${systemPrompt}`;
+      }
+      
+      // Add community information if available
+      if (communityInfo) {
+        systemPrompt += `\n\nCommunity Information:\n- Description: ${communityInfo.description || 'Not provided'}\n- Rules: ${communityInfo.rules || 'Not provided'}\n- Member Count: ${communityInfo.memberCount || 0}`;
+      }
 
       let enhancedPrompt = systemPrompt;
       if (context) {
-        enhancedPrompt += ` Current context: Page - ${context.page || 'unknown'}, User role - ${
+        enhancedPrompt += `\n\nCurrent context: Page - ${context.page || 'unknown'}, User role - ${
           context.role || 'unknown'
         }.`;
       }
@@ -43,7 +79,7 @@ export const aiChat = functions.https.onRequest((req, res) => {
           { role: 'system', content: enhancedPrompt },
           { role: 'user', content: message },
         ],
-        max_tokens: 150,
+        max_tokens: 300,
         temperature: 0.7,
       });
 

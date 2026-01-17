@@ -1,8 +1,12 @@
-<div class="profile-container">
-  <button class="back-btn" (click)="goBack()">Back</button>
-
-  <!-- Header/Background Section -->
-  <div class="profile-header" [style.background-image]="backgroundImage">
+<div class="profile-wrapper">
+  <div class="profile-header-section">
+    <button class="btn-back" (click)="goBack()">Back</button>
+    <h1 class="page-title">Profile</h1>
+  </div>
+  
+  <div class="profile-container">
+    <!-- Header/Background Section -->
+    <div class="profile-header" [style.background-image]="backgroundImage">
     <div class="profile-picture">
       {{ profilePicture }}
     </div>
@@ -69,7 +73,7 @@
         href="#"
         (click)="$event.preventDefault(); navigateToDashboard()"
         class="dashboard-link"
-        >Dashboard</a
+        >User Management</a
       >
       <a
         *ngIf="isAdmin"
@@ -95,5 +99,6 @@
       <h3>Number of Posts</h3>
       <p>{{ userPosts.length }}</p>
     </div>
+  </div>
   </div>
 </div>

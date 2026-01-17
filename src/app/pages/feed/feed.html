@@ -20,10 +20,11 @@
       <!-- Center Column: Main Feed -->
       <div class="feed-center-column">
         <!-- Welcome Card -->
-        <div class="welcome-card">
+        <div class="welcome-card" *ngIf="showWelcomeCard">
           <div class="welcome-image">
             <div class="mountain-placeholder"></div>
             <div class="welcome-overlay">
+              <button class="welcome-close-btn" (click)="removeWelcomeCard()" title="Remove welcome card">×</button>
               <h1 class="welcome-title">Welcome to {{ communityName }} Community</h1>
               <p class="welcome-subtitle">Share your thoughts and connect with the community</p>
             </div>
@@ -80,14 +81,27 @@
             <div class="post-header">
               <div class="post-avatar" (click)="navigateToProfile()">{{ post.avatar }}</div>
               <div class="post-meta" (click)="navigateToProfile()">
-                <h3 class="post-author">{{ post.author }}</h3>
+                <h3 class="post-author">
+                  {{ post.author }}
+                  <span class="pinned-badge" *ngIf="post.isPinned">📌 Pinned</span>
+                </h3>
                 <p class="post-time">{{ post.time }}</p>
               </div>
-              <button class="post-options" *ngIf="isAdmin" (click)="deletePost(post)">×</button>
+              <div class="post-actions" *ngIf="userRole === 'admin'">
+                <button class="pin-btn" (click)="pinPost(post)" [title]="post.isPinned ? 'Unpin post' : 'Pin post'">
+                  {{ post.isPinned ? '📌' : '📍' }}
+                </button>
+                <button class="post-options" (click)="deletePost(post)">×</button>
+              </div>
             </div>
 
             <!-- Post Content -->
             <p class="post-content">{{ post.content }}</p>
+            
+            <!-- Image Post Content -->
+            <div class="post-image" *ngIf="post.type === 'image' && post.imageData">
+              <img [src]="post.imageData" alt="Post image" />
+            </div>
 
             <!-- Post Tags -->
             <div class="post-tags">

@@ -22,6 +22,8 @@ interface Post {
   tags: string[];
   type: string;
   likedBy: string[];
+  imageData?: string;
+  isPinned?: boolean;
 }
 
 @Component({
@@ -41,6 +43,7 @@ export class FeedComponent implements OnInit {
   newCommentText: { [postId: number]: string } = {};
   currentTab: string = 'post';
   postText: string = '';
+  showWelcomeCard: boolean = true;
 
   posts: Post[] = [
     {
@@ -95,10 +98,6 @@ export class FeedComponent implements OnInit {
   ];
 
   isAdmin: boolean = false;
-  popularPosts: Post[] = [];
-  activeMembers: any[] = [];
-
-  constructor(private router: Router, private authService: AuthService) {}
 
   ngOnInit() {
     this.communityName = this.authService.getCommunityName() || 'Innera Platform';
@@ -106,17 +105,30 @@ export class FeedComponent implements OnInit {
     this.userName = localStorage.getItem('userName') || '';
     this.userEmail = localStorage.getItem('userEmail') || '';
     this.userRole = localStorage.getItem('userRole') || '';
+    this.isAdmin = this.userRole === 'admin';
+    this.loadWelcomeCardState();
     this.loadPostsFromStorage();
     this.initializePopularPosts();
     this.initializeActiveMembers();
   }
+  
+  popularPosts: Post[] = [];
+  activeMembers: any[] = [];
+
+  constructor(private router: Router, private authService: AuthService) {}
 
   loadPostsFromStorage() {
     const userEmail = localStorage.getItem('userEmail') || '';
     const feedPostsKey = `feed_posts_${userEmail}`;
     const storedPosts = localStorage.getItem(feedPostsKey);
     if (storedPosts) {
-      this.posts = JSON.parse(storedPosts);
+      const loadedPosts = JSON.parse(storedPosts);
+      // Sort posts: pinned first, then by time
+      this.posts = loadedPosts.sort((a: Post, b: Post) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return 0;
+      });
     }
   }
 
@@ -209,7 +221,17 @@ export class FeedComponent implements OnInit {
   deletePost(post: Post): void {
     if (this.isAdmin) {
       this.posts = this.posts.filter((p) => p.id !== post.id);
+      this.savePostsToStorage();
       this.showNotification('Post deleted successfully', 'success');
+    }
+  }
+
+  pinPost(post: Post): void {
+    if (this.userRole === 'admin') {
+      post.isPinned = !post.isPinned;
+      this.savePostsToStorage();
+      this.loadPostsFromStorage(); // Reload to re-sort
+      this.showNotification(post.isPinned ? 'Post pinned' : 'Post unpinned', 'success');
     }
   }
 
@@ -288,5 +310,17 @@ export class FeedComponent implements OnInit {
 
   trackByPostId(index: number, post: Post): number {
     return post.id;
+  }
+
+  removeWelcomeCard(): void {
+    this.showWelcomeCard = false;
+    const welcomeCardKey = `welcome_card_${this.userEmail}`;
+    localStorage.setItem(welcomeCardKey, 'hidden');
+  }
+
+  loadWelcomeCardState(): void {
+    const welcomeCardKey = `welcome_card_${this.userEmail}`;
+    const hidden = localStorage.getItem(welcomeCardKey);
+    this.showWelcomeCard = hidden !== 'hidden';
   }
 }

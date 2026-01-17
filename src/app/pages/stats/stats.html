@@ -1,6 +1,10 @@
-<div class="stats-container">
-  <button class="btn-back" (click)="goBack()">← Back</button>
-  <h1 class="fade-in">Admin Statistics</h1>
+<div class="stats-wrapper">
+  <div class="stats-header">
+    <button class="btn-back" (click)="goBack()">Back</button>
+    <h1 class="page-title fade-in">Admin Statistics</h1>
+  </div>
+  
+  <div class="stats-container">
 
   <!-- Top Row: Two Cards -->
   <div class="stats-row top-row">
@@ -37,4 +41,5 @@
       <p class="stat-number">{{ totalMessages }}</p>
     </div>
   </div>
+</div>
 </div>
