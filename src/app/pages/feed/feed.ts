@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { NavbarComponent } from '../../components/navbar/navbar';
 
@@ -33,7 +34,7 @@ interface Post {
   templateUrl: './feed.html',
   styleUrls: ['./feed.css'],
 })
-export class FeedComponent implements OnInit {
+export class FeedComponent implements OnInit, OnDestroy {
   // Removed unimplemented methods unrelated to comments
   communityName: string = '';
   adminName: string = '';
@@ -85,6 +86,45 @@ export class FeedComponent implements OnInit {
       type: 'text',
       likedBy: [],
     },
+    {
+      id: 4,
+      author: this.adminName || 'Admin',
+      avatar: '👑',
+      content:
+        'Welcome to our community! Let\'s share positive experiences and support each other. 🌟',
+      time: '4 hours ago',
+      likes: 30,
+      comments: [],
+      tags: ['#Community', '#Welcome', '#Support'],
+      type: 'text',
+      likedBy: [],
+    },
+    {
+      id: 5,
+      author: 'Youssef Gharbi',
+      avatar: '👨',
+      content:
+        'Attended a fantastic cultural event in Carthage today. The history comes alive! 🏛️',
+      time: '5 hours ago',
+      likes: 12,
+      comments: [],
+      tags: ['#Carthage', '#History', '#Culture'],
+      type: 'text',
+      likedBy: [],
+    },
+    {
+      id: 6,
+      author: 'Leila Mansouri',
+      avatar: '👩',
+      content:
+        'Baking traditional Tunisian pastries at home. The aroma is heavenly! 🥧',
+      time: '6 hours ago',
+      likes: 25,
+      comments: [],
+      tags: ['#Baking', '#TunisianCuisine', '#HomeCooking'],
+      type: 'text',
+      likedBy: [],
+    },
   ];
 
   trendingTags: string[] = [
@@ -98,6 +138,7 @@ export class FeedComponent implements OnInit {
   ];
 
   isAdmin: boolean = false;
+  private routerSubscription!: Subscription;
 
   ngOnInit() {
     this.communityName = this.authService.getCommunityName() || 'Innera Platform';
@@ -110,6 +151,14 @@ export class FeedComponent implements OnInit {
     this.loadPostsFromStorage();
     this.initializePopularPosts();
     this.initializeActiveMembers();
+
+    // Subscribe to router events to reload posts when navigating back to feed
+    this.routerSubscription = this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd && event.url === '/feed') {
+        this.loadPostsFromStorage();
+        this.initializePopularPosts();
+      }
+    });
   }
   
   popularPosts: Post[] = [];
@@ -142,10 +191,6 @@ export class FeedComponent implements OnInit {
 
   navigateToMessage(): void {
     this.router.navigate(['/message']);
-  }
-
-  navigateToAiAssistant(): void {
-    this.router.navigate(['/ai-assistant']);
   }
 
   navigateToHistory(): void {
@@ -322,5 +367,11 @@ export class FeedComponent implements OnInit {
     const welcomeCardKey = `welcome_card_${this.userEmail}`;
     const hidden = localStorage.getItem(welcomeCardKey);
     this.showWelcomeCard = hidden !== 'hidden';
+  }
+
+  ngOnDestroy(): void {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
   }
 }

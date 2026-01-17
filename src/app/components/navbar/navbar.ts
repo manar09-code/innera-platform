@@ -45,8 +45,4 @@ export class NavbarComponent implements OnInit {
   navigateToMessage(): void {
     this.router.navigate(['/message']);
   }
-
-  navigateToAiAssistant(): void {
-    this.router.navigate(['/ai-assistant']);
-  }
 }

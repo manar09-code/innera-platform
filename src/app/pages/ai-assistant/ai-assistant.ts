@@ -73,50 +73,35 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked, OnDestroy
       isUser: true,
     });
 
-    try {
-      const functions = getFunctions();
-      const aiChat = httpsCallable(functions, 'aiChat');
-      const userEmail = localStorage.getItem('userEmail') || '';
-      
-      // Load AI instructions and community info from localStorage
-      const aiInstructions = localStorage.getItem('aiInstructions') || '';
-      const communityInfoStr = localStorage.getItem('communityInfo');
-      let communityInfo = null;
-      if (communityInfoStr) {
-        try {
-          communityInfo = JSON.parse(communityInfoStr);
-        } catch (e) {
-          console.error('Error parsing community info:', e);
-        }
+    // Simulate AI response with basic answers
+    setTimeout(() => {
+      let response = 'I\'m sorry, I don\'t have an answer for that right now.';
+
+      const lowerMessage = message.toLowerCase();
+
+      if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+        response = 'Hello! How can I help you today?';
+      } else if (lowerMessage.includes('how are you')) {
+        response = 'I\'m doing well, thank you for asking! How about you?';
+      } else if (lowerMessage.includes('what is your name') || lowerMessage.includes('who are you')) {
+        response = 'I am the AI Assistant for the Innera Platform. I\'m here to help with basic questions.';
+      } else if (lowerMessage.includes('time') || lowerMessage.includes('date')) {
+        response = `The current time is ${new Date().toLocaleString()}.`;
+      } else if (lowerMessage.includes('help')) {
+        response = 'I can answer basic questions about the platform, time, and general inquiries. What would you like to know?';
+      } else if (lowerMessage.includes('thank you') || lowerMessage.includes('thanks')) {
+        response = 'You\'re welcome! Is there anything else I can assist you with?';
       }
-      
-      const result = await aiChat({
-        message,
-        context: {
-          page: this.currentPage,
-          role: this.userRole,
-          userEmail: userEmail,
-          aiInstructions: aiInstructions,
-          communityInfo: communityInfo,
-        },
-      });
 
       // Add AI response
       this.messages.push({
-        text: (result.data as { reply: string }).reply || 'Sorry, I could not generate a response.',
+        text: response,
         time: new Date(),
         isUser: false,
       });
-    } catch (error) {
-      console.error('Error sending message:', error);
-      this.messages.push({
-        text: 'Sorry, I am unable to respond right now. Please try again later.',
-        time: new Date(),
-        isUser: false,
-      });
-    } finally {
+
       this.isLoading = false;
-    }
+    }, 1000); // Simulate 1 second delay
   }
 
   private scrollToBottom(): void {
