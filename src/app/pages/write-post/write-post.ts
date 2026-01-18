@@ -1,16 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
-
-interface TextPost {
-  id: number;
-  content: string;
-  author: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { PostService } from '../../services/post.service';
 
 @Component({
   selector: 'app-write-post',
@@ -19,73 +12,60 @@ interface TextPost {
   templateUrl: './write-post.html',
   styleUrls: ['./write-post.css'],
 })
-export class WritePostComponent implements OnInit {
+export class WritePostComponent {
   postContent: string = '';
-  posts: TextPost[] = [];
-  selectedPost: TextPost | null = null;
   isEditing: boolean = false;
+  posts: any[] = [];
+  selectedPost: any = null;
 
-  constructor(private router: Router, private authService: AuthService) {}
-
-  ngOnInit() {
+  constructor(private router: Router, private authService: AuthService, private postService: PostService) {
     this.loadPosts();
   }
 
+  async createPost() {
+    if (!this.postContent.trim()) return;
+
+    try {
+      const communityName = this.authService.getCommunityName() || 'Innera Platform';
+      const userName = localStorage.getItem('userName') || 'Anonymous';
+      const userEmail = localStorage.getItem('userEmail') || '';
+
+      await this.postService.createPost({
+        author: userName,
+        avatar: userName.charAt(0).toUpperCase(),
+        content: this.postContent.trim(),
+        tags: [],
+        type: 'text',
+        userId: userEmail,
+        communityName: communityName
+      });
+
+      this.postContent = '';
+
+      // Navigate back to feed to see the new post
+      this.router.navigate(['/feed']);
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Error creating post. Please try again.');
+    }
+  }
+
+  goBack() {
+    this.router.navigate(['/feed']);
+  }
+
   loadPosts() {
-    const userEmail = localStorage.getItem('userEmail') || '';
-    const storedPosts = localStorage.getItem(`posts_${userEmail}`);
-    if (storedPosts) {
-      this.posts = JSON.parse(storedPosts);
+    const savedPosts = localStorage.getItem('textPosts');
+    if (savedPosts) {
+      this.posts = JSON.parse(savedPosts);
     }
   }
 
   savePosts() {
-    const userEmail = localStorage.getItem('userEmail') || '';
-    localStorage.setItem(`posts_${userEmail}`, JSON.stringify(this.posts));
+    localStorage.setItem('textPosts', JSON.stringify(this.posts));
   }
 
-  createPost() {
-    if (!this.postContent.trim()) return;
-
-    const newPost: TextPost = {
-      id: Date.now(),
-      content: this.postContent.trim(),
-      author: localStorage.getItem('userName') || 'Anonymous',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.posts.unshift(newPost);
-    this.savePosts();
-    this.updateFeedWithNewPost(newPost);
-    this.postContent = '';
-    this.selectedPost = null;
-    this.isEditing = false;
-  }
-
-  updateFeedWithNewPost(post: TextPost) {
-    const userEmail = localStorage.getItem('userEmail') || '';
-    const feedPostsKey = `feed_posts_${userEmail}`;
-    let feedPosts = JSON.parse(localStorage.getItem(feedPostsKey) || '[]');
-
-    const feedPost = {
-      id: post.id,
-      author: post.author,
-      avatar: post.author.charAt(0).toUpperCase(),
-      content: post.content,
-      time: 'Just now',
-      likes: 0,
-      comments: [],
-      tags: [],
-      type: 'text',
-      likedBy: [],
-    };
-
-    feedPosts.unshift(feedPost);
-    localStorage.setItem(feedPostsKey, JSON.stringify(feedPosts));
-  }
-
-  selectPost(post: TextPost) {
+  selectPost(post: any) {
     this.selectedPost = post;
     this.postContent = post.content;
     this.isEditing = true;
@@ -96,25 +76,30 @@ export class WritePostComponent implements OnInit {
 
     this.selectedPost.content = this.postContent.trim();
     this.selectedPost.updatedAt = new Date().toISOString();
+
     this.savePosts();
-    this.cancelEdit();
+    this.resetForm();
+    this.isEditing = false;
+    this.selectedPost = null;
+  }
+
+  cancelEdit() {
+    this.resetForm();
+    this.isEditing = false;
+    this.selectedPost = null;
   }
 
   deletePost() {
     if (!this.selectedPost) return;
 
-    this.posts = this.posts.filter((p) => p.id !== this.selectedPost!.id);
+    this.posts = this.posts.filter(p => p.id !== this.selectedPost.id);
     this.savePosts();
-    this.cancelEdit();
-  }
-
-  cancelEdit() {
-    this.postContent = '';
-    this.selectedPost = null;
+    this.resetForm();
     this.isEditing = false;
+    this.selectedPost = null;
   }
 
-  goBack() {
-    this.router.navigate(['/feed']);
+  resetForm() {
+    this.postContent = '';
   }
 }

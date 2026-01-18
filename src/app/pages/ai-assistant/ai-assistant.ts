@@ -3,12 +3,23 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
 import { httpsCallable, getFunctions } from 'firebase/functions';
+import { HttpClient } from '@angular/common/http';
 import { filter, Subscription } from 'rxjs';
+import { PostService } from '../../services/post.service';
 
 interface Message {
   text: string;
   time: Date;
   isUser: boolean;
+}
+
+interface FeedPostSummary {
+  author: string;
+  content: string;
+  time: Date;
+  likes: number;
+  comments: number;
+  tags: string[];
 }
 
 @Component({
@@ -29,7 +40,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked, OnDestroy
   messages: Message[] = [];
   private routerSubscription?: Subscription;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private http: HttpClient, private postService: PostService) {}
 
   ngOnInit() {
     this.userRole = localStorage.getItem('userRole') || '';
@@ -73,35 +84,80 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked, OnDestroy
       isUser: true,
     });
 
-    // Simulate AI response with basic answers
-    setTimeout(() => {
-      let response = 'I\'m sorry, I don\'t have an answer for that right now.';
+    try {
+      // Gather context for AI
+      const context = await this.buildContext();
 
-      const lowerMessage = message.toLowerCase();
-
-      if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-        response = 'Hello! How can I help you today?';
-      } else if (lowerMessage.includes('how are you')) {
-        response = 'I\'m doing well, thank you for asking! How about you?';
-      } else if (lowerMessage.includes('what is your name') || lowerMessage.includes('who are you')) {
-        response = 'I am the AI Assistant for the Innera Platform. I\'m here to help with basic questions.';
-      } else if (lowerMessage.includes('time') || lowerMessage.includes('date')) {
-        response = `The current time is ${new Date().toLocaleString()}.`;
-      } else if (lowerMessage.includes('help')) {
-        response = 'I can answer basic questions about the platform, time, and general inquiries. What would you like to know?';
-      } else if (lowerMessage.includes('thank you') || lowerMessage.includes('thanks')) {
-        response = 'You\'re welcome! Is there anything else I can assist you with?';
-      }
+      // Call Firebase function
+      const response = await this.http.post<{ reply: string }>(
+        'https://us-central1-innera-platform.cloudfunctions.net/aiChat',
+        {
+          message,
+          context
+        }
+      ).toPromise();
 
       // Add AI response
       this.messages.push({
-        text: response,
+        text: response?.reply || 'Sorry, I couldn\'t generate a response.',
         time: new Date(),
         isUser: false,
       });
-
+    } catch (error) {
+      console.error('Error calling AI service:', error);
+      this.messages.push({
+        text: 'Sorry, I\'m having trouble connecting right now. Please try again later.',
+        time: new Date(),
+        isUser: false,
+      });
+    } finally {
       this.isLoading = false;
-    }, 1000); // Simulate 1 second delay
+    }
+  }
+
+  private async buildContext(): Promise<any> {
+    const userEmail = localStorage.getItem('userEmail') || '';
+    const communityName = localStorage.getItem('communityName') || '';
+
+    // Get admin instructions
+    const aiInstructions = localStorage.getItem('aiInstructions') || '';
+
+    // Get community info
+    const communityInfoStr = localStorage.getItem('communityInfo');
+    let communityInfo = null;
+    if (communityInfoStr) {
+      try {
+        communityInfo = JSON.parse(communityInfoStr);
+      } catch (e) {
+        console.error('Error parsing community info:', e);
+      }
+    }
+
+    // Get recent feed posts (limit to last 10) from Firestore
+    let feedPosts: FeedPostSummary[] = [];
+    try {
+      const posts = await this.postService.getPosts(communityName);
+      feedPosts = posts.slice(0, 10).map((post: any) => ({
+        author: post.author,
+        content: post.content,
+        time: post.time.toDate(),
+        likes: post.likes,
+        comments: post.comments.length,
+        tags: post.tags
+      }));
+    } catch (error) {
+      console.error('Error getting posts for AI context:', error);
+    }
+
+    return {
+      page: this.currentPage,
+      role: this.userRole,
+      userEmail,
+      communityName,
+      aiInstructions,
+      communityInfo,
+      feedPosts
+    };
   }
 
   private scrollToBottom(): void {

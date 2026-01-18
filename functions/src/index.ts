@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import OpenAI from 'openai';
 import * as cors from 'cors';
+import { seedPosts } from './seed-posts';
 
 admin.initializeApp();
 
@@ -71,6 +72,18 @@ export const aiChat = functions.https.onRequest((req, res) => {
         enhancedPrompt += `\n\nCurrent context: Page - ${context.page || 'unknown'}, User role - ${
           context.role || 'unknown'
         }.`;
+
+        // Add recent posts context for community questions
+        if (context.feedPosts && context.feedPosts.length > 0) {
+          enhancedPrompt += `\n\nRecent community posts (last ${context.feedPosts.length}):`;
+          context.feedPosts.forEach((post: any, index: number) => {
+            enhancedPrompt += `\n${index + 1}. ${post.author}: "${post.content}" (${post.likes} likes, ${post.comments} comments)`;
+            if (post.tags && post.tags.length > 0) {
+              enhancedPrompt += ` [Tags: ${post.tags.join(', ')}]`;
+            }
+          });
+          enhancedPrompt += `\n\nYou can reference these posts when answering questions about community content, discussions, or popular topics.`;
+        }
       }
 
       const completion = await openai.chat.completions.create({

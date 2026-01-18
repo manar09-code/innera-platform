@@ -56,34 +56,37 @@ throw new Error('Method not implemented.');
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  register() {
+  async register() {
     if (this.form.invalid) {
       this.errorMessage = 'Please fill in all fields correctly';
       return;
     }
 
     this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
 
-    setTimeout(() => {
-      const adminName = this.form.get('adminName')?.value;
-      const email = this.form.get('email')?.value;
-      const password = this.form.get('password')?.value;
-      const communityName = this.form.get('communityName')?.value;
+    const adminName = this.form.get('adminName')?.value;
+    const email = this.form.get('email')?.value;
+    const password = this.form.get('password')?.value;
+    const communityName = this.form.get('communityName')?.value;
 
-      const success = this.authService.registerAdmin(adminName, email, password, communityName);
-      if (success) {
+    try {
+      const result = await this.authService.registerAdmin(adminName, email, password, communityName);
+      if (result.success) {
         this.successMessage = 'Admin account created! Redirecting to login...';
-        this.errorMessage = '';
         setTimeout(() => {
           this.router.navigate(['/login-admin']);
         }, 2000);
       } else {
-        this.errorMessage = 'Email already exists. Please use a different email.';
-        this.successMessage = '';
+        this.errorMessage = result.error || 'Registration failed. Please try again.';
       }
+    } catch (error) {
+      this.errorMessage = 'An unexpected error occurred. Please try again.';
+      console.error('Admin registration error:', error);
+    }
 
-      this.isLoading = false;
-    }, 1000);
+    this.isLoading = false;
   }
 
   goToLogin() {

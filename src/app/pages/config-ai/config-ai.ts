@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { doc, setDoc } from 'firebase/firestore';
+import { firestore } from '../../firebase.config';
 
 @Component({
   selector: 'app-config-ai',
@@ -80,10 +82,16 @@ export class ConfigAiComponent implements OnInit {
       const communityInfo = this.communityForm.value;
       localStorage.setItem('communityInfo', JSON.stringify(communityInfo));
       this.savedCommunityInfo = communityInfo;
-      
+
       // Also save to Firestore for backend access
       try {
-        // Note: In a real app, you'd use Firebase SDK here
+        const communityName = localStorage.getItem('communityName') || 'default';
+        const communityRef = doc(firestore, 'aiConfig', 'community');
+        await setDoc(communityRef, {
+          ...communityInfo,
+          communityName: communityName,
+          updatedAt: new Date()
+        });
         alert('Community info saved successfully!');
       } catch (error) {
         console.error('Error saving community info:', error);

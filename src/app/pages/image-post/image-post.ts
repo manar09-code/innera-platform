@@ -1,12 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { PostService } from '../../services/post.service';
 
 interface ImagePost {
   id: number;
-  imageData: string; // base64
+  imageData: string;
   caption: string;
   author: string;
   createdAt: string;
@@ -20,31 +21,16 @@ interface ImagePost {
   templateUrl: './image-post.html',
   styleUrls: ['./image-post.css'],
 })
-export class ImagePostComponent implements OnInit {
+export class ImagePostComponent {
   selectedFile: File | null = null;
   imagePreview: string | null = null;
   caption: string = '';
+  isEditing: boolean = false;
   posts: ImagePost[] = [];
   selectedPost: ImagePost | null = null;
-  isEditing: boolean = false;
 
-  constructor(private router: Router, private authService: AuthService) {}
-
-  ngOnInit() {
+  constructor(private router: Router, private authService: AuthService, private postService: PostService) {
     this.loadPosts();
-  }
-
-  loadPosts() {
-    const userEmail = localStorage.getItem('userEmail') || '';
-    const storedPosts = localStorage.getItem(`imagePosts_${userEmail}`);
-    if (storedPosts) {
-      this.posts = JSON.parse(storedPosts);
-    }
-  }
-
-  savePosts() {
-    const userEmail = localStorage.getItem('userEmail') || '';
-    localStorage.setItem(`imagePosts_${userEmail}`, JSON.stringify(this.posts));
   }
 
   onFileSelected(event: any) {
@@ -64,46 +50,59 @@ export class ImagePostComponent implements OnInit {
     alert('Camera functionality not implemented yet.');
   }
 
-  createPost() {
+  async createPost() {
     if (!this.imagePreview || !this.caption.trim()) return;
 
-    const newPost: ImagePost = {
-      id: Date.now(),
-      imageData: this.imagePreview,
-      caption: this.caption.trim(),
-      author: localStorage.getItem('userName') || 'Anonymous',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      const communityName = this.authService.getCommunityName() || 'Innera Platform';
+      const userName = localStorage.getItem('userName') || 'Anonymous';
+      const userEmail = localStorage.getItem('userEmail') || '';
 
-    this.posts.unshift(newPost);
-    this.savePosts();
-    this.updateFeedWithNewPost(newPost);
-    this.resetForm();
-    this.goBack();
+      await this.postService.createPost({
+        author: userName,
+        avatar: userName.charAt(0).toUpperCase(),
+        content: this.caption.trim(),
+        tags: [],
+        type: 'image',
+        userId: userEmail,
+        communityName: communityName,
+        imageData: this.imagePreview
+      });
+
+      this.resetForm();
+      this.goBack();
+    } catch (error) {
+      console.error('Error creating image post:', error);
+      alert('Error creating post. Please try again.');
+    }
   }
 
-  updateFeedWithNewPost(post: ImagePost) {
-    const userEmail = localStorage.getItem('userEmail') || '';
-    const feedPostsKey = `feed_posts_${userEmail}`;
-    let feedPosts = JSON.parse(localStorage.getItem(feedPostsKey) || '[]');
 
-    const feedPost = {
-      id: post.id,
-      author: post.author,
-      avatar: post.author.charAt(0).toUpperCase(),
-      content: post.caption,
-      time: 'Just now',
-      likes: 0,
-      comments: [],
-      tags: [],
-      type: 'image',
-      likedBy: [],
-      imageData: post.imageData,
-    };
 
-    feedPosts.unshift(feedPost);
-    localStorage.setItem(feedPostsKey, JSON.stringify(feedPosts));
+  resetForm() {
+    this.selectedFile = null;
+    this.imagePreview = null;
+    this.caption = '';
+  }
+
+  goBack() {
+    this.router.navigate(['/feed']);
+  }
+
+  loadPosts() {
+    const savedPosts = localStorage.getItem('imagePosts');
+    if (savedPosts) {
+      this.posts = JSON.parse(savedPosts);
+    }
+  }
+
+  savePosts() {
+    localStorage.setItem('imagePosts', JSON.stringify(this.posts));
+  }
+
+  updateFeedWithNewPost(newPost: ImagePost) {
+    // Placeholder for updating feed
+    console.log('New post added:', newPost);
   }
 
   selectPost(post: ImagePost) {
@@ -119,27 +118,20 @@ export class ImagePostComponent implements OnInit {
     this.selectedPost.imageData = this.imagePreview;
     this.selectedPost.caption = this.caption.trim();
     this.selectedPost.updatedAt = new Date().toISOString();
+
     this.savePosts();
     this.resetForm();
+    this.isEditing = false;
+    this.selectedPost = null;
   }
 
   deletePost() {
     if (!this.selectedPost) return;
 
-    this.posts = this.posts.filter((p) => p.id !== this.selectedPost!.id);
+    this.posts = this.posts.filter(p => p.id !== this.selectedPost!.id);
     this.savePosts();
     this.resetForm();
-  }
-
-  resetForm() {
-    this.selectedFile = null;
-    this.imagePreview = null;
-    this.caption = '';
-    this.selectedPost = null;
     this.isEditing = false;
-  }
-
-  goBack() {
-    this.router.navigate(['/feed']);
+    this.selectedPost = null;
   }
 }

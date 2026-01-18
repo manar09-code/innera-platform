@@ -53,34 +53,37 @@ export class RegisterUserComponent {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  register() {
+  async register() {
     if (this.form.invalid) {
       this.errorMessage = 'Please fill in all fields correctly';
       return;
     }
 
     this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
 
-    setTimeout(() => {
-      const username = this.form.get('username')?.value;
-      const email = this.form.get('email')?.value;
-      const password = this.form.get('password')?.value;
-      const communityName = this.form.get('communityName')?.value;
+    const username = this.form.get('username')?.value;
+    const email = this.form.get('email')?.value;
+    const password = this.form.get('password')?.value;
+    const communityName = this.form.get('communityName')?.value;
 
-      const success = this.authService.registerUser(username, email, password, communityName);
-      if (success) {
+    try {
+      const result = await this.authService.registerUser(username, email, password, communityName);
+      if (result.success) {
         this.successMessage = 'User account created! Redirecting...';
-        this.errorMessage = '';
-
         setTimeout(() => {
           this.router.navigate(['/feed']);
         }, 2000);
       } else {
-        this.errorMessage = 'Email already exists. Please use a different email.';
+        this.errorMessage = result.error || 'Registration failed. Please try again.';
       }
+    } catch (error) {
+      this.errorMessage = 'An unexpected error occurred. Please try again.';
+      console.error('Registration error:', error);
+    }
 
-      this.isLoading = false;
-    }, 1000);
+    this.isLoading = false;
   }
 
   goToLogin() {

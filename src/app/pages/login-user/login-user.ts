@@ -29,29 +29,32 @@ export class LoginUserComponent {
     this.showPassword = !this.showPassword;
   }
 
-  login() {
+  async login() {
     if (this.form.invalid) {
       this.errorMessage = 'Please fill in all fields correctly';
       return;
     }
 
     this.isLoading = true;
+    this.errorMessage = '';
 
-    setTimeout(() => {
-      const email = this.form.get('email')?.value;
-      const password = this.form.get('password')?.value;
-      const communityName = this.form.get('communityName')?.value;
+    const email = this.form.get('email')?.value;
+    const password = this.form.get('password')?.value;
+    const communityName = this.form.get('communityName')?.value;
 
-      const success = this.authService.loginUser(email, password, communityName);
-      if (success) {
-        this.errorMessage = '';
+    try {
+      const result = await this.authService.loginUser(email, password, communityName);
+      if (result.success) {
         this.router.navigate(['/feed']);
       } else {
-        this.errorMessage =
-          'Invalid credentials. Please check your email, password, and community name.';
+        this.errorMessage = result.error || 'Invalid credentials. Please check your email, password, and community name.';
       }
-      this.isLoading = false;
-    }, 1000);
+    } catch (error) {
+      this.errorMessage = 'An unexpected error occurred. Please try again.';
+      console.error('Login error:', error);
+    }
+
+    this.isLoading = false;
   }
 
   goToRegister() {

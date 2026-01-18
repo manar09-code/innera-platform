@@ -4,28 +4,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { PostService, Post, Comment } from '../../services/post.service';
+import { SeedService } from '../../services/seed.service';
 import { NavbarComponent } from '../../components/navbar/navbar';
-
-interface Comment {
-  username: string;
-  text: string;
-  time: string;
-}
-
-interface Post {
-  id: number;
-  author: string;
-  avatar: string;
-  content: string;
-  time: string;
-  likes: number;
-  comments: Comment[];
-  tags: string[];
-  type: string;
-  likedBy: string[];
-  imageData?: string;
-  isPinned?: boolean;
-}
 
 @Component({
   selector: 'app-feed',
@@ -41,91 +22,14 @@ export class FeedComponent implements OnInit, OnDestroy {
   userName: string = '';
   userEmail: string = '';
   userRole: string = '';
-  newCommentText: { [postId: number]: string } = {};
+  newCommentText: { [postId: string]: string } = {};
   currentTab: string = 'post';
   postText: string = '';
   showWelcomeCard: boolean = true;
 
-  posts: Post[] = [
-    {
-      id: 1,
-      author: 'Ahmed Ben Ali',
-      avatar: '👨',
-      content:
-        'Exploring the beautiful beaches of Hammamet this weekend! The Mediterranean sea is calling. 🏖️',
-      time: '2 hours ago',
-      likes: 15,
-      comments: [],
-      tags: ['#Tunisia', '#Hammamet', '#BeachLife'],
-      type: 'text',
-      likedBy: [],
-    },
-    {
-      id: 2,
-      author: 'Fatima Trabelsi',
-      avatar: '👩',
-      content:
-        'Just tried the most amazing couscous at a local restaurant in Tunis. Traditional flavors never disappoint! 🍲',
-      time: '1 hour ago',
-      likes: 22,
-      comments: [],
-      tags: ['#TunisianFood', '#Couscous', '#Culture'],
-      type: 'text',
-      likedBy: [],
-    },
-    {
-      id: 3,
-      author: 'Mohamed Saidi',
-      avatar: '🧑',
-      content:
-        'The architecture in Sidi Bou Said is absolutely stunning. White and blue everywhere! 🏛️',
-      time: '3 hours ago',
-      likes: 18,
-      comments: [],
-      tags: ['#SidiBouSaid', '#Architecture', '#Travel'],
-      type: 'text',
-      likedBy: [],
-    },
-    {
-      id: 4,
-      author: this.adminName || 'Admin',
-      avatar: '👑',
-      content:
-        'Welcome to our community! Let\'s share positive experiences and support each other. 🌟',
-      time: '4 hours ago',
-      likes: 30,
-      comments: [],
-      tags: ['#Community', '#Welcome', '#Support'],
-      type: 'text',
-      likedBy: [],
-    },
-    {
-      id: 5,
-      author: 'Youssef Gharbi',
-      avatar: '👨',
-      content:
-        'Attended a fantastic cultural event in Carthage today. The history comes alive! 🏛️',
-      time: '5 hours ago',
-      likes: 12,
-      comments: [],
-      tags: ['#Carthage', '#History', '#Culture'],
-      type: 'text',
-      likedBy: [],
-    },
-    {
-      id: 6,
-      author: 'Leila Mansouri',
-      avatar: '👩',
-      content:
-        'Baking traditional Tunisian pastries at home. The aroma is heavenly! 🥧',
-      time: '6 hours ago',
-      likes: 25,
-      comments: [],
-      tags: ['#Baking', '#TunisianCuisine', '#HomeCooking'],
-      type: 'text',
-      likedBy: [],
-    },
-  ];
+  posts: Post[] = [];
+  private postsUnsubscribe: (() => void) | null = null;
+  private commentUnsubscribers: Map<string, () => void> = new Map();
 
   trendingTags: string[] = [
     '#Tunisia',
@@ -140,22 +44,22 @@ export class FeedComponent implements OnInit, OnDestroy {
   isAdmin: boolean = false;
   private routerSubscription!: Subscription;
 
-  ngOnInit() {
+  async ngOnInit() {
     this.communityName = this.authService.getCommunityName() || 'Innera Platform';
-    this.adminName = this.authService.getAdminNameForCommunity(this.communityName);
+    this.adminName = await this.authService.getAdminNameForCommunity(this.communityName);
     this.userName = localStorage.getItem('userName') || '';
     this.userEmail = localStorage.getItem('userEmail') || '';
     this.userRole = localStorage.getItem('userRole') || '';
     this.isAdmin = this.userRole === 'admin';
     this.loadWelcomeCardState();
-    this.loadPostsFromStorage();
+    this.loadPostsFromFirestore();
     this.initializePopularPosts();
     this.initializeActiveMembers();
 
     // Subscribe to router events to reload posts when navigating back to feed
     this.routerSubscription = this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd && event.url === '/feed') {
-        this.loadPostsFromStorage();
+        this.loadPostsFromFirestore();
         this.initializePopularPosts();
       }
     });
@@ -164,20 +68,57 @@ export class FeedComponent implements OnInit, OnDestroy {
   popularPosts: Post[] = [];
   activeMembers: any[] = [];
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(private router: Router, private authService: AuthService, private postService: PostService, private seedService: SeedService) {}
 
-  loadPostsFromStorage() {
-    const userEmail = localStorage.getItem('userEmail') || '';
-    const feedPostsKey = `feed_posts_${userEmail}`;
-    const storedPosts = localStorage.getItem(feedPostsKey);
-    if (storedPosts) {
-      const loadedPosts = JSON.parse(storedPosts);
-      // Sort posts: pinned first, then by time
-      this.posts = loadedPosts.sort((a: Post, b: Post) => {
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return 0;
+  async loadPostsFromFirestore() {
+    try {
+      console.log('Loading posts for community:', this.communityName);
+
+      // Unsubscribe from previous listener if exists
+      if (this.postsUnsubscribe) {
+        this.postsUnsubscribe();
+      }
+
+      // Listen to real-time updates
+      this.postsUnsubscribe = this.postService.listenToPosts(this.communityName, (posts: Post[]) => {
+        console.log('Received posts from Firestore:', posts.length, 'posts for community:', this.communityName);
+
+        // Clean up old comment listeners
+        this.commentUnsubscribers.forEach(unsubscribe => unsubscribe());
+        this.commentUnsubscribers.clear();
+
+        // Sort posts: pinned first, then by time
+        this.posts = posts.sort((a: Post, b: Post) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          return b.time.toMillis() - a.time.toMillis(); // Newest first
+        });
+        this.initializePopularPosts();
+
+        // Start listening to comments for each post
+        this.posts.forEach(post => {
+          const unsubscribe = this.postService.listenToComments(post.id, (comments: Comment[]) => {
+            post.comments = comments;
+          });
+          this.commentUnsubscribers.set(post.id, unsubscribe);
+        });
+
+        // If no posts exist, seed initial posts
+        if (this.posts.length === 0) {
+          console.log('No posts found, attempting to seed initial posts for community:', this.communityName);
+          this.seedService.seedInitialPosts(this.communityName).then(success => {
+            if (success) {
+              console.log('Successfully seeded initial posts');
+            } else {
+              console.error('Failed to seed initial posts');
+            }
+          }).catch(error => {
+            console.error('Error during seeding:', error);
+          });
+        }
       });
+    } catch (error) {
+      console.error('Error loading posts from Firestore:', error);
     }
   }
 
@@ -221,19 +162,14 @@ export class FeedComponent implements OnInit, OnDestroy {
     }
   }
 
-  onLikePost(post: Post): void {
+  async onLikePost(post: Post): Promise<void> {
     if (!this.userName || this.userName.trim() === '') {
       return; // Only allow likes for logged-in users
     }
-    const index = post.likedBy.indexOf(this.userName);
-    if (index === -1) {
-      // User hasn't liked, so like it
-      post.likedBy.push(this.userName);
-      post.likes++;
-    } else {
-      // User has liked, so unlike it
-      post.likedBy.splice(index, 1);
-      post.likes--;
+    try {
+      await this.postService.toggleLike(post.id, this.userEmail, this.userName);
+    } catch (error) {
+      console.error('Error toggling like:', error);
     }
   }
 
@@ -242,16 +178,19 @@ export class FeedComponent implements OnInit, OnDestroy {
     // For simplicity, since input is always there, perhaps no action needed
   }
 
-  submitComment(post: Post): void {
+  async submitComment(post: Post): Promise<void> {
     const text = this.newCommentText[post.id]?.trim();
     if (text) {
-      const newComment: Comment = {
-        username: this.userName || 'Anonymous',
-        text: text,
-        time: new Date().toLocaleString(),
-      };
-      post.comments.push(newComment);
-      this.newCommentText[post.id] = ''; // Clear the input
+      try {
+        await this.postService.addComment(post.id, {
+          username: this.userName || 'Anonymous',
+          text: text,
+          userId: this.userEmail
+        });
+        this.newCommentText[post.id] = ''; // Clear the input
+      } catch (error) {
+        console.error('Error adding comment:', error);
+      }
     }
   }
 
@@ -263,20 +202,27 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.router.navigate(['/home']);
   }
 
-  deletePost(post: Post): void {
+  async deletePost(post: Post): Promise<void> {
     if (this.isAdmin) {
-      this.posts = this.posts.filter((p) => p.id !== post.id);
-      this.savePostsToStorage();
-      this.showNotification('Post deleted successfully', 'success');
+      try {
+        await this.postService.deletePost(post.id);
+        this.showNotification('Post deleted successfully', 'success');
+      } catch (error) {
+        console.error('Error deleting post:', error);
+        this.showNotification('Error deleting post', 'error');
+      }
     }
   }
 
-  pinPost(post: Post): void {
+  async pinPost(post: Post): Promise<void> {
     if (this.userRole === 'admin') {
-      post.isPinned = !post.isPinned;
-      this.savePostsToStorage();
-      this.loadPostsFromStorage(); // Reload to re-sort
-      this.showNotification(post.isPinned ? 'Post pinned' : 'Post unpinned', 'success');
+      try {
+        await this.postService.updatePost(post.id, { isPinned: !post.isPinned });
+        this.showNotification(post.isPinned ? 'Post unpinned' : 'Post pinned', 'success');
+      } catch (error) {
+        console.error('Error pinning/unpinning post:', error);
+        this.showNotification('Error updating post', 'error');
+      }
     }
   }
 
@@ -313,30 +259,43 @@ export class FeedComponent implements OnInit, OnDestroy {
     return this.posts.reduce((total, post) => total + post.comments.length, 0);
   }
 
-  handlePostSubmit(): void {
+  async handlePostSubmit(): Promise<void> {
     if (this.postText.trim()) {
-      const newPost: Post = {
-        id: this.posts.length + 1,
-        author: this.userName || 'Anonymous',
-        avatar: this.userName.charAt(0).toUpperCase(),
-        content: this.postText,
-        time: 'Just now',
-        likes: 0,
-        comments: [],
-        tags: [],
-        type: this.currentTab === 'post' ? 'text' : 'image',
-        likedBy: [],
-      };
-      this.posts.unshift(newPost); // Add to the beginning of the array
-      this.postText = ''; // Clear the input
-      this.initializePopularPosts(); // Update popular posts
-      this.savePostsToStorage(); // Save to localStorage
+      try {
+        await this.postService.createPost({
+          author: this.userName || 'Anonymous',
+          avatar: this.userName.charAt(0).toUpperCase(),
+          content: this.postText,
+          tags: [],
+          type: this.currentTab === 'post' ? 'text' : 'image',
+          userId: this.userEmail,
+          communityName: this.communityName
+        });
+        this.postText = ''; // Clear the input
+      } catch (error) {
+        console.error('Error creating post:', error);
+        this.showNotification('Error creating post', 'error');
+      }
+    }
+  }
+
+  async seedPosts(): Promise<void> {
+    try {
+      const success = await this.seedService.seedInitialPosts(this.communityName);
+      if (success) {
+        this.showNotification('Sample posts added successfully!', 'success');
+      } else {
+        this.showNotification('Error seeding posts', 'error');
+      }
+    } catch (error) {
+      console.error('Error seeding posts:', error);
+      this.showNotification('Error seeding posts', 'error');
     }
   }
 
   savePostsToStorage(): void {
-    const userEmail = localStorage.getItem('userEmail') || '';
-    const feedPostsKey = `feed_posts_${userEmail}`;
+    const communityName = this.authService.getCommunityName() || '';
+    const feedPostsKey = `feed_posts_${communityName}`;
     localStorage.setItem(feedPostsKey, JSON.stringify(this.posts));
   }
 
@@ -353,7 +312,7 @@ export class FeedComponent implements OnInit, OnDestroy {
     }
   }
 
-  trackByPostId(index: number, post: Post): number {
+  trackByPostId(index: number, post: Post): string {
     return post.id;
   }
 
@@ -373,5 +332,10 @@ export class FeedComponent implements OnInit, OnDestroy {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
     }
+    if (this.postsUnsubscribe) {
+      this.postsUnsubscribe();
+    }
+    this.commentUnsubscribers.forEach(unsubscribe => unsubscribe());
+    this.commentUnsubscribers.clear();
   }
 }

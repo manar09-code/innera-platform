@@ -74,6 +74,16 @@
           </button>
         </div>
 
+        <!-- Feed Stats -->
+        <div class="feed-stats" *ngIf="isAdmin">
+          <div class="stats-info">
+            <span>{{ getPostCount() }} posts</span>
+            <span>{{ getTotalLikes() }} likes</span>
+            <span>{{ getTotalComments() }} comments</span>
+          </div>
+          <button (click)="seedPosts()" class="seed-button">Seed Posts</button>
+        </div>
+
         <!-- Posts Feed -->
         <div class="posts-feed">
           <div class="post-card" *ngFor="let post of posts; trackBy: trackByPostId">

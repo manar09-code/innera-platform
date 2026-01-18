@@ -29,7 +29,7 @@ export class LoginAdminComponent {
     this.showPassword = !this.showPassword;
   }
 
-  login() {
+  async login() {
     if (this.form.invalid) {
       this.errorMessage = 'Please fill in all fields correctly';
       return;
@@ -37,21 +37,23 @@ export class LoginAdminComponent {
 
     this.isLoading = true;
 
-    setTimeout(() => {
+    try {
       const email = this.form.get('email')?.value;
       const password = this.form.get('password')?.value;
       const communityName = this.form.get('communityName')?.value;
 
-      const success = this.authService.loginAdmin(email, password, communityName);
-      if (success) {
+      const result = await this.authService.loginAdmin(email, password, communityName);
+      if (result.success) {
         this.errorMessage = '';
         this.router.navigate(['/feed']);
       } else {
-        this.errorMessage =
-          'Invalid credentials. Please check your email, password, and community name.';
+        this.errorMessage = result.error || 'Invalid credentials. Please check your email, password, and community name.';
       }
+    } catch (error) {
+      this.errorMessage = 'An error occurred during login.';
+    } finally {
       this.isLoading = false;
-    }, 1000);
+    }
   }
 
   goToForgotPassword() {
