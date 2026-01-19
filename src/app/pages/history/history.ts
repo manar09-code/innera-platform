@@ -2,30 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-
-interface Post {
-  id: number;
-  author: string;
-  avatar: string;
-  content: string;
-  time: string;
-  likes: number;
-  comments: any[];
-  tags: string[];
-  type: string;
-  likedBy: string[];
-}
-
-interface Comment {
-  username: string;
-  text: string;
-  time: string;
-}
+import { PostService, Post, Comment } from '../../services/post.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { Timestamp } from 'firebase/firestore';
 
 @Component({
   selector: 'app-history',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './history.html',
   styleUrls: ['./history.css'],
 })
@@ -52,52 +36,31 @@ export class HistoryComponent implements OnInit {
   commentsItemsPerPage: number = 5;
   commentsTotalPages: number = 0;
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private postService: PostService
+  ) { }
 
   ngOnInit() {
     this.userRole = localStorage.getItem('userRole') || '';
     this.loadHistory();
   }
 
-  loadHistory() {
-    const userName = localStorage.getItem('userName') || '';
+  async loadHistory() {
     const userEmail = localStorage.getItem('userEmail') || '';
+    const userName = localStorage.getItem('userName') || '';
 
-    // Load posts
-    const storedPosts = localStorage.getItem(`posts_${userEmail}`);
-    if (storedPosts) {
-      const allPosts: Post[] = JSON.parse(storedPosts);
-      this.userPosts = allPosts.filter((p) => p.author === userName);
+    if (userEmail) {
+      // Load User Posts
+      this.userPosts = await this.postService.getUserPosts(userEmail);
+
+      // Load User Likes
+      this.userLikes = await this.postService.getUserLikedPosts(userName);
+
+      // Load User Comments
+      this.userComments = await this.postService.getUserComments(userEmail);
     }
-
-    // Load image posts
-    const storedImagePosts = localStorage.getItem(`imagePosts_${userEmail}`);
-    if (storedImagePosts) {
-      const allImagePosts: any[] = JSON.parse(storedImagePosts);
-      const imagePostsAsPosts: Post[] = allImagePosts.map((ip) => ({
-        id: ip.id,
-        author: ip.author,
-        avatar: '👤',
-        content: ip.caption,
-        time: new Date(ip.createdAt).toLocaleString(),
-        likes: 0,
-        comments: [],
-        tags: [],
-        type: 'image',
-        likedBy: [],
-      }));
-      this.userPosts = [
-        ...this.userPosts,
-        ...imagePostsAsPosts.filter((p) => p.author === userName),
-      ];
-    }
-
-    // Mock likes and comments (in real app, track separately)
-    this.userLikes = this.userPosts.slice(0, 5); // Mock
-    this.userComments = [
-      { username: userName, text: 'Great post!', time: '2 hours ago' },
-      { username: userName, text: 'Thanks for sharing', time: '1 day ago' },
-    ];
 
     // Calculate total pages
     this.postsTotalPages = Math.ceil(this.userPosts.length / this.postsItemsPerPage);
@@ -111,6 +74,15 @@ export class HistoryComponent implements OnInit {
     } else {
       this.router.navigate(['/user-profile']);
     }
+  }
+
+  toDate(time: any): Date | null {
+    if (!time) return null;
+    if (time instanceof Timestamp) {
+      return time.toDate();
+    }
+    // Handle string or number if legacy data exists
+    return new Date(time);
   }
 
   // Pagination methods for posts

@@ -58,6 +58,7 @@ export class ImagePostComponent {
       const userName = localStorage.getItem('userName') || 'Anonymous';
       const userEmail = localStorage.getItem('userEmail') || '';
 
+      const userRole = localStorage.getItem('userRole') || 'user';
       await this.postService.createPost({
         author: userName,
         avatar: userName.charAt(0).toUpperCase(),
@@ -66,7 +67,8 @@ export class ImagePostComponent {
         type: 'image',
         userId: userEmail,
         communityName: communityName,
-        imageData: this.imagePreview
+        imageData: this.imagePreview,
+        authorRole: userRole as 'admin' | 'user'
       });
 
       this.resetForm();

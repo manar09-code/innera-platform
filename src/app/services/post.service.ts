@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
+import { Firestore, collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, query, where, onSnapshot, Timestamp, collectionGroup } from 'firebase/firestore';
 import { firestore } from '../firebase.config';
 
 export interface Comment {
@@ -8,6 +8,9 @@ export interface Comment {
   text: string;
   time: Timestamp;
   userId: string;
+  parentId?: string;
+  communityName: string;
+  replies?: Comment[];
 }
 
 export interface Post {
@@ -25,6 +28,8 @@ export interface Post {
   isPinned?: boolean;
   userId: string;
   communityName: string;
+  authorRole: 'admin' | 'user';
+  commentCount?: number; // Added to track count for stats
 }
 
 @Injectable({
@@ -43,7 +48,8 @@ export class PostService {
         time: Timestamp.now(),
         likes: 0,
         comments: [],
-        likedBy: []
+        likedBy: [],
+        commentCount: 0
       });
       return docRef.id;
     } catch (error) {
@@ -99,13 +105,23 @@ export class PostService {
   }
 
   // Add a comment to a post
-  async addComment(postId: string, commentData: Omit<Comment, 'id' | 'time'>): Promise<string> {
+  async addComment(postId: string, commentData: Omit<Comment, 'id' | 'time'>, parentId?: string): Promise<string> {
     try {
       const commentsRef = collection(firestore, 'posts', postId, 'comments');
       const docRef = await addDoc(commentsRef, {
         ...commentData,
+        parentId: parentId || null,
         time: Timestamp.now()
       });
+
+      // Update comment count on post
+      const postRef = doc(firestore, 'posts', postId);
+      const postSnap = await getDoc(postRef);
+      if (postSnap.exists()) {
+        const currentCount = postSnap.data()['commentCount'] || 0;
+        await updateDoc(postRef, { commentCount: currentCount + 1 });
+      }
+
       return docRef.id;
     } catch (error) {
       console.error('Error adding comment:', error);
@@ -205,5 +221,94 @@ export class PostService {
       callback(comments);
     });
     return unsubscribe;
+  }
+  // Get posts authored by a specific user
+  async getUserPosts(userEmail: string): Promise<Post[]> {
+    try {
+      const postsRef = collection(firestore, 'posts');
+      const q = query(postsRef, where('userId', '==', userEmail));
+      const querySnapshot = await getDocs(q);
+      const posts: Post[] = [];
+      querySnapshot.forEach((doc) => {
+        const postData = doc.data() as Omit<Post, 'id'>;
+        posts.push({ id: doc.id, ...postData, time: postData.time as Timestamp });
+      });
+      return posts.sort((a, b) => b.time.toMillis() - a.time.toMillis());
+    } catch (error) {
+      console.error("Error getting user posts:", error);
+      return [];
+    }
+  }
+
+  // Get posts liked by user
+  async getUserLikedPosts(username: string): Promise<Post[]> {
+    try {
+      const postsRef = collection(firestore, 'posts');
+      const q = query(postsRef, where('likedBy', 'array-contains', username));
+      const querySnapshot = await getDocs(q);
+      const posts: Post[] = [];
+      querySnapshot.forEach((doc) => {
+        const postData = doc.data() as Omit<Post, 'id'>;
+        posts.push({ id: doc.id, ...postData, time: postData.time as Timestamp });
+      });
+      return posts;
+    } catch (error) {
+      console.error("Error getting liked posts:", error);
+      return [];
+    }
+  }
+
+  // Get comments by user
+  async getUserComments(userId: string): Promise<Comment[]> {
+    try {
+      const q = query(collectionGroup(firestore, 'comments'), where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      const comments: Comment[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data() as Omit<Comment, 'id'>;
+        comments.push({ id: doc.id, ...data, time: data.time as Timestamp });
+      });
+      return comments.sort((a, b) => b.time.toMillis() - a.time.toMillis());
+    } catch (error) {
+      console.error("Error getting user comments:", error);
+      // NOTE: This might require an index error in console, link provided by Firebase must be clicked
+      return [];
+    }
+  }
+
+  // Get all stats
+  async getCommunityStats(communityName: string): Promise<any> {
+    try {
+      const postsRef = collection(firestore, 'posts');
+      const q = query(postsRef, where('communityName', '==', communityName));
+      const snapshot = await getDocs(q);
+
+      let totalPosts = 0;
+      let totalImagePosts = 0;
+      let totalTextPosts = 0;
+      let totalLikes = 0;
+      let totalComments = 0;
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        totalPosts++;
+        if (data['type'] === 'image') totalImagePosts++;
+        else totalTextPosts++;
+
+        totalLikes += (data['likes'] || 0);
+        totalComments += (data['commentCount'] || 0); // Use the new field
+      });
+
+      return {
+        totalPosts,
+        totalImagePosts,
+        totalTextPosts,
+        totalLikes,
+        totalComments
+      };
+    } catch (e) {
+      console.error(e);
+      return { totalPosts: 0, totalImagePosts: 0, totalTextPosts: 0, totalLikes: 0, totalComments: 0 };
+    }
   }
 }

@@ -18,7 +18,8 @@ export class SeedService {
         type: 'text',
         userId: 'ahmed@example.com',
         communityName: communityName,
-        isPinned: true
+        isPinned: true,
+        authorRole: 'admin' as 'admin' | 'user'
       },
       {
         author: 'Fatima Trabelsi',
@@ -27,7 +28,8 @@ export class SeedService {
         tags: ['TunisianFood', 'Couscous'],
         type: 'text',
         userId: 'fatima@example.com',
-        communityName: communityName
+        communityName: communityName,
+        authorRole: 'user' as 'admin' | 'user'
       },
       {
         author: 'Mohamed Saidi',
@@ -36,7 +38,8 @@ export class SeedService {
         tags: ['Hammamet', 'BeachLife'],
         type: 'text',
         userId: 'mohamed@example.com',
-        communityName: communityName
+        communityName: communityName,
+        authorRole: 'user' as 'admin' | 'user'
       },
       {
         author: 'Leila Mansouri',
@@ -45,7 +48,8 @@ export class SeedService {
         tags: ['Tunis', 'Culture'],
         type: 'text',
         userId: 'leila@example.com',
-        communityName: communityName
+        communityName: communityName,
+        authorRole: 'user' as 'admin' | 'user'
       },
       {
         author: 'Youssef Gharbi',
@@ -54,7 +58,8 @@ export class SeedService {
         tags: ['TunisianCulture', 'Heritage'],
         type: 'text',
         userId: 'youssef@example.com',
-        communityName: communityName
+        communityName: communityName,
+        authorRole: 'user' as 'admin' | 'user'
       }
     ];
 

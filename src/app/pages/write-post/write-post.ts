@@ -29,6 +29,7 @@ export class WritePostComponent {
       const communityName = this.authService.getCommunityName() || 'Innera Platform';
       const userName = localStorage.getItem('userName') || 'Anonymous';
       const userEmail = localStorage.getItem('userEmail') || '';
+      const userRole = localStorage.getItem('userRole') || 'user';
 
       await this.postService.createPost({
         author: userName,
@@ -37,7 +38,8 @@ export class WritePostComponent {
         tags: [],
         type: 'text',
         userId: userEmail,
-        communityName: communityName
+        communityName: communityName,
+        authorRole: userRole as 'admin' | 'user'
       });
 
       this.postContent = '';

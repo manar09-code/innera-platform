@@ -1,141 +1,113 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { collection, addDoc, getDocs, query, orderBy, where, Timestamp } from 'firebase/firestore';
-import { firestore } from '../../firebase.config';
-
-interface Message {
-  id: string;
-  content: string;
-  sender: string; // 'admin' or user email
-  timestamp: string;
-}
+import { MessageService, Message } from '../../services/message.service'; // Import service
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 interface Conversation {
   userEmail: string;
   userName: string;
   messages: Message[];
   lastMessage: string;
-  lastTimestamp: string;
+  lastTimestamp: any;
 }
 
 @Component({
   selector: 'app-admin-message',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './admin-message.html',
   styleUrls: ['./admin-message.css'],
 })
-export class AdminMessageComponent implements OnInit {
+export class AdminMessageComponent implements OnInit, OnDestroy {
   conversations: Conversation[] = [];
   selectedConversation: Conversation | null = null;
   newMessage: string = '';
+  private unsubscribe: (() => void) | null = null;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private messageService: MessageService) { }
 
   ngOnInit() {
     this.loadConversations();
   }
 
-  async loadConversations() {
-    try {
-      const messagesRef = collection(firestore, 'adminMessages');
-      const q = query(messagesRef, orderBy('timestamp', 'desc'));
-      const querySnapshot = await getDocs(q);
+  ngOnDestroy() {
+    if (this.unsubscribe) this.unsubscribe();
+  }
 
-      const userConversations: { [key: string]: Conversation } = {};
+  loadConversations() {
+    this.unsubscribe = this.messageService.listenToAllMessages((messages) => {
+      const grouped: { [key: string]: Conversation } = {};
 
-      querySnapshot.forEach((doc) => {
-        const msg = doc.data() as any;
-        const sender = msg['userEmail'];
+      messages.forEach(msg => {
+        // Determine conversation key (user email)
+        const convKey = msg.conversationId;
 
-        if (!userConversations[sender]) {
-          userConversations[sender] = {
-            userEmail: sender,
-            userName: msg['userName'] || sender,
+        if (!grouped[convKey]) {
+          grouped[convKey] = {
+            userEmail: convKey,
+            userName: msg.senderRole === 'user' ? msg.senderName : 'User',
             messages: [],
             lastMessage: '',
-            lastTimestamp: '',
+            lastTimestamp: 0
           };
         }
 
-        const message: Message = {
-          id: doc.id,
-          content: msg['content'],
-          sender: sender,
-          timestamp: msg['timestamp'].toDate().toISOString(),
-        };
-
-        userConversations[sender].messages.unshift(message);
-        if (!userConversations[sender].lastMessage) {
-          userConversations[sender].lastMessage = msg['content'];
-          userConversations[sender].lastTimestamp = message.timestamp;
+        // Update username if we find a user message (in case first msg was admin)
+        if (msg.senderRole === 'user') {
+          grouped[convKey].userName = msg.senderName;
         }
+
+        grouped[convKey].messages.push(msg); // already sorted desc by query, but let's re-sort if needed
+
+        // Sort messages asc for display
+        grouped[convKey].messages.sort((a: any, b: any) => a.createdAt?.toMillis() - b.createdAt?.toMillis());
+
+        // Last message info (since iteration order might vary or query order, let's pick last from sorted)
+        const lastMsg = grouped[convKey].messages[grouped[convKey].messages.length - 1];
+        grouped[convKey].lastMessage = lastMsg.content;
+        grouped[convKey].lastTimestamp = lastMsg.createdAt;
       });
 
-      this.conversations = Object.values(userConversations);
-    } catch (error) {
-      console.error('Error loading conversations:', error);
-      // Fallback to localStorage if Firestore fails
-      this.loadConversationsFromLocalStorage();
-    }
-  }
+      this.conversations = Object.values(grouped).sort((a: any, b: any) => b.lastTimestamp?.toMillis() - a.lastTimestamp?.toMillis());
 
-  loadConversationsFromLocalStorage() {
-    // Load real user messages from localStorage
-    const adminMessages = JSON.parse(localStorage.getItem('admin_messages') || '[]');
-
-    // Group messages by user
-    const userConversations: { [key: string]: Conversation } = {};
-
-    adminMessages.forEach((msg: any) => {
-      if (!userConversations[msg.sender]) {
-        userConversations[msg.sender] = {
-          userEmail: msg.sender,
-          userName: msg.senderName,
-          messages: [],
-          lastMessage: '',
-          lastTimestamp: '',
-        };
+      // Re-select conversation if active
+      if (this.selectedConversation) {
+        const updated = this.conversations.find(c => c.userEmail === this.selectedConversation!.userEmail);
+        if (updated) {
+          this.selectedConversation = updated;
+          this.autoScrollBottom();
+        }
       }
-      userConversations[msg.sender].messages.push({
-        id: msg.id,
-        content: msg.content,
-        sender: msg.sender,
-        timestamp: msg.timestamp,
-      });
-      userConversations[msg.sender].lastMessage = msg.content;
-      userConversations[msg.sender].lastTimestamp = msg.timestamp;
     });
-
-    this.conversations = Object.values(userConversations);
   }
 
   selectConversation(conversation: Conversation) {
     this.selectedConversation = conversation;
+    this.autoScrollBottom();
   }
 
-  sendMessage() {
+  async sendMessage() {
     if (!this.newMessage.trim() || !this.selectedConversation) return;
 
-    const message: Message = {
-      id: Date.now().toString(),
-      content: this.newMessage.trim(),
-      sender: 'admin',
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      await this.messageService.sendReplyToUser(this.selectedConversation.userEmail, this.newMessage.trim());
+      this.newMessage = '';
+      this.autoScrollBottom();
+    } catch (e) {
+      console.error("Error sending reply", e);
+    }
+  }
 
-    this.selectedConversation.messages.push(message);
-    this.selectedConversation.lastMessage = message.content;
-    this.selectedConversation.lastTimestamp = message.timestamp;
-    this.newMessage = '';
-
-    // In real app, send to backend
-    console.log('Admin reply sent:', message);
+  autoScrollBottom() {
+    setTimeout(() => {
+      const container = document.querySelector('.chat-messages');
+      if (container) container.scrollTop = container.scrollHeight;
+    }, 100);
   }
 
   goBack() {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/feed']); // Or dashboard
   }
 }

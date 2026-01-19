@@ -1,11 +1,23 @@
-import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, Input, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewChecked,
+  ElementRef,
+  ViewChild,
+  Input,
+  OnDestroy
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
-import { httpsCallable, getFunctions } from 'firebase/functions';
 import { HttpClient } from '@angular/common/http';
 import { filter, Subscription } from 'rxjs';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../../firebase.config';
+
 import { PostService } from '../../services/post.service';
+import { ConfigService } from '../../services/config.service';
+import { AiService } from '../../services/ai.service';
 
 interface Message {
   text: string;
@@ -29,7 +41,9 @@ interface FeedPostSummary {
   templateUrl: './ai-assistant.html',
   styleUrls: ['./ai-assistant.css'],
 })
-export class AiAssistantComponent implements OnInit, AfterViewChecked, OnDestroy {
+export class AiAssistantComponent
+  implements OnInit, AfterViewChecked, OnDestroy {
+
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
   @Input() currentPage: string = '';
   @Input() userRole: string = '';
@@ -38,30 +52,39 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked, OnDestroy
   isLoading = false;
   userMessage = '';
   messages: Message[] = [];
+
   private routerSubscription?: Subscription;
 
-  constructor(private router: Router, private http: HttpClient, private postService: PostService) {}
+  constructor(
+    private router: Router,
+    private http: HttpClient,
+    private postService: PostService,
+    private configService: ConfigService,
+    private aiService: AiService
+  ) { }
+
+  /* -------------------- Lifecycle -------------------- */
 
   ngOnInit() {
     this.userRole = localStorage.getItem('userRole') || '';
     this.currentPage = this.router.url.split('/')[1] || 'home';
-    // Update currentPage when route changes
+
     this.routerSubscription = this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
+      .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => {
         this.currentPage = this.router.url.split('/')[1] || 'home';
       });
   }
 
   ngOnDestroy() {
-    if (this.routerSubscription) {
-      this.routerSubscription.unsubscribe();
-    }
+    this.routerSubscription?.unsubscribe();
   }
 
   ngAfterViewChecked() {
     this.scrollToBottom();
   }
+
+  /* -------------------- UI -------------------- */
 
   toggleChat() {
     this.isOpen = !this.isOpen;
@@ -69,6 +92,8 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked, OnDestroy
       setTimeout(() => this.scrollToBottom(), 100);
     }
   }
+
+  /* -------------------- Core Logic -------------------- */
 
   async sendMessage() {
     if (!this.userMessage.trim() || this.isLoading) return;
@@ -85,28 +110,34 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked, OnDestroy
     });
 
     try {
-      // Gather context for AI
-      const context = await this.buildContext();
+      // Always fetch latest admin instructions and news
+      const config = await this.configService.getConfig();
 
-      // Call Firebase function
-      const response = await this.http.post<{ reply: string }>(
-        'https://us-central1-innera-platform.cloudfunctions.net/aiChat',
-        {
-          message,
-          context
-        }
-      ).toPromise();
+      if (!config.openaiKey) {
+        this.messages.push({
+          text: 'AI Assistant is not configured. Please ask the admin to provide a Gemini API Key in the "Config AI" page.',
+          time: new Date(),
+          isUser: false,
+        });
+        return;
+      }
 
-      // Add AI response
+      // ✅ Build context and call AI
+      const context = await this.buildContext(config);
+
+      const reply = await this.aiService.getChatResponse(message, context, config.openaiKey);
+
       this.messages.push({
-        text: response?.reply || 'Sorry, I couldn\'t generate a response.',
+        text: reply || 'Sorry, I could not generate a response.',
         time: new Date(),
         isUser: false,
       });
-    } catch (error) {
-      console.error('Error calling AI service:', error);
+
+    } catch (error: any) {
+      console.error('AI Assistant error:', error);
+      const errorMsg = error.message || 'Unknown error';
       this.messages.push({
-        text: 'Sorry, I\'m having trouble connecting right now. Please try again later.',
+        text: `Sorry, something went wrong: ${errorMsg}. Please try again later.`,
         time: new Date(),
         isUser: false,
       });
@@ -115,38 +146,46 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked, OnDestroy
     }
   }
 
-  private async buildContext(): Promise<any> {
+  /* -------------------- Helpers -------------------- */
+
+  private isCommunityQuestion(message: string): boolean {
+    const keywords = [
+      'community',
+      'tunisia hood',
+      'post',
+      'feed',
+      'comment',
+      'member',
+      'rules',
+      'guidelines',
+      'learning',
+      'resource',
+      'admin',
+      'platform'
+    ];
+
+    const lower = message.toLowerCase();
+    return keywords.some(k => lower.includes(k));
+  }
+
+  private async buildContext(config: { instructions: string; news: string }): Promise<any> {
     const userEmail = localStorage.getItem('userEmail') || '';
     const communityName = localStorage.getItem('communityName') || '';
 
-    // Get admin instructions
-    const aiInstructions = localStorage.getItem('aiInstructions') || '';
-
-    // Get community info
-    const communityInfoStr = localStorage.getItem('communityInfo');
-    let communityInfo = null;
-    if (communityInfoStr) {
-      try {
-        communityInfo = JSON.parse(communityInfoStr);
-      } catch (e) {
-        console.error('Error parsing community info:', e);
-      }
-    }
-
-    // Get recent feed posts (limit to last 10) from Firestore
     let feedPosts: FeedPostSummary[] = [];
+
     try {
       const posts = await this.postService.getPosts(communityName);
       feedPosts = posts.slice(0, 10).map((post: any) => ({
         author: post.author,
         content: post.content,
-        time: post.time.toDate(),
-        likes: post.likes,
-        comments: post.comments.length,
-        tags: post.tags
+        time: post.time?.toDate?.() || new Date(),
+        likes: post.likes || 0,
+        comments: post.comments?.length || 0,
+        tags: post.tags || []
       }));
-    } catch (error) {
-      console.error('Error getting posts for AI context:', error);
+    } catch (err) {
+      console.error('Error loading feed context:', err);
     }
 
     return {
@@ -154,8 +193,8 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked, OnDestroy
       role: this.userRole,
       userEmail,
       communityName,
-      aiInstructions,
-      communityInfo,
+      aiInstructions: config.instructions,
+      news: config.news,
       feedPosts
     };
   }
@@ -164,6 +203,6 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked, OnDestroy
     try {
       this.messagesContainer.nativeElement.scrollTop =
         this.messagesContainer.nativeElement.scrollHeight;
-    } catch (err) {}
+    } catch { }
   }
 }

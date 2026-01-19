@@ -1,74 +1,29 @@
 <div class="message-wrapper">
   <div class="message-header">
-    <button class="btn-back" (click)="goBack()">Back</button>
-    <h1 class="page-title">Messages</h1>
+    <button class="btn-back" (click)="goBack()">{{ 'BACK' | translate }}</button>
+    <h1 class="page-title">{{ 'MESSAGES' | translate }}</h1>
   </div>
-  
+
   <div class="message-container">
-  <!-- Left Section: History of last sent messages -->
-  <div class="left-section">
-    <h3>Last Sent Messages</h3>
-    <div class="message-history">
-      <div class="message-item" *ngFor="let message of lastSentMessages">
-        <p>{{ message.content }}</p>
-        <small>{{ message.createdAt | date : 'short' }}</small>
+    <div class="chat-interface">
+      <div class="messages-list">
+        <div class="message" *ngFor="let msg of messages" [class.sent]="msg.senderRole === 'user'"
+          [class.received]="msg.senderRole === 'admin'">
+          <div class="message-bubble">
+            <p>{{ msg.content }}</p>
+            <small>{{ msg.createdAt.toDate() | date:'short' }}</small>
+          </div>
+        </div>
+        <p *ngIf="messages.length === 0" class="no-messages">{{ 'NO_MESSAGES' | translate }}</p>
       </div>
-      <p *ngIf="lastSentMessages.length === 0">No messages sent yet.</p>
-    </div>
-  </div>
 
-  <!-- Center Section: CRUD actions -->
-  <div class="center-section">
-    <h2>Messages</h2>
-    <div class="message-list">
-      <div class="message-item" *ngFor="let message of messages" (click)="selectMessage(message)">
-        <p>{{ message.content }}</p>
-        <small>{{ message.createdAt | date : 'short' }}</small>
-      </div>
-      <p *ngIf="messages.length === 0">No messages yet.</p>
-    </div>
-
-    <div class="crud-actions">
-      <textarea
-        [(ngModel)]="createMessageContent"
-        placeholder="Type your message..."
-        rows="4"
-        class="message-input"
-      ></textarea>
-      <div class="action-buttons">
-        <button
-          (click)="createMessage()"
-          [disabled]="!createMessageContent.trim()"
-          *ngIf="!isEditing"
-        >
-          Create Message
+      <div class="input-area">
+        <textarea [(ngModel)]="createMessageContent" placeholder="{{ 'WRITE_MESSAGE_TO_ADMIN' | translate }}..."
+          rows="3" class="message-input"></textarea>
+        <button (click)="sendMessage()" [disabled]="!createMessageContent.trim()" class="send-button">
+          {{ 'SEND' | translate }}
         </button>
-        <button
-          (click)="updateMessage()"
-          [disabled]="!createMessageContent.trim()"
-          *ngIf="isEditing"
-        >
-          Update Message
-        </button>
-        <button (click)="deleteMessage()" *ngIf="isEditing">Delete Message</button>
-        <button (click)="cancelEdit()" *ngIf="isEditing">Cancel</button>
       </div>
     </div>
-  </div>
-
-  <!-- Bottom/Center Section: Message input to contact Admin -->
-  <div class="bottom-section">
-    <h3>Contact Admin</h3>
-    <textarea
-      [(ngModel)]="sendMessageContent"
-      placeholder="Send a message to the Admin..."
-      rows="3"
-      class="admin-message-input"
-    ></textarea>
-    <button (click)="sendMessage()" [disabled]="!sendMessageContent.trim()" class="send-button">
-      Send Message
-    </button>
-  </div>
-
   </div>
 </div>

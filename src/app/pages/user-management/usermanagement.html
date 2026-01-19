@@ -1,32 +1,35 @@
 <div class="user-management-wrapper">
   <div class="user-management-header">
-    <button class="btn-back" (click)="goBack()">Back</button>
-    <h1 class="page-title">User Management</h1>
+    <button class="btn-back" (click)="goBack()">{{ 'BACK' | translate }}</button>
+    <h1 class="page-title">{{ 'USER_MANAGEMENT' | translate }}</h1>
   </div>
-  
+
   <div class="user-management-container">
     <!-- Top Section: Community Members List -->
     <div class="top-section">
-      <h2 class="section-title">Community Members</h2>
+      <h2 class="section-title">{{ 'COMMUNITY_MEMBERS' | translate }}</h2>
       <ul class="members-list">
         <li *ngFor="let member of members" class="member-item" [class.blocked]="member.isBlocked">
           <div class="member-info">
             <span class="member-name">{{ member.name }}</span>
             <span class="member-email">({{ member.email }})</span>
-            <span class="blocked-badge" *ngIf="member.isBlocked">Blocked</span>
+            <span class="blocked-badge" *ngIf="member.isBlocked">{{ 'BLOCKED' | translate }}</span>
           </div>
           <div class="member-actions">
-            <button (click)="blockMember(member.id)" [class.block-btn]="!member.isBlocked" [class.unblock-btn]="member.isBlocked" class="action-btn">
-              {{ member.isBlocked ? 'Unblock' : 'Block' }}
+            <button (click)="blockMember(member.id)" [class.block-btn]="!member.isBlocked"
+              [class.unblock-btn]="member.isBlocked" class="action-btn">
+              {{ member.isBlocked ? ('UNBLOCK' | translate) : ('BLOCK' | translate) }}
             </button>
-            <button (click)="deleteMember(member.id)" class="delete-btn">Delete</button>
+            <button (click)="deleteMember(member.id)" class="delete-btn">{{ 'DELETE' | translate }}</button>
           </div>
         </li>
       </ul>
       <div class="add-member">
-        <input [(ngModel)]="newMemberName" placeholder="Member Name" type="text" class="member-input" />
-        <input [(ngModel)]="newMemberEmail" placeholder="Member Email" type="email" class="member-input" />
-        <button (click)="addMember()" class="add-btn">Add Member</button>
+        <input [(ngModel)]="newMemberName" placeholder="{{ 'MEMBER_NAME' | translate }}" type="text"
+          class="member-input" />
+        <input [(ngModel)]="newMemberEmail" placeholder="{{ 'MEMBER_EMAIL' | translate }}" type="email"
+          class="member-input" />
+        <button (click)="addMember()" class="add-btn">{{ 'ADD_MEMBER' | translate }}</button>
       </div>
     </div>
 
@@ -36,13 +39,13 @@
     <!-- Bottom Section: Divided into 2 vertical sections -->
     <div class="bottom-section">
       <div class="bottom-left">
-        <h3 class="section-title">Community Name</h3>
+        <h3 class="section-title">{{ 'COMMUNITY_NAME' | translate }}</h3>
         <p class="section-content">{{ communityName }}</p>
       </div>
       <div class="bottom-right">
-        <h3 class="section-title">Join Link / Invite Code</h3>
+        <h3 class="section-title">{{ 'JOIN_LINK' | translate }} / {{ 'INVITE_CODE' | translate }}</h3>
         <p class="section-content">{{ joinLink }}</p>
-        <button (click)="copyJoinLink()" class="copy-btn">Copy Link</button>
+        <button (click)="copyJoinLink()" class="copy-btn">{{ 'COPY_LINK' | translate }}</button>
       </div>
     </div>
   </div>

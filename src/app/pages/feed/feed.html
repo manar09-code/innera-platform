@@ -9,7 +9,7 @@
           <span>{{ userRole || 'User' }}</span> • <span>{{ communityName }}</span>
         </p>
       </div>
-      <button class="btn-back" (click)="goBack()">Logout</button>
+      <button class="btn-back" (click)="goBack()">{{ 'LOGOUT' | translate }}</button>
     </div>
     <app-navbar></app-navbar>
   </div>
@@ -25,7 +25,7 @@
             <div class="mountain-placeholder"></div>
             <div class="welcome-overlay">
               <button class="welcome-close-btn" (click)="removeWelcomeCard()" title="Remove welcome card">×</button>
-              <h1 class="welcome-title">Welcome to {{ communityName }} Community</h1>
+              <h1 class="welcome-title">{{ 'WELCOME_HEADER' | translate }} {{ communityName }}</h1>
               <p class="welcome-subtitle">Share your thoughts and connect with the community</p>
             </div>
           </div>
@@ -34,24 +34,16 @@
         <!-- Create Post Card -->
         <div class="create-post-card">
           <div class="create-post-header">
-            <h2 class="section-title">Create a Post</h2>
+            <h2 class="section-title">{{ 'CREATE_POST' | translate }}</h2>
           </div>
 
           <!-- Post Tabs -->
           <div class="post-tabs">
-            <button
-              class="tab-btn"
-              [class.active]="currentTab === 'post'"
-              (click)="switchTabUI('post')"
-            >
+            <button class="tab-btn" [class.active]="currentTab === 'post'" (click)="switchTabUI('post')">
               <span class="tab-icon">📝</span>
               Text Post
             </button>
-            <button
-              class="tab-btn"
-              [class.active]="currentTab === 'image'"
-              (click)="switchTabUI('image')"
-            >
+            <button class="tab-btn" [class.active]="currentTab === 'image'" (click)="switchTabUI('image')">
               <span class="tab-icon">🖼️</span>
               Image Post
             </button>
@@ -59,43 +51,47 @@
 
           <!-- Post Input -->
           <div class="post-input-container">
-            <textarea
-              class="post-textarea"
-              placeholder="What's on your mind?"
-              rows="4"
-              [(ngModel)]="postText"
-              (input)="onPostInput()"
-            ></textarea>
+            <textarea class="post-textarea" placeholder="What's on your mind?" rows="4" [(ngModel)]="postText"
+              (input)="onPostInput()"></textarea>
           </div>
 
           <!-- Post Button -->
           <button class="post-button" (click)="handlePostSubmit()">
-            {{ currentTab === 'post' ? 'Post' : 'Upload Image' }}
+            {{ currentTab === 'post' ? ('POST' | translate) : ('UPLOAD_IMAGE' | translate) }}
           </button>
         </div>
 
         <!-- Feed Stats -->
         <div class="feed-stats" *ngIf="isAdmin">
           <div class="stats-info">
-            <span>{{ getPostCount() }} posts</span>
-            <span>{{ getTotalLikes() }} likes</span>
-            <span>{{ getTotalComments() }} comments</span>
+            <span>{{ getPostCount() }} {{ 'POSTS' | translate }}</span>
+            <span>{{ getTotalLikes() }} {{ 'LIKES' | translate }}</span>
+            <span>{{ getTotalComments() }} {{ 'COMMENTS' | translate }}</span>
           </div>
           <button (click)="seedPosts()" class="seed-button">Seed Posts</button>
         </div>
 
         <!-- Posts Feed -->
         <div class="posts-feed">
-          <div class="post-card" *ngFor="let post of posts; trackBy: trackByPostId">
+          <!-- Filter Indicator -->
+          <div class="filter-indicator" *ngIf="currentTag"
+            style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; background: rgba(138, 43, 226, 0.1); padding: 10px 20px; border-radius: 8px; border: 1px solid rgba(255, 184, 77, 0.2);">
+            <span style="color: #ffb84d;">{{ 'FILTERING_BY' | translate }}: <strong>{{ currentTag }}</strong></span>
+            <button (click)="onHashtagClick(currentTag)"
+              style="background: none; border: none; color: white; cursor: pointer;">✕ {{ 'CLEAR' | translate
+              }}</button>
+          </div>
+
+          <div class="post-card" *ngFor="let post of filteredPosts; trackBy: trackByPostId">
             <!-- Post Header -->
             <div class="post-header">
               <div class="post-avatar" (click)="navigateToProfile()">{{ post.avatar }}</div>
               <div class="post-meta" (click)="navigateToProfile()">
                 <h3 class="post-author">
                   {{ post.author }}
-                  <span class="pinned-badge" *ngIf="post.isPinned">📌 Pinned</span>
+                  <span class="pinned-badge" *ngIf="post.isPinned">📌 {{ 'PINNED' | translate }}</span>
                 </h3>
-                <p class="post-time">{{ post.time }}</p>
+                <p class="post-time">{{ post.time.toDate() | date:'short' }}</p>
               </div>
               <div class="post-actions" *ngIf="userRole === 'admin'">
                 <button class="pin-btn" (click)="pinPost(post)" [title]="post.isPinned ? 'Unpin post' : 'Pin post'">
@@ -107,7 +103,7 @@
 
             <!-- Post Content -->
             <p class="post-content">{{ post.content }}</p>
-            
+
             <!-- Image Post Content -->
             <div class="post-image" *ngIf="post.type === 'image' && post.imageData">
               <img [src]="post.imageData" alt="Post image" />
@@ -134,29 +130,45 @@
 
             <!-- Comments Section -->
             <div class="comments-section" *ngIf="post.comments.length > 0">
-              <div class="comment" *ngFor="let comment of post.comments">
+              <ng-container
+                *ngTemplateOutlet="commentTemplate; context: { comments: post.comments, postId: post.id, level: 0 }"></ng-container>
+            </div>
+
+            <ng-template #commentTemplate let-comments="comments" let-postId="postId" let-level="level">
+              <div class="comment" *ngFor="let comment of comments" [style.margin-left.px]="level * 20">
                 <div class="comment-header">
                   <strong>{{ comment.username }}</strong>
-                  <span class="comment-time">{{ comment.time }}</span>
+                  <span class="comment-time">{{ comment.time.toDate() | date:'short' }}</span>
                 </div>
                 <p class="comment-text">{{ comment.text }}</p>
+                <button class="reply-btn" (click)="toggleReplyInput(comment.id)"
+                  style="background:none; border:none; color: #ffb84d; font-size:12px; cursor:pointer; margin-top:5px;">reply</button>
+                <div class="reply-input" *ngIf="showReplyInput[comment.id]" style="margin-top:10px;">
+                  <textarea class="comment-input" placeholder="{{ 'WRITE_REPLY' | translate }}"
+                    [(ngModel)]="newReplyText[comment.id]" rows="2"></textarea>
+                  <button class="comment-submit-btn" (click)="submitReply(comment, postId)"
+                    [disabled]="!newReplyText[comment.id]?.trim()"
+                    style="margin-top:5px; padding: 5px 15px; font-size: 12px;">
+                    {{ 'SEND' | translate }}
+                  </button>
+                </div>
+                <!-- Replies -->
+                <ng-container
+                  *ngIf="comment.replies && comment.replies.length > 0; then repliesTemplate"></ng-container>
+                <ng-template #repliesTemplate>
+                  <ng-container
+                    *ngTemplateOutlet="commentTemplate; context: { comments: comment.replies, postId: postId, level: level + 1 }"></ng-container>
+                </ng-template>
               </div>
-            </div>
+            </ng-template>
 
             <!-- Add Comment -->
             <div class="add-comment">
-              <textarea
-                class="comment-input"
-                placeholder="Write a comment..."
-                [(ngModel)]="newCommentText[post.id]"
-                rows="2"
-              ></textarea>
-              <button
-                class="comment-submit-btn"
-                (click)="submitComment(post)"
-                [disabled]="!newCommentText[post.id]?.trim()"
-              >
-                Comment
+              <textarea class="comment-input" placeholder="{{ 'WRITE_COMMENT' | translate }}"
+                [(ngModel)]="newCommentText[post.id]" rows="2"></textarea>
+              <button class="comment-submit-btn" (click)="submitComment(post)"
+                [disabled]="!newCommentText[post.id]?.trim()">
+                {{ 'SEND' | translate }}
               </button>
             </div>
           </div>
@@ -166,36 +178,35 @@
       <!-- Right Column: Trends -->
       <div class="trends-column">
         <!-- Trending Tags -->
-        <div class="trending-section">
-          <h3 class="section-title">Trending</h3>
+        <div class="trending-section right-column-box">
+          <h3 class="section-title">{{ 'TRENDING' | translate }}</h3>
           <div class="hashtags-container">
-            <button
-              class="hashtag-btn"
-              *ngFor="let tag of trendingTags"
-              (click)="onHashtagClick(tag)"
-            >
+            <button class="hashtag-btn" *ngFor="let tag of trendingTags" (click)="onHashtagClick(tag)">
               {{ tag }}
             </button>
           </div>
         </div>
 
         <!-- Popular Posts -->
-        <div class="popular-posts">
-          <h3 class="section-title">Popular Posts</h3>
-          <div class="popular-post" *ngFor="let post of popularPosts">
+        <div class="popular-posts right-column-box">
+          <h3 class="section-title">{{ 'POPULAR_POSTS' | translate }}</h3>
+          <div class="popular-post" *ngFor="let post of popularPosts"
+            style="margin-bottom: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
             <p class="popular-post-content">{{ post.content.substring(0, 100) }}...</p>
-            <p class="popular-post-likes">{{ post.likes }} likes</p>
+            <p class="popular-post-likes">❤️ {{ post.likes }} {{ 'LIKES' | translate }} • 💬 {{ post.comments.length }}
+              {{ 'COMMENTS' | translate }}</p>
           </div>
         </div>
 
         <!-- Active Members -->
-        <div class="active-members">
-          <h3 class="section-title">Active Members</h3>
-          <div class="active-member" *ngFor="let member of activeMembers">
+        <div class="active-members right-column-box">
+          <h3 class="section-title">{{ 'ACTIVE_MEMBERS' | translate }}</h3>
+          <div class="active-member" *ngFor="let member of activeMembers"
+            style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
             <div class="member-avatar">{{ member.avatar }}</div>
             <div class="member-info">
               <h4 class="member-name">{{ member.name }}</h4>
-              <p class="member-activity">{{ member.activity }} posts</p>
+              <p class="member-activity">{{ member.activity }} {{ 'POSTS' | translate }}</p>
             </div>
           </div>
         </div>

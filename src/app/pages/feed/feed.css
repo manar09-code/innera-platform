@@ -233,6 +233,15 @@
 .trends-column {
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+.right-column-box {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(100, 30, 200, 0.08) 100%);
+  border: 1px solid rgba(255, 184, 77, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
 }
 
 /* Welcome Card */

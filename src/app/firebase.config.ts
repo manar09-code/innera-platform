@@ -16,6 +16,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const functions = getFunctions(app);
+export const functions = getFunctions(app, 'us-central1');
 export const firestore = getFirestore(app);
 export const analytics = getAnalytics(app);

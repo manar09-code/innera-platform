@@ -21,7 +21,7 @@
         </label>
         <input type="text" formControlName="username" placeholder="Enter your username" />
         <div *ngIf="form.get('username')?.invalid && form.get('username')?.touched" class="error">
-          Username is required
+          Required
         </div>
       </div>
       <!-- Email Field -->
@@ -42,16 +42,9 @@
           <span class="icon">🏢</span>
           Community Name
         </label>
-        <input
-          type="text"
-          formControlName="communityName"
-          placeholder="Enter your community name"
-        />
-        <div
-          *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched"
-          class="error"
-        >
-          Community name is required
+        <input type="text" formControlName="communityName" placeholder="Enter your community name" />
+        <div *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched" class="error">
+          Required
         </div>
       </div>
       <!-- Password Field -->
@@ -61,11 +54,7 @@
           Password
         </label>
         <div class="password-input">
-          <input
-            [type]="showPassword ? 'text' : 'password'"
-            formControlName="password"
-            placeholder="••••••"
-          />
+          <input [type]="showPassword ? 'text' : 'password'" formControlName="password" placeholder="••••••" />
           <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
             {{ showPassword ? '👁️' : '👁️‍🗨️' }}
           </button>
@@ -81,36 +70,27 @@
           Confirm Password
         </label>
         <div class="password-input">
-          <input
-            [type]="showConfirmPassword ? 'text' : 'password'"
-            formControlName="confirmPassword"
-            placeholder="••••••"
-          />
+          <input [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword"
+            placeholder="••••••" />
           <button type="button" class="toggle-password" (click)="toggleConfirmPasswordVisibility()">
             {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
           </button>
         </div>
-        <div
-          *ngIf="form.get('confirmPassword')?.invalid && form.get('confirmPassword')?.touched"
-          class="error"
-        >
-          Confirm password
+        <div *ngIf="form.get('confirmPassword')?.invalid && form.get('confirmPassword')?.touched" class="error">
+          Required
         </div>
-        <div
-          *ngIf="form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched"
-          class="error"
-        >
+        <div *ngIf="form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched" class="error">
           Passwords don't match
         </div>
       </div>
 
       <button type="submit" class="btn-primary btn-register" [disabled]="isLoading || form.invalid">
-        {{ isLoading ? 'Creating...' : "S'inscrire" }}
+        {{ isLoading ? 'Creating...' : 'Sign Up' }}
       </button>
     </form>
 
     <div class="switch-login">
-      <p>Already have account? <a (click)="goToLogin()">Login</a></p>
+      <p>Already have an account? <a (click)="goToLogin()">Login</a></p>
     </div>
   </div>
 </div>

@@ -1,45 +1,71 @@
 <div class="stats-wrapper">
   <div class="stats-header">
-    <button class="btn-back" (click)="goBack()">Back</button>
-    <h1 class="page-title fade-in">Admin Statistics</h1>
+    <button class="btn-back" (click)="goBack()">{{ 'BACK' | translate }}</button>
+    <h1 class="page-title fade-in">{{ 'STATS' | translate }}</h1>
   </div>
-  
+
   <div class="stats-container">
 
-  <!-- Top Row: Two Cards -->
-  <div class="stats-row top-row">
-    <div class="stat-card animate-card">
-      <h2>Users/Members</h2>
-      <p class="stat-number">{{ totalUsers }}</p>
+    <!-- User Stats Section -->
+    <div class="stats-section" style="margin-bottom: 30px;">
+      <h2 class="section-title fade-in" style="color: #ffb84d; margin-bottom: 15px;">{{ 'MY_ACTIVITY' | translate }}
+      </h2>
+      <div class="stats-row">
+        <div class="stat-card animate-card">
+          <h2>{{ 'MY_POSTS' | translate }}</h2>
+          <p class="stat-number">{{ myPostCount }}</p>
+        </div>
+        <div class="stat-card animate-card">
+          <h2>{{ 'MY_COMMENTS' | translate }}</h2>
+          <p class="stat-number">{{ myCommentCount }}</p>
+        </div>
+        <div class="stat-card animate-card">
+          <h2>{{ 'MY_LIKES' | translate }}</h2>
+          <p class="stat-number">{{ myLikeCount }}</p>
+        </div>
+      </div>
     </div>
-    <div class="stat-card animate-card">
-      <h2>Likes + Comments</h2>
-      <p class="stat-number">{{ totalLikesAndComments }}</p>
-    </div>
-  </div>
 
-  <!-- Middle Row: Three Cards -->
-  <div class="stats-row middle-row">
-    <div class="stat-card animate-card">
-      <h2>Total Posts</h2>
-      <p class="stat-number">{{ totalPosts }}</p>
-    </div>
-    <div class="stat-card animate-card">
-      <h2>Image Posts</h2>
-      <p class="stat-number">{{ totalImagePosts }}</p>
-    </div>
-    <div class="stat-card animate-card">
-      <h2>Text Posts</h2>
-      <p class="stat-number">{{ totalTextPosts }}</p>
-    </div>
-  </div>
+    <!-- Community Stats Section -->
+    <div class="stats-section">
+      <h2 class="section-title fade-in" style="color: #ffb84d; margin-bottom: 15px;">{{ 'COMMUNITY_STATS' | translate
+        }}</h2>
 
-  <!-- Bottom Row: One Centered Card -->
-  <div class="stats-row bottom-row">
-    <div class="stat-card centered animate-card">
-      <h2>Messages</h2>
-      <p class="stat-number">{{ totalMessages }}</p>
+      <!-- Top Row: Two Cards -->
+      <div class="stats-row top-row">
+        <div class="stat-card animate-card">
+          <h2>{{ 'TOTAL_USERS' | translate }}</h2>
+          <p class="stat-number">{{ totalUsers }}</p>
+        </div>
+        <div class="stat-card animate-card">
+          <h2>{{ 'LIKES' | translate }} + {{ 'COMMENTS' | translate }}</h2>
+          <p class="stat-number">{{ totalLikesAndComments }}</p>
+        </div>
+      </div>
+
+      <!-- Middle Row: Three Cards -->
+      <div class="stats-row middle-row">
+        <div class="stat-card animate-card">
+          <h2>{{ 'TOTAL_POSTS' | translate }}</h2>
+          <p class="stat-number">{{ totalPosts }}</p>
+        </div>
+        <div class="stat-card animate-card">
+          <h2>Image Posts</h2>
+          <p class="stat-number">{{ totalImagePosts }}</p>
+        </div>
+        <div class="stat-card animate-card">
+          <h2>Text Posts</h2>
+          <p class="stat-number">{{ totalTextPosts }}</p>
+        </div>
+      </div>
+
+      <!-- Bottom Row: One Centered Card -->
+      <div class="stats-row bottom-row">
+        <div class="stat-card centered animate-card">
+          <h2>{{ 'TOTAL_MESSAGES' | translate }}</h2>
+          <p class="stat-number">{{ totalMessages }}</p>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 </div>

@@ -4,7 +4,7 @@
       <h1>INNERA</h1>
     </div>
 
-    <h2>Login User</h2>
+    <h2>{{ 'LOGIN_USER' | translate }}</h2>
 
     <div *ngIf="errorMessage" class="error-box">
       {{ errorMessage }}
@@ -15,11 +15,11 @@
       <div class="form-group">
         <label>
           <span class="icon">📧</span>
-          Email
+          {{ 'EMAIL' | translate }}
         </label>
         <input type="email" formControlName="email" placeholder="user@innera.com" />
         <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="error">
-          Valid email required
+          {{ 'VALID_EMAIL_REQUIRED' | translate }}
         </div>
       </div>
 
@@ -27,18 +27,11 @@
       <div class="form-group">
         <label>
           <span class="icon">🏢</span>
-          Community Name
+          {{ 'COMMUNITY_NAME' | translate }}
         </label>
-        <input
-          type="text"
-          formControlName="communityName"
-          placeholder="Enter your community name"
-        />
-        <div
-          *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched"
-          class="error"
-        >
-          Community name is required
+        <input type="text" formControlName="communityName" placeholder="Enter your community name" />
+        <div *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched" class="error">
+          {{ 'REQUIRED' | translate }}
         </div>
       </div>
 
@@ -46,35 +39,31 @@
       <div class="form-group">
         <label>
           <span class="icon">🔒</span>
-          Password
+          {{ 'PASSWORD' | translate }}
         </label>
         <div class="password-input">
-          <input
-            [type]="showPassword ? 'text' : 'password'"
-            formControlName="password"
-            placeholder="••••••"
-          />
+          <input [type]="showPassword ? 'text' : 'password'" formControlName="password" placeholder="••••••" />
           <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
             {{ showPassword ? '👁️' : '👁️‍🗨️' }}
           </button>
         </div>
         <div *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="error">
-          Min 6 characters
+          {{ 'MIN_CHARS' | translate }}
         </div>
       </div>
 
       <button type="submit" class="btn-primary btn-login" [disabled]="isLoading">
-        {{ isLoading ? 'Connecting...' : 'Log In' }}
+        {{ isLoading ? ('CONNECTING' | translate) : ('LOG_IN' | translate) }}
       </button>
     </form>
 
     <div class="links">
-      <a (click)="goToForgotPassword()">Forgot Password?</a>
-      <a (click)="goToRegister()">Don't have an account yet?</a>
+      <a (click)="goToForgotPassword()">{{ 'FORGOT_PASSWORD' | translate }}</a>
+      <a (click)="goToRegister()">{{ 'DONT_HAVE_ACCOUNT' | translate }}</a>
     </div>
 
     <div class="switch-user">
-      <a (click)="goToAdminLogin()">← Admin Login</a>
+      <a (click)="goToAdminLogin()">← {{ 'ADMIN_LOGIN' | translate }}</a>
     </div>
   </div>
 </div>

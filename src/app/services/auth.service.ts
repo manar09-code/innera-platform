@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { Firestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { Firestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import { auth, firestore } from '../firebase.config';
 
 interface UserData {
@@ -187,6 +187,16 @@ export class AuthService {
     return this.currentUser !== null && !!localStorage.getItem('userRole');
   }
 
+  getCurrentUser(): FirebaseUser | null {
+    return this.currentUser;
+  }
+
+  // Simulated automation hooks
+  private triggerAutomation(event: string, data: any) {
+    console.log(`[Automation Triggered] Event: ${event}`, data);
+    // In real scenario: POST to webhook url
+  }
+
   async logout(): Promise<void> {
     try {
       await signOut(auth);
@@ -225,5 +235,62 @@ export class AuthService {
 
   setRegisteredAdmins(admins: any[]): void {
     localStorage.setItem('registeredAdmins', JSON.stringify(admins));
+  }
+
+  // Listen to real-time updates for members count in "tunisia hood" community
+  listenToMembersCount(callback: (count: number) => void): () => void {
+    const usersRef = collection(firestore, 'users');
+    const q = query(usersRef, where('communityName', '==', this.getCommunityName()));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      callback(querySnapshot.size);
+    });
+    return unsubscribe;
+  }
+
+  // Get all members for current community
+  async getMembers(): Promise<any[]> {
+    const communityName = this.getCommunityName();
+    if (!communityName) return [];
+
+    try {
+      const usersRef = collection(firestore, 'users');
+      const q = query(usersRef, where('communityName', '==', communityName));
+      const querySnapshot = await getDocs(usersRef); // Actually we should filter by community, but simpler query might be safer if index missing
+      // Let's use client side filtering if index issues arise, but try query first.
+      // Correction: querySnapshot above used usersRef without q. Fix:
+      const q2 = query(usersRef, where('communityName', '==', communityName));
+      const snapshot = await getDocs(q2);
+
+      const members: any[] = [];
+      snapshot.forEach(doc => {
+        members.push({ id: doc.id, ...doc.data() });
+      });
+      return members;
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      return [];
+    }
+  }
+
+  // Toggle block status
+  async toggleBlockUser(uid: string, currentStatus: boolean): Promise<void> {
+    try {
+      await updateDoc(doc(firestore, 'users', uid), {
+        isBlocked: !currentStatus
+      });
+    } catch (e) {
+      console.error("Error blocking user:", e);
+      throw e;
+    }
+  }
+
+  // Delete user (firestore data only, auth deletion requires cloud function usually)
+  async deleteUser(uid: string): Promise<void> {
+    try {
+      await deleteDoc(doc(firestore, 'users', uid));
+    } catch (e) {
+      console.error("Error deleting user:", e);
+      throw e;
+    }
   }
 }

@@ -7,11 +7,12 @@ import { AuthService } from '../../services/auth.service';
 import { PostService, Post, Comment } from '../../services/post.service';
 import { SeedService } from '../../services/seed.service';
 import { NavbarComponent } from '../../components/navbar/navbar';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-feed',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, TranslatePipe],
   templateUrl: './feed.html',
   styleUrls: ['./feed.css'],
 })
@@ -23,6 +24,8 @@ export class FeedComponent implements OnInit, OnDestroy {
   userEmail: string = '';
   userRole: string = '';
   newCommentText: { [postId: string]: string } = {};
+  newReplyText: { [commentId: string]: string } = {};
+  showReplyInput: { [commentId: string]: boolean } = {};
   currentTab: string = 'post';
   postText: string = '';
   showWelcomeCard: boolean = true;
@@ -46,13 +49,21 @@ export class FeedComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     this.communityName = this.authService.getCommunityName() || 'Innera Platform';
-    this.adminName = await this.authService.getAdminNameForCommunity(this.communityName);
     this.userName = localStorage.getItem('userName') || '';
     this.userEmail = localStorage.getItem('userEmail') || '';
     this.userRole = localStorage.getItem('userRole') || '';
     this.isAdmin = this.userRole === 'admin';
-    this.loadWelcomeCardState();
+
+    // Load posts immediately
     this.loadPostsFromFirestore();
+    this.loadWelcomeCardState();
+
+    try {
+      this.adminName = await this.authService.getAdminNameForCommunity(this.communityName);
+    } catch (e) {
+      console.warn('Could not fetch admin name:', e);
+    }
+
     this.initializePopularPosts();
     this.initializeActiveMembers();
 
@@ -64,11 +75,13 @@ export class FeedComponent implements OnInit, OnDestroy {
       }
     });
   }
-  
+
   popularPosts: Post[] = [];
   activeMembers: any[] = [];
+  currentTag: string | null = null;
+  filteredPosts: Post[] = [];
 
-  constructor(private router: Router, private authService: AuthService, private postService: PostService, private seedService: SeedService) {}
+  constructor(private router: Router, private authService: AuthService, private postService: PostService, private seedService: SeedService) { }
 
   async loadPostsFromFirestore() {
     try {
@@ -81,45 +94,99 @@ export class FeedComponent implements OnInit, OnDestroy {
 
       // Listen to real-time updates
       this.postsUnsubscribe = this.postService.listenToPosts(this.communityName, (posts: Post[]) => {
-        console.log('Received posts from Firestore:', posts.length, 'posts for community:', this.communityName);
-
         // Clean up old comment listeners
         this.commentUnsubscribers.forEach(unsubscribe => unsubscribe());
         this.commentUnsubscribers.clear();
 
         // Sort posts: pinned first, then by time
-        this.posts = posts.sort((a: Post, b: Post) => {
+        const sortedPosts = posts.sort((a: Post, b: Post) => {
           if (a.isPinned && !b.isPinned) return -1;
           if (!a.isPinned && b.isPinned) return 1;
           return b.time.toMillis() - a.time.toMillis(); // Newest first
         });
+
+        this.posts = sortedPosts;
+        this.applyFilter(); // Filter posts based on tag
+
         this.initializePopularPosts();
+        this.initializeActiveMembers();
 
         // Start listening to comments for each post
         this.posts.forEach(post => {
           const unsubscribe = this.postService.listenToComments(post.id, (comments: Comment[]) => {
-            post.comments = comments;
+            post.comments = this.buildCommentTree(comments);
+            // Re-sort popular posts as comments change
+            this.initializePopularPosts();
           });
           this.commentUnsubscribers.set(post.id, unsubscribe);
         });
 
-        // If no posts exist, seed initial posts
         if (this.posts.length === 0) {
-          console.log('No posts found, attempting to seed initial posts for community:', this.communityName);
-          this.seedService.seedInitialPosts(this.communityName).then(success => {
-            if (success) {
-              console.log('Successfully seeded initial posts');
-            } else {
-              console.error('Failed to seed initial posts');
-            }
-          }).catch(error => {
-            console.error('Error during seeding:', error);
-          });
+          // ... (seeding logic remains same)
+          this.seedInitialPosts();
         }
       });
     } catch (error) {
       console.error('Error loading posts from Firestore:', error);
     }
+  }
+
+  // Helper for seeding to keep main method clean
+  async seedInitialPosts() {
+    console.log('No posts found, seeding...');
+    try {
+      await this.seedService.seedInitialPosts(this.communityName);
+    } catch (e) { console.error(e); }
+  }
+
+  applyFilter() {
+    if (this.currentTag) {
+      this.filteredPosts = this.posts.filter(post => post.tags && post.tags.includes(this.currentTag!));
+    } else {
+      this.filteredPosts = this.posts;
+    }
+  }
+
+  onHashtagClick(tag: string): void {
+    if (this.currentTag === tag) {
+      this.currentTag = null; // Toggle off
+    } else {
+      this.currentTag = tag;
+    }
+    this.applyFilter();
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  private initializePopularPosts(): void {
+    // Score = Likes * 2 + Comments * 1
+    this.popularPosts = [...this.posts].sort((a, b) => {
+      const scoreA = (a.likes || 0) * 2 + (a.comments?.length || 0);
+      const scoreB = (b.likes || 0) * 2 + (b.comments?.length || 0);
+      return scoreB - scoreA;
+    }).slice(0, 3);
+  }
+
+  private initializeActiveMembers(): void {
+    // Calculate top authors from posts
+    const authorCounts = new Map<string, number>();
+    const authorAvatars = new Map<string, string>();
+
+    this.posts.forEach(post => {
+      const count = authorCounts.get(post.author) || 0;
+      authorCounts.set(post.author, count + 1);
+      if (!authorAvatars.has(post.author)) {
+        authorAvatars.set(post.author, post.avatar || '👤');
+      }
+    });
+
+    const sortedAuthors = Array.from(authorCounts.entries()).sort((a, b) => b[1] - a[1]);
+
+    this.activeMembers = sortedAuthors.slice(0, 5).map(([name, count]) => ({
+      name,
+      avatar: authorAvatars.get(name),
+      activity: count
+    }));
   }
 
   navigateToWritePost(): void {
@@ -174,8 +241,7 @@ export class FeedComponent implements OnInit, OnDestroy {
   }
 
   onCommentPost(post: Post): void {
-    // Toggle comment input visibility (for now, just focus or something, but since it's always visible, maybe do nothing or scroll)
-    // For simplicity, since input is always there, perhaps no action needed
+    // Toggle comment input visibility
   }
 
   async submitComment(post: Post): Promise<void> {
@@ -185,17 +251,14 @@ export class FeedComponent implements OnInit, OnDestroy {
         await this.postService.addComment(post.id, {
           username: this.userName || 'Anonymous',
           text: text,
-          userId: this.userEmail
+          userId: this.userEmail,
+          communityName: this.communityName
         });
         this.newCommentText[post.id] = ''; // Clear the input
       } catch (error) {
         console.error('Error adding comment:', error);
       }
     }
-  }
-
-  onHashtagClick(tag: string): void {
-    console.log('Clicked hashtag:', tag);
   }
 
   goBack(): void {
@@ -226,22 +289,6 @@ export class FeedComponent implements OnInit, OnDestroy {
     }
   }
 
-  private initializePopularPosts(): void {
-    // Sort posts by likes and take top 3
-    this.popularPosts = [...this.posts].sort((a, b) => b.likes - a.likes).slice(0, 3);
-  }
-
-  private initializeActiveMembers(): void {
-    // Mock active members data with Tunisian names
-    this.activeMembers = [
-      { avatar: '👨', name: 'Ahmed Ben Ali', activity: 250 },
-      { avatar: '👩', name: 'Fatima Trabelsi', activity: 220 },
-      { avatar: '🧑', name: 'Mohamed Saidi', activity: 200 },
-      { avatar: '👨', name: 'Youssef Gharbi', activity: 180 },
-      { avatar: '👩', name: 'Leila Mansouri', activity: 160 },
-    ];
-  }
-
   private showNotification(message: string, type: string): void {
     // TODO: Implement notification system
     alert(message);
@@ -269,7 +316,8 @@ export class FeedComponent implements OnInit, OnDestroy {
           tags: [],
           type: this.currentTab === 'post' ? 'text' : 'image',
           userId: this.userEmail,
-          communityName: this.communityName
+          communityName: this.communityName,
+          authorRole: this.userRole as 'admin' | 'user'
         });
         this.postText = ''; // Clear the input
       } catch (error) {
@@ -326,6 +374,53 @@ export class FeedComponent implements OnInit, OnDestroy {
     const welcomeCardKey = `welcome_card_${this.userEmail}`;
     const hidden = localStorage.getItem(welcomeCardKey);
     this.showWelcomeCard = hidden !== 'hidden';
+  }
+
+  toggleReplyInput(commentId: string): void {
+    this.showReplyInput[commentId] = !this.showReplyInput[commentId];
+  }
+
+  async submitReply(comment: Comment, postId: string): Promise<void> {
+    const text = this.newReplyText[comment.id]?.trim();
+    if (text) {
+      try {
+        await this.postService.addComment(postId, {
+          username: this.userName || 'Anonymous',
+          text: text,
+          userId: this.userEmail,
+          communityName: this.communityName
+        }, comment.id);
+        this.newReplyText[comment.id] = ''; // Clear the input
+        this.showReplyInput[comment.id] = false; // Hide the input
+      } catch (error) {
+        console.error('Error adding reply:', error);
+      }
+    }
+  }
+
+  buildCommentTree(comments: Comment[]): Comment[] {
+    const commentMap = new Map<string, Comment>();
+    const rootComments: Comment[] = [];
+
+    // First pass: create map and add replies array
+    comments.forEach(comment => {
+      commentMap.set(comment.id, { ...comment, replies: [] });
+    });
+
+    // Second pass: build tree
+    comments.forEach(comment => {
+      const commentWithReplies = commentMap.get(comment.id)!;
+      if (comment.parentId) {
+        const parent = commentMap.get(comment.parentId);
+        if (parent) {
+          parent.replies!.push(commentWithReplies);
+        }
+      } else {
+        rootComments.push(commentWithReplies);
+      }
+    });
+
+    return rootComments;
   }
 
   ngOnDestroy(): void {
