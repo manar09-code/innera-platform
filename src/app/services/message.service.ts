@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { Firestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, Timestamp, getDocs } from 'firebase/firestore';
 import { firestore } from '../firebase.config';
 import { AuthService } from './auth.service';
+import { WebhookService } from './webhook.service';
+import { environment } from '../../environments/environment';
 
 export interface Message {
     id?: string;
@@ -19,7 +21,25 @@ export interface Message {
 })
 export class MessageService {
 
-    constructor(private authService: AuthService) { }
+    constructor(private authService: AuthService, private webhookService: WebhookService) {
+        // this.testMessagesIndex();
+    }
+
+    testMessagesIndex() {
+        console.log('[CRITICAL DEBUG] Testing messages index...');
+
+        // Test without ordering
+        const qSimple = query(collection(firestore, 'messages'), where('conversationId', '==', 'test'));
+        getDocs(qSimple)
+            .then(snap => console.log('[DEBUG] Simple query:', snap.size, 'docs'))
+            .catch(err => console.error('[DEBUG] Simple query failed:', err));
+
+        // Test with ordering  
+        // const qOrdered = query(collection(firestore, 'messages'), where('conversationId', '==', 'test'), orderBy('createdAt', 'desc'));
+        // getDocs(qOrdered)
+        //     .then(() => console.log('[DEBUG] Ordered query WORKS'))
+        //     .catch(err => console.error('[DEBUG] Ordered query FAILED:', err));
+    }
 
     async sendMessageToAdmin(content: string): Promise<void> {
         let user: any = this.authService.getCurrentUser();
@@ -67,13 +87,20 @@ export class MessageService {
             createdAt: serverTimestamp()
         };
         await addDoc(collection(firestore, 'messages'), message);
+
+        // Automation Hook: Send reply notification to user
+        this.triggerAutomation('sendReply', {
+            userId: userId,
+            message: content
+        });
     }
 
     listenToConversation(conversationId: string, callback: (messages: Message[]) => void): () => void {
+        console.log('[DEBUG] Messages query:', { collection: 'messages', where: ['conversationId', '==', conversationId], orderBy: ['createdAt', 'desc'] });
         const q = query(
             collection(firestore, 'messages'),
             where('conversationId', '==', conversationId),
-            orderBy('createdAt', 'asc')
+            // orderBy('createdAt', 'desc')
         );
         return onSnapshot(q, (snapshot) => {
             const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
@@ -84,7 +111,7 @@ export class MessageService {
     listenToAllMessages(callback: (messages: Message[]) => void): () => void {
         const q = query(
             collection(firestore, 'messages'),
-            orderBy('createdAt', 'desc')
+            // orderBy('createdAt', 'desc')
         );
         return onSnapshot(q, (snapshot) => {
             const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
@@ -98,22 +125,22 @@ export class MessageService {
     private triggerAutomation(event: string, data: any) {
         console.log(`[Automation Triggered] Event: ${event}, Data:`, data);
 
-        // 1. Simulation for User Feedback
-        if (event === 'sendMessage') {
-            const email = data.email || 'user';
-            const msg = `[AUTOMATION SIMULATION]\n\nSuccess! An email would be sent to ${email} confirming receipt of their message.\n\n(See console for Webhook setup instructions if not configured)`;
-            alert(msg);
-        }
+        const adminEmail = environment.adminEmail || 'admin@innera-platform.com';
 
-        // 2. Real Integration with Make.com
-        if (this.automationWebhookUrl) {
-            fetch(this.automationWebhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ event, ...data })
-            }).catch(err => console.error('Automation Webhook Error:', err));
-        } else {
-            console.warn('Automation Webhook URL not set. To enable real email automation, paste your Make.com webhook URL into MessageService.automationWebhookUrl.');
+        if (event === 'sendMessage') {
+            const userEmail = data.email;
+            const userName = localStorage.getItem('userName') || 'User';
+            const messageContent = data.message;
+
+            // Trigger webhook for message received by admin
+            this.webhookService.triggerMessageReceived(userEmail, userName, 'admin', adminEmail, 'Admin', messageContent);
+        } else if (event === 'sendReply') {
+            const userId = data.userId;
+            const messageContent = data.message;
+            const userEmail = userId; // In this app, userId is often the email
+
+            // Trigger webhook for message sent confirmation to user
+            this.webhookService.triggerMessageSent(userEmail, 'User', userId, adminEmail, 'Admin', messageContent);
         }
     }
 }

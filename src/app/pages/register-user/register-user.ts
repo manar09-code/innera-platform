@@ -10,12 +10,11 @@ import {
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-register-user',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './register-user.html',
   styleUrls: ['./register-user.css'],
 })
@@ -32,6 +31,7 @@ export class RegisterUserComponent {
       {
         username: ['', Validators.required],
         email: ['', [Validators.required, Validators.email]],
+        communityName: ['', Validators.required],
         password: ['', [Validators.required, Validators.minLength(6)]],
         confirmPassword: ['', Validators.required],
       },
@@ -66,7 +66,7 @@ export class RegisterUserComponent {
     const username = this.form.get('username')?.value;
     const email = this.form.get('email')?.value;
     const password = this.form.get('password')?.value;
-    const communityName = 'tunisia hood';
+    const communityName = this.form.get('communityName')?.value;
 
     try {
       const result = await this.authService.registerUser(username, email, password, communityName);

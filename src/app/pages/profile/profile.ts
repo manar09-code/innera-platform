@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { Firestore, doc, getDoc } from 'firebase/firestore';
+import { firestore } from '../../firebase.config';
 
 interface Comment {
   username: string;
@@ -62,8 +64,8 @@ export class ProfileComponent implements OnInit {
 
   constructor(private router: Router, private authService: AuthService) {}
 
-  ngOnInit() {
-    this.loadUserData();
+  async ngOnInit() {
+    await this.loadCurrentProfile();
   }
 
   goBack() {
@@ -84,6 +86,29 @@ export class ProfileComponent implements OnInit {
     this.tempCommunity = this.communityName;
   }
 
+  async loadCurrentProfile() {
+    const user = this.authService.getCurrentUser();
+    if (!user) return;
+
+    try {
+      const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+      const userData = userDoc.data();
+
+      this.userName = userData?.['username'] || userData?.['adminName'] || user.displayName || user.email?.split('@')[0] || 'Guest';
+      this.userEmail = userData?.['email'] || user.email || '';
+      this.communityName = userData?.['communityName'] || this.authService.getCommunityName() || '';
+      this.isAdmin = userData?.['role'] === 'admin';
+      this.userRole = userData?.['role'] || 'user';
+
+      // Set temp values
+      this.tempUsername = this.userName;
+      this.tempEmail = this.userEmail;
+      this.tempCommunity = this.communityName;
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  }
+
   startEdit(field: string) {
     switch (field) {
       case 'Username':
@@ -101,57 +126,92 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  saveEdit(field: string) {
+  async saveEdit(field: string) {
     let tempValue: string;
-    let fieldUpdated = false;
+    let actualField = '';
+
     switch (field) {
       case 'Username':
         tempValue = this.tempUsername;
-        if (tempValue.trim()) {
-          this.userName = tempValue;
-          localStorage.setItem('userName', tempValue);
-          this.updateRegisteredUser('username', tempValue);
-          fieldUpdated = true;
-        }
-        this.editingUsername = false;
+        actualField = 'username';
         break;
       case 'Email':
         tempValue = this.tempEmail;
-        if (tempValue.trim()) {
-          this.userEmail = tempValue;
-          localStorage.setItem('userEmail', tempValue);
-          this.updateRegisteredUser('email', tempValue);
-          fieldUpdated = true;
-        }
-        this.editingEmail = false;
+        actualField = 'email';
         break;
       case 'Community':
         tempValue = this.tempCommunity;
-        if (tempValue.trim()) {
-          this.communityName = tempValue;
-          this.authService.setCommunityName(tempValue);
-          this.updateRegisteredUser('communityName', tempValue);
-          fieldUpdated = true;
-        }
-        this.editingCommunity = false;
+        actualField = 'communityName';
         break;
       case 'Password':
         tempValue = this.tempPassword;
-        if (tempValue.trim()) {
-          this.userPassword = tempValue;
-          // In real app, hash and save password
-          this.updateRegisteredUser('password', tempValue);
-          fieldUpdated = true;
-        }
-        this.editingPassword = false;
+        actualField = 'password';
         break;
+      default:
+        return;
     }
 
-    if (fieldUpdated) {
-      this.successMessage = `${field} updated successfully!`;
-      setTimeout(() => {
-        this.successMessage = '';
-      }, 3000); // Clear message after 3 seconds
+    if (tempValue.trim()) {
+      try {
+        const user = this.authService.getCurrentUser();
+        if (!user) throw new Error('No user logged in');
+
+        // Get old data for comparison
+        const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+        const oldData = userDoc.data();
+
+        // Prepare new data
+        const newData: any = {};
+        newData[actualField] = tempValue.trim();
+
+        // Find what changed
+        const changes: any = {};
+        for (const key in newData) {
+          if (newData[key] !== oldData?.[key]) {
+            changes[key] = newData[key];
+          }
+        }
+
+        // If no changes, exit
+        if (Object.keys(changes).length === 0) {
+          this.cancelEdit(field);
+          return;
+        }
+
+        // Update Firebase
+        await this.authService.updateUserProfile(actualField, tempValue.trim());
+
+        // Show success
+        this.successMessage = `${field} updated successfully!`;
+        setTimeout(() => this.successMessage = '', 3000);
+
+        // Update local UI state
+        switch (field) {
+          case 'Username':
+            this.userName = tempValue;
+            this.editingUsername = false;
+            break;
+          case 'Email':
+            this.userEmail = tempValue;
+            this.editingEmail = false;
+            break;
+          case 'Community':
+            this.communityName = tempValue;
+            this.editingCommunity = false;
+            break;
+          case 'Password':
+            this.userPassword = tempValue;
+            this.editingPassword = false;
+            break;
+        }
+
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        this.successMessage = `Failed to update ${field}. Please try again.`;
+        setTimeout(() => this.successMessage = '', 3000);
+      }
+    } else {
+      this.cancelEdit(field);
     }
   }
 

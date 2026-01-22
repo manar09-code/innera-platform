@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, query, where, onSnapshot, Timestamp, collectionGroup } from 'firebase/firestore';
+import { Firestore, collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, query, where, onSnapshot, Timestamp, collectionGroup, orderBy } from 'firebase/firestore';
 import { firestore } from '../firebase.config';
 
 export interface Comment {
@@ -18,7 +18,7 @@ export interface Post {
   author: string;
   avatar: string;
   content: string;
-  time: Timestamp;
+  createdAt: Timestamp;
   likes: number;
   comments: Comment[];
   tags: string[];
@@ -40,12 +40,12 @@ export class PostService {
   constructor() { }
 
   // Create a new post
-  async createPost(postData: Omit<Post, 'id' | 'time' | 'likes' | 'comments' | 'likedBy'>): Promise<string> {
+  async createPost(postData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments' | 'likedBy'>): Promise<string> {
     try {
       const postsRef = collection(firestore, 'posts');
       const docRef = await addDoc(postsRef, {
         ...postData,
-        time: Timestamp.now(),
+        createdAt: Timestamp.now(),
         likes: 0,
         comments: [],
         likedBy: [],
@@ -70,11 +70,11 @@ export class PostService {
         posts.push({
           id: docSnap.id,
           ...postData,
-          time: postData.time as Timestamp
+          createdAt: postData.createdAt as Timestamp
         });
       }
-      // Sort posts by time descending
-      posts.sort((a, b) => b.time.toMillis() - a.time.toMillis());
+      // Sort posts by createdAt descending
+      posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
       return posts;
     } catch (error) {
       console.error('Error getting posts:', error);
@@ -184,7 +184,11 @@ export class PostService {
   // Listen to real-time updates for posts
   listenToPosts(communityName: string, callback: (posts: Post[]) => void): () => void {
     const postsRef = collection(firestore, 'posts');
-    const q = query(postsRef, where('communityName', '==', communityName));
+    const q = query(
+      postsRef,
+      where('communityName', '==', communityName),
+      orderBy('createdAt', 'desc')
+    );
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const posts: Post[] = [];
       querySnapshot.forEach((doc) => {
@@ -192,11 +196,11 @@ export class PostService {
         posts.push({
           id: doc.id,
           ...postData,
-          time: postData.time as Timestamp
+          createdAt: postData.createdAt as Timestamp
         });
       });
-      // Sort posts by time descending
-      posts.sort((a, b) => b.time.toMillis() - a.time.toMillis());
+      // Sort posts by createdAt descending
+      posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
       callback(posts);
     });
     return unsubscribe;
@@ -231,9 +235,9 @@ export class PostService {
       const posts: Post[] = [];
       querySnapshot.forEach((doc) => {
         const postData = doc.data() as Omit<Post, 'id'>;
-        posts.push({ id: doc.id, ...postData, time: postData.time as Timestamp });
+        posts.push({ id: doc.id, ...postData, createdAt: postData.createdAt as Timestamp });
       });
-      return posts.sort((a, b) => b.time.toMillis() - a.time.toMillis());
+      return posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
     } catch (error) {
       console.error("Error getting user posts:", error);
       return [];
@@ -249,7 +253,7 @@ export class PostService {
       const posts: Post[] = [];
       querySnapshot.forEach((doc) => {
         const postData = doc.data() as Omit<Post, 'id'>;
-        posts.push({ id: doc.id, ...postData, time: postData.time as Timestamp });
+        posts.push({ id: doc.id, ...postData, createdAt: postData.createdAt as Timestamp });
       });
       return posts;
     } catch (error) {

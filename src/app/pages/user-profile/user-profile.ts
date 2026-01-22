@@ -57,21 +57,21 @@ export class UserProfileComponent implements OnInit {
   tempPassword: string = '';
   userRole!: string;
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(private router: Router, private authService: AuthService) { }
 
   ngOnInit() {
     this.loadUserData();
     this.loadUserActivity();
   }
 
-goBack(){  
-  if (this.userRole === 'admin') {
+  goBack() {
+    if (this.userRole === 'admin') {
       this.router.navigate(['/feed']);
     } else {
       this.router.navigate(['/feed']);
     }
   }
-    loadUserData() {
+  loadUserData() {
     this.userName = localStorage.getItem('userName') || '';
     this.userEmail = localStorage.getItem('userEmail') || '';
     this.communityName = this.authService.getCommunityName() || '';
@@ -124,41 +124,46 @@ goBack(){
     }
   }
 
-  saveEdit(field: string) {
+  async saveEdit(field: string) {
     let tempValue: string;
-    switch (field) {
-      case 'Username':
-        tempValue = this.tempUsername;
-        if (tempValue.trim()) {
-          this.userName = tempValue;
-          localStorage.setItem('userName', tempValue);
-        }
-        this.editingUsername = false;
-        break;
-      case 'Email':
-        tempValue = this.tempEmail;
-        if (tempValue.trim()) {
-          this.userEmail = tempValue;
-          localStorage.setItem('userEmail', tempValue);
-        }
-        this.editingEmail = false;
-        break;
-      case 'Community':
-        tempValue = this.tempCommunity;
-        if (tempValue.trim()) {
-          this.communityName = tempValue;
-          this.authService.setCommunityName(tempValue);
-        }
-        this.editingCommunity = false;
-        break;
-      case 'Password':
-        tempValue = this.tempPassword;
-        if (tempValue.trim()) {
-          this.userPassword = tempValue;
-          // In real app, hash and save password
-        }
-        this.editingPassword = false;
-        break;
+    try {
+      switch (field) {
+        case 'Username':
+          tempValue = this.tempUsername;
+          if (tempValue.trim()) {
+            await this.authService.updateUserProfile('username', tempValue);
+            this.userName = tempValue;
+          }
+          this.editingUsername = false;
+          break;
+        case 'Email':
+          tempValue = this.tempEmail;
+          if (tempValue.trim()) {
+            await this.authService.updateUserProfile('email', tempValue);
+            this.userEmail = tempValue;
+          }
+          this.editingEmail = false;
+          break;
+        case 'Community':
+          tempValue = this.tempCommunity;
+          if (tempValue.trim()) {
+            await this.authService.updateUserProfile('communityName', tempValue);
+            this.communityName = tempValue;
+          }
+          this.editingCommunity = false;
+          break;
+        case 'Password':
+          tempValue = this.tempPassword;
+          if (tempValue.trim()) {
+            this.userPassword = tempValue;
+            // In real app, hash and save password via service
+          }
+          this.editingPassword = false;
+          break;
+      }
+    } catch (error) {
+      console.error(`Error saving ${field}:`, error);
+      alert(`Failed to update ${field}. Please try again.`);
     }
   }
 

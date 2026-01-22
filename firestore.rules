@@ -31,7 +31,20 @@ service cloud.firestore {
 
     // ADMIN MESSAGES (for AI logging)
     match /adminMessages/{msgId} {
-      allow read, write: if request.auth != null; 
+      allow read, write: if request.auth != null;
+    }
+
+    // MESSAGES (for user messaging)
+    match /messages/{messageId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+
+    // ADMINS (for admin data)
+    match /admins/{adminId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == adminId;
     }
   }
 }

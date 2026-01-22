@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { MessageService, Message } from '../../services/message.service';
+import { WebhookService } from '../../services/webhook.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
@@ -22,7 +23,8 @@ export class MessageComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private webhookService: WebhookService
   ) { }
 
   ngOnInit() {
@@ -43,13 +45,99 @@ export class MessageComponent implements OnInit, OnDestroy {
   async sendMessage() {
     if (!this.createMessageContent.trim()) return;
 
-    try {
-      await this.messageService.sendMessageToAdmin(this.createMessageContent.trim());
-      this.createMessageContent = ''; // Clear input
-      this.autoScrollBottom();
-    } catch (error) {
-      console.error("Error sending message to admin:", error);
+    const user = this.authService.getCurrentUser();
+    if (!user || !user.email) {
+      console.error('No user logged in');
+      return;
     }
+
+    const messageText = this.createMessageContent.trim();
+    const adminEmail = 'admin@innera-platform.com';
+    const adminName = 'Community Admin';
+
+    try {
+      // 1. Save to Firebase Firestore
+      await this.messageService.sendMessageToAdmin(messageText);
+
+      // 2. Show UI success
+      this.showToast('✅ Message sent to admin!');
+
+      // 3. Clear input
+      this.createMessageContent = '';
+
+      // 4. Send Make AI webhook (non-blocking)
+      this.sendMessageNotification();
+
+    } catch (error) {
+      this.showError('Failed to send message');
+    }
+  }
+
+  private async sendMessageNotification() {
+    try {
+      const user = this.authService.getCurrentUser();
+      if (!user || !user.email) return;
+
+      const messageText = this.createMessageContent.trim();
+
+      // Send to USER (confirmation)
+      await this.webhookService.triggerMessageSent(
+        user.email,
+        user.displayName || user.email.split('@')[0],
+        user.uid,
+        'admin@innera-platform.com',
+        'Community Admin',
+        messageText
+      );
+
+      // Send to ADMIN (alert)
+      await this.webhookService.triggerMessageReceived(
+        user.email,
+        user.displayName || user.email.split('@')[0],
+        user.uid,
+        'admin@innera-platform.com',
+        'Community Admin',
+        messageText
+      );
+
+    } catch (error) {
+      console.warn('Email notification failed:', error);
+    }
+  }
+
+  private showToast(message: string) {
+    // Simple toast implementation
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: green;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      z-index: 1000;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => document.body.removeChild(toast), 3000);
+  }
+
+  private showError(message: string) {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: red;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      z-index: 1000;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => document.body.removeChild(toast), 3000);
   }
 
   autoScrollBottom() {

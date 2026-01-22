@@ -1,0 +1,36 @@
+<div class="webhook-test-container">
+  <h2>🔧 Webhook Diagnostic Tool</h2>
+  <p class="subtitle">Test all Make AI automations to find what's broken</p>
+
+  <div class="button-group">
+    <button (click)="testAllWebhooks()" [disabled]="isLoading" class="btn-test-all">
+      {{ isLoading ? 'Testing...' : '🧪 Test ALL Webhooks' }}
+    </button>
+
+    <button (click)="testLoginWebhook()" class="btn-test">Test Login</button>
+    <button (click)="testProfileWebhook()" class="btn-test">Test Profile</button>
+    <button (click)="testMessageWebhooks()" class="btn-test">Test Message</button>
+    <button (click)="testWithRealUser()" class="btn-test">Test Real User</button>
+    <button (click)="clearLogs()" class="btn-clear">Clear Logs</button>
+  </div>
+
+  <div class="results-container" *ngIf="testResults.length > 0">
+    <h3>Test Results:</h3>
+    <div class="log-output">
+      <div *ngFor="let log of testResults" class="log-entry" [class.error]="log.includes('❌')" [class.success]="log.includes('✅')">
+        {{ log }}
+      </div>
+    </div>
+  </div>
+
+  <div class="environment-info" *ngIf="environment">
+    <h3>Environment Check:</h3>
+    <div class="env-vars">
+      <div><strong>Login Webhook:</strong> {{ environment.webhooks.login || 'NOT SET' }}</div>
+      <div><strong>Profile Webhook:</strong> {{ environment.webhooks.profileUpdate || 'NOT SET' }}</div>
+      <div><strong>Message Sent Webhook:</strong> {{ environment.webhooks.messageSent || 'NOT SET' }}</div>
+      <div><strong>Message Received Webhook:</strong> {{ environment.webhooks.messageReceived || 'NOT SET' }}</div>
+      <div><strong>Admin Email:</strong> {{ environment.adminEmail || 'NOT SET' }}</div>
+    </div>
+  </div>
+</div>

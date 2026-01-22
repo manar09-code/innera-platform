@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { Firestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import { auth, firestore } from '../firebase.config';
+import { WebhookService } from './webhook.service';
 
 interface UserData {
   username?: string;
@@ -18,7 +19,7 @@ export class AuthService {
   private communityName: string = '';
   private currentUser: FirebaseUser | null = null;
 
-  constructor() {
+  constructor(private webhookService: WebhookService) {
     // Listen to authentication state changes
     onAuthStateChanged(auth, (user) => {
       this.currentUser = user;
@@ -74,6 +75,9 @@ export class AuthService {
       localStorage.setItem('userName', username);
       this.setCommunityName(communityName);
 
+      // Trigger automation webhook
+      this.triggerAutomation('userRegistration', { email, name: username, userId: user.uid });
+
       return { success: true };
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -102,6 +106,9 @@ export class AuthService {
       localStorage.setItem('userName', adminName);
       this.setCommunityName(communityName);
 
+      // Trigger automation webhook
+      this.triggerAutomation('userRegistration', { email, name: adminName, userId: user.uid });
+
       return { success: true };
     } catch (error: any) {
       console.error('Admin registration error:', error);
@@ -128,6 +135,9 @@ export class AuthService {
         localStorage.setItem('userEmail', email);
         localStorage.setItem('userName', userData.username || '');
         this.setCommunityName(communityName);
+
+        // Trigger automation webhook
+        this.triggerAutomation('userLogin', { email, name: userData.username || '' });
 
         return { success: true };
       } else {
@@ -160,6 +170,9 @@ export class AuthService {
         localStorage.setItem('userName', userData.adminName || '');
         this.setCommunityName(communityName);
 
+        // Trigger automation webhook
+        this.triggerAutomation('userLogin', { email, name: userData.adminName || '' });
+
         return { success: true };
       } else {
         await signOut(auth);
@@ -191,10 +204,22 @@ export class AuthService {
     return this.currentUser;
   }
 
-  // Simulated automation hooks
+  // Automation hooks for Make AI webhooks
   private triggerAutomation(event: string, data: any) {
-    console.log(`[Automation Triggered] Event: ${event}`, data);
-    // In real scenario: POST to webhook url
+    const { email, name, userId } = data;
+    switch (event) {
+      case 'userRegistration':
+        this.webhookService.triggerUserRegistration(email, name, userId);
+        break;
+      case 'userLogin':
+        this.webhookService.triggerUserLogin(email, name);
+        break;
+      case 'profileUpdate':
+        this.webhookService.triggerProfileUpdate(email, name, userId, data.changes);
+        break;
+      default:
+        console.warn(`Unknown automation event: ${event}`);
+    }
   }
 
   async logout(): Promise<void> {
@@ -209,10 +234,17 @@ export class AuthService {
   async getAdminNameForCommunity(communityName: string): Promise<string> {
     try {
       // Query Firestore for admin with matching community name
-      // Note: This is a simplified implementation. In a real app, you might want to use a more efficient query
-      const usersRef = doc(firestore, 'users'); // This would need to be a collection query
-      // For now, return a placeholder
-      return 'Community Admin';
+      const usersRef = collection(firestore, 'users');
+      const q = query(usersRef, where('communityName', '==', communityName), where('role', '==', 'admin'));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const adminDoc = querySnapshot.docs[0];
+        const adminData = adminDoc.data() as UserData;
+        return adminData.adminName || 'Community Admin';
+      } else {
+        return 'Community Admin';
+      }
     } catch (error) {
       console.error('Error getting admin name:', error);
       return 'Unknown Admin';
@@ -291,6 +323,57 @@ export class AuthService {
     } catch (e) {
       console.error("Error deleting user:", e);
       throw e;
+    }
+  }
+
+  // Update user profile in Firestore and trigger webhook
+  async updateUserProfile(field: string, value: string): Promise<void> {
+    try {
+      const currentUser = this.getCurrentUser();
+      if (!currentUser) {
+        throw new Error('No authenticated user');
+      }
+
+      const userDocRef = doc(firestore, 'users', currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        throw new Error('User document not found');
+      }
+
+      const userData = userDoc.data() as UserData;
+      const currentRole = localStorage.getItem('userRole');
+      const currentEmail = localStorage.getItem('userEmail') || '';
+      const currentName = localStorage.getItem('userName') || '';
+
+      // Map field names for admin vs user
+      const actualField = currentRole === 'admin' && field === 'username' ? 'adminName' : field;
+
+      // Update Firestore
+      await updateDoc(userDocRef, {
+        [actualField]: value
+      });
+
+      // Update local storage
+      if (field === 'username' || field === 'adminName') {
+        localStorage.setItem('userName', value);
+      } else if (field === 'email') {
+        localStorage.setItem('userEmail', value);
+      } else if (field === 'communityName') {
+        this.setCommunityName(value);
+      }
+
+      // Trigger automation webhook for profile update
+      this.triggerAutomation('profileUpdate', {
+        email: currentEmail,
+        name: currentName,
+        userId: currentUser.uid,
+        changes: { [actualField]: value }
+      });
+
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
     }
   }
 }

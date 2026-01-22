@@ -55,4 +55,8 @@ export class NavbarComponent implements OnInit {
   navigateToMessage(): void {
     this.router.navigate(['/message']);
   }
+
+  navigateToAdminMessages(): void {
+    this.router.navigate(['/admin-message']);
+  }
 }

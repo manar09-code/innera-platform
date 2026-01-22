@@ -20,26 +20,28 @@ import { UserProfileComponent } from './pages/user-profile/user-profile';
 import { HistoryComponent } from './pages/history/history';
 import { AuthGuard } from './guards/auth.guard';
 import { AdminGuard } from './guards/admin.guard';
+import { WebhookTestComponent } from './components/webhook-test/webhook-test.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
+  { path: '', redirectTo: '/home', pathMatch: 'full' },
+  { path: 'home', component: HomeComponent },
   { path: 'login-admin', component: LoginAdminComponent },
   { path: 'login-user', component: LoginUserComponent },
   { path: 'register-admin', component: RegisterAdminComponent },
   { path: 'register-user', component: RegisterUserComponent },
-  { path: 'stats', component: StatsComponent, canActivate: [AdminGuard] },
-  { path: 'admin-message', component: AdminMessageComponent, canActivate: [AdminGuard] },
-  { path: 'profile', component: ProfileComponent, canActivate: [AdminGuard] },
-  { path: 'user-profile', component: UserProfileComponent, canActivate: [AuthGuard] },
-  { path: 'history', component: HistoryComponent, canActivate: [AuthGuard] },
-  { path: 'dashboard', component: UserManagementComponent, canActivate: [AdminGuard] },
-  { path: 'home', component: HomeComponent },
   { path: 'feed', component: FeedComponent, canActivate: [AuthGuard] },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'write-post', component: WritePostComponent, canActivate: [AuthGuard] },
   { path: 'image-post', component: ImagePostComponent, canActivate: [AuthGuard] },
   { path: 'message', component: MessageComponent, canActivate: [AuthGuard] },
-
-  { path: 'config-ai', component: ConfigAiComponent, canActivate: [AdminGuard] },
-  { path: 'forgot-password', component: ForgotPasswordComponent },
-  { path: 'reset-password', component: ResetPasswordComponent },
+  { path: 'config-ai', component: ConfigAiComponent, canActivate: [AuthGuard] },
+  { path: 'user-management', component: UserManagementComponent, canActivate: [AdminGuard] },
+  { path: 'stats', component: StatsComponent, canActivate: [AdminGuard] },
+  { path: 'admin-message', component: AdminMessageComponent, canActivate: [AdminGuard] },
+  { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
+  { path: 'user-profile', component: UserProfileComponent, canActivate: [AuthGuard] },
+  { path: 'history', component: HistoryComponent, canActivate: [AuthGuard] },
+  { path: 'webhook-test', component: WebhookTestComponent },
+  { path: '**', redirectTo: '/home' }
 ];

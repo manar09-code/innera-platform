@@ -91,7 +91,7 @@
                   {{ post.author }}
                   <span class="pinned-badge" *ngIf="post.isPinned">📌 {{ 'PINNED' | translate }}</span>
                 </h3>
-                <p class="post-time">{{ post.time.toDate() | date:'short' }}</p>
+                <p class="post-time">{{ post.createdAt.toDate() | date:'short' }}</p>
               </div>
               <div class="post-actions" *ngIf="userRole === 'admin'">
                 <button class="pin-btn" (click)="pinPost(post)" [title]="post.isPinned ? 'Unpin post' : 'Pin post'">

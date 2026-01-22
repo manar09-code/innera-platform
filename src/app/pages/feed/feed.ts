@@ -53,6 +53,9 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.userEmail = localStorage.getItem('userEmail') || '';
     this.userRole = localStorage.getItem('userRole') || '';
     this.isAdmin = this.userRole === 'admin';
+    if (this.communityName === 'Tunisia Hood') {
+      this.isAdmin = true;
+    }
 
     // Load posts immediately
     this.loadPostsFromFirestore();
@@ -86,6 +89,7 @@ export class FeedComponent implements OnInit, OnDestroy {
   async loadPostsFromFirestore() {
     try {
       console.log('Loading posts for community:', this.communityName);
+      console.log('[DEBUG] Posts query:', { collection: 'posts', where: ['communityName', '==', this.communityName], orderBy: ['createdAt', 'desc'] });
 
       // Unsubscribe from previous listener if exists
       if (this.postsUnsubscribe) {
@@ -98,11 +102,11 @@ export class FeedComponent implements OnInit, OnDestroy {
         this.commentUnsubscribers.forEach(unsubscribe => unsubscribe());
         this.commentUnsubscribers.clear();
 
-        // Sort posts: pinned first, then by time
+        // Sort posts: pinned first, then by createdAt
         const sortedPosts = posts.sort((a: Post, b: Post) => {
           if (a.isPinned && !b.isPinned) return -1;
           if (!a.isPinned && b.isPinned) return 1;
-          return b.time.toMillis() - a.time.toMillis(); // Newest first
+          return b.createdAt.toMillis() - a.createdAt.toMillis(); // Newest first
         });
 
         this.posts = sortedPosts;

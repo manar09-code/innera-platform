@@ -22,7 +22,7 @@
             <div class="post-header">
               <span class="avatar">{{ post.avatar }}</span>
               <span class="author">{{ post.author }}</span>
-              <span class="time">{{ toDate(post.time) | date:'medium' }}</span>
+              <span class="time">{{ toDate(post.createdAt) | date:'medium' }}</span>
             </div>
             <div class="post-content">{{ post.content }}</div>
             <div class="post-type">{{ post.type }}</div>
@@ -49,7 +49,7 @@
             <span class="avatar">{{ like.avatar }}</span>
             <span class="author">{{ like.author }}</span>
             <span class="text">{{ like.content }}</span>
-            <span class="time">{{ toDate(like.time) | date:'medium' }}</span>
+            <span class="time">{{ toDate(like.createdAt) | date:'medium' }}</span>
           </div>
         </div>
         <div class="pagination" *ngIf="likesTotalPages > 1">
