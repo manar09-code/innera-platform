@@ -47,6 +47,7 @@ export class WebhookService {
       user_name: userName,
       platform: 'web'
     };
+    }; // This closes the payload object.
 
     this.sendWebhook(this.webhookUrls.userLogin, 'userLogin', payload);
   }
@@ -145,3 +146,4 @@ export class WebhookService {
       ).subscribe();
   }
 }
+      platform: 'web' // This line sets the platform to 'web'.

@@ -1,88 +1,88 @@
-<div class="history-wrapper">
-  <div class="history-header">
-    <button class="btn-back" (click)="goBack()">{{ 'BACK' | translate }}</button>
-    <h1 class="page-title">{{ 'HISTORY' | translate }}</h1>
-  </div>
+<!-- This file is located in the src/app/pages folder, which contains page components that represent different views or routes in the application, such as home, feed, profile, etc. This file serves as the history page template. Its role is to display the user's history of posts, likes, and comments in a paginated format. It interacts with the history component for data binding and event handling. -->
+<div class="history-wrapper"> <!-- This div wraps the entire history page content, providing the main container for the layout. -->
+  <div class="history-header"> <!-- This div contains the header section of the history page, including the back button and title. -->
+    <button class="btn-back" (click)="goBack()">{{ 'BACK' | translate }}</button> <!-- This button allows the user to go back to the previous page, with the text translated. -->
+    <h1 class="page-title">{{ 'HISTORY' | translate }}</h1> <!-- This heading displays the title of the history page, with the text translated. -->
+  </div> <!-- This closes the history-header div. -->
 
-  <div class="profile-container">
-    <!-- Top Section -->
-    <div class="top-section" [style.background-image]="backgroundImage">
-      <div class="community-info">
-        <div class="community-picture">{{ profilePicture }}</div>
-        <h1 class="community-name">{{ 'HISTORY' | translate }}</h1>
-      </div>
-    </div>
+  <div class="profile-container"> <!-- This div contains the main profile container for the history page. -->
+    <!-- Top Section --> <!-- This comment indicates the start of the top section of the profile container. -->
+    <div class="top-section" [style.background-image]="backgroundImage"> <!-- This div represents the top section with a background image. -->
+      <div class="community-info"> <!-- This div contains information about the community. -->
+        <div class="community-picture">{{ profilePicture }}</div> <!-- This div displays the community picture. -->
+        <h1 class="community-name">{{ 'HISTORY' | translate }}</h1> <!-- This heading displays the community name, with the text translated. -->
+      </div> <!-- This closes the community-info div. -->
+    </div> <!-- This closes the top-section div. -->
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <div class="content-section">
-        <h2>{{ 'POSTS' | translate }}</h2>
-        <div class="posts-list">
-          <div class="post-item" *ngFor="let post of getPostsForCurrentPage()">
-            <div class="post-header">
-              <span class="avatar">{{ post.avatar }}</span>
-              <span class="author">{{ post.author }}</span>
-              <span class="time">{{ toDate(post.createdAt) | date:'medium' }}</span>
-            </div>
-            <div class="post-content">{{ post.content }}</div>
-            <div class="post-type">{{ post.type }}</div>
-            <div class="post-stats">
-              <span>{{ post.likes }} {{ 'LIKES' | translate }}</span>
-              <span>{{ post.comments.length }} {{ 'COMMENTS' | translate }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="pagination" *ngIf="postsTotalPages > 1">
-          <button (click)="prevPostsPage()" [disabled]="postsCurrentPage === 1">{{ 'PREVIOUS' | translate }}</button>
-          <span>{{ 'PAGE' | translate }} {{ postsCurrentPage }} {{ 'OF' | translate }} {{ postsTotalPages }}</span>
-          <button (click)="nextPostsPage()" [disabled]="postsCurrentPage === postsTotalPages">
-            {{ 'NEXT' | translate }}
-          </button>
-        </div>
-        <p *ngIf="userPosts.length === 0" class="no-content">{{ 'NO_POSTS' | translate }}</p>
-      </div>
+    <!-- Main Content --> <!-- This comment indicates the start of the main content section. -->
+    <div class="main-content"> <!-- This div contains the main content of the history page. -->
+      <div class="content-section"> <!-- This div represents a section for posts. -->
+        <h2>{{ 'POSTS' | translate }}</h2> <!-- This heading displays the posts section title, with the text translated. -->
+        <div class="posts-list"> <!-- This div contains the list of posts. -->
+          <div class="post-item" *ngFor="let post of getPostsForCurrentPage()"> <!-- This div represents an individual post item, repeated for each post in the current page. -->
+            <div class="post-header"> <!-- This div contains the header of the post. -->
+              <span class="avatar">{{ post.avatar }}</span> <!-- This span displays the post author's avatar. -->
+              <span class="author">{{ post.author }}</span> <!-- This span displays the post author's name. -->
+              <span class="time">{{ toDate(post.createdAt) | date:'medium' }}</span> <!-- This span displays the post creation time, formatted as medium date. -->
+            </div> <!-- This closes the post-header div. -->
+            <div class="post-content">{{ post.content }}</div> <!-- This div displays the content of the post. -->
+            <div class="post-type">{{ post.type }}</div> <!-- This div displays the type of the post. -->
+            <div class="post-stats"> <!-- This div contains the statistics of the post. -->
+              <span>{{ post.likes }} {{ 'LIKES' | translate }}</span> <!-- This span displays the number of likes, with the text translated. -->
+              <span>{{ post.comments.length }} {{ 'COMMENTS' | translate }}</span> <!-- This span displays the number of comments, with the text translated. -->
+            </div> <!-- This closes the post-stats div. -->
+          </div> <!-- This closes the post-item div. -->
+        </div> <!-- This closes the posts-list div. -->
+        <div class="pagination" *ngIf="postsTotalPages > 1"> <!-- This div contains pagination controls for posts, shown if there are multiple pages. -->
+          <button (click)="prevPostsPage()" [disabled]="postsCurrentPage === 1">{{ 'PREVIOUS' | translate }}</button> <!-- This button navigates to the previous page of posts, disabled if on the first page. -->
+          <span>{{ 'PAGE' | translate }} {{ postsCurrentPage }} {{ 'OF' | translate }} {{ postsTotalPages }}</span> <!-- This span displays the current page and total pages for posts. -->
+          <button (click)="nextPostsPage()" [disabled]="postsCurrentPage === postsTotalPages"> <!-- This button navigates to the next page of posts, disabled if on the last page. -->
+            {{ 'NEXT' | translate }} <!-- This displays the next button text, with the text translated. -->
+          </button> <!-- This closes the next button. -->
+        </div> <!-- This closes the pagination div. -->
+        <p *ngIf="userPosts.length === 0" class="no-content">{{ 'NO_POSTS' | translate }}</p> <!-- This paragraph displays a message if there are no posts, with the text translated. -->
+      </div> <!-- This closes the content-section div for posts. -->
 
-      <div class="content-section">
-        <h2>{{ 'LIKES' | translate }}</h2>
-        <div class="likes-list">
-          <div class="like-item" *ngFor="let like of getLikesForCurrentPage()">
-            <span class="avatar">{{ like.avatar }}</span>
-            <span class="author">{{ like.author }}</span>
-            <span class="text">{{ like.content }}</span>
-            <span class="time">{{ toDate(like.createdAt) | date:'medium' }}</span>
-          </div>
-        </div>
-        <div class="pagination" *ngIf="likesTotalPages > 1">
-          <button (click)="prevLikesPage()" [disabled]="likesCurrentPage === 1">{{ 'PREVIOUS' | translate }}</button>
-          <span>{{ 'PAGE' | translate }} {{ likesCurrentPage }} {{ 'OF' | translate }} {{ likesTotalPages }}</span>
-          <button (click)="nextLikesPage()" [disabled]="likesCurrentPage === likesTotalPages">
-            {{ 'NEXT' | translate }}
-          </button>
-        </div>
-        <p *ngIf="userLikes.length === 0" class="no-content">{{ 'NO_LIKES' | translate }}</p>
-      </div>
+      <div class="content-section"> <!-- This div represents a section for likes. -->
+        <h2>{{ 'LIKES' | translate }}</h2> <!-- This heading displays the likes section title, with the text translated. -->
+        <div class="likes-list"> <!-- This div contains the list of likes. -->
+          <div class="like-item" *ngFor="let like of getLikesForCurrentPage()"> <!-- This div represents an individual like item, repeated for each like in the current page. -->
+            <span class="avatar">{{ like.avatar }}</span> <!-- This span displays the liked post author's avatar. -->
+            <span class="author">{{ like.author }}</span> <!-- This span displays the liked post author's name. -->
+            <span class="text">{{ like.content }}</span> <!-- This span displays the content of the liked post. -->
+            <span class="time">{{ toDate(like.createdAt) | date:'medium' }}</span> <!-- This span displays the liked post creation time, formatted as medium date. -->
+          </div> <!-- This closes the like-item div. -->
+        </div> <!-- This closes the likes-list div. -->
+        <div class="pagination" *ngIf="likesTotalPages > 1"> <!-- This div contains pagination controls for likes, shown if there are multiple pages. -->
+          <button (click)="prevLikesPage()" [disabled]="likesCurrentPage === 1">{{ 'PREVIOUS' | translate }}</button> <!-- This button navigates to the previous page of likes, disabled if on the first page. -->
+          <span>{{ 'PAGE' | translate }} {{ likesCurrentPage }} {{ 'OF' | translate }} {{ likesTotalPages }}</span> <!-- This span displays the current page and total pages for likes. -->
+          <button (click)="nextLikesPage()" [disabled]="likesCurrentPage === likesTotalPages"> <!-- This button navigates to the next page of likes, disabled if on the last page. -->
+            {{ 'NEXT' | translate }} <!-- This displays the next button text, with the text translated. -->
+          </button> <!-- This closes the next button. -->
+        </div> <!-- This closes the pagination div. -->
+        <p *ngIf="userLikes.length === 0" class="no-content">{{ 'NO_LIKES' | translate }}</p> <!-- This paragraph displays a message if there are no likes, with the text translated. -->
+      </div> <!-- This closes the content-section div for likes. -->
 
-      <div class="content-section">
-        <h2>{{ 'COMMENTS' | translate }}</h2>
-        <div class="comments-list">
-          <div class="comment-item" *ngFor="let comment of getCommentsForCurrentPage()">
-            <span class="username">{{ comment.username }}</span>
-            <span class="text">{{ comment.text }}</span>
-            <span class="time">{{ toDate(comment.time) | date:'medium' }}</span>
-          </div>
-        </div>
-        <div class="pagination" *ngIf="commentsTotalPages > 1">
-          <button (click)="prevCommentsPage()" [disabled]="commentsCurrentPage === 1">
-            {{ 'PREVIOUS' | translate }}
-          </button>
-          <span>{{ 'PAGE' | translate }} {{ commentsCurrentPage }} {{ 'OF' | translate }} {{ commentsTotalPages
-            }}</span>
-          <button (click)="nextCommentsPage()" [disabled]="commentsCurrentPage === commentsTotalPages">
-            {{ 'NEXT' | translate }}
-          </button>
-        </div>
-        <p *ngIf="userComments.length === 0" class="no-content">{{ 'NO_COMMENTS' | translate }}</p>
-      </div>
-    </div>
-  </div>
-</div>
+      <div class="content-section"> <!-- This div represents a section for comments. -->
+        <h2>{{ 'COMMENTS' | translate }}</h2> <!-- This heading displays the comments section title, with the text translated. -->
+        <div class="comments-list"> <!-- This div contains the list of comments. -->
+          <div class="comment-item" *ngFor="let comment of getCommentsForCurrentPage()"> <!-- This div represents an individual comment item, repeated for each comment in the current page. -->
+            <span class="username">{{ comment.username }}</span> <!-- This span displays the comment author's username. -->
+            <span class="text">{{ comment.text }}</span> <!-- This span displays the text of the comment. -->
+            <span class="time">{{ toDate(comment.time) | date:'medium' }}</span> <!-- This span displays the comment time, formatted as medium date. -->
+          </div> <!-- This closes the comment-item div. -->
+        </div> <!-- This closes the comments-list div. -->
+        <div class="pagination" *ngIf="commentsTotalPages > 1"> <!-- This div contains pagination controls for comments, shown if there are multiple pages. -->
+          <button (click)="prevCommentsPage()" [disabled]="commentsCurrentPage === 1"> <!-- This button navigates to the previous page of comments, disabled if on the first page. -->
+            {{ 'PREVIOUS' | translate }} <!-- This displays the previous button text, with the text translated. -->
+          </button> <!-- This closes the previous button. -->
+          <span>{{ 'PAGE' | translate }} {{ commentsCurrentPage }} {{ 'OF' | translate }} {{ commentsTotalPages }}</span> <!-- This span displays the current page and total pages for comments. This closes the span. -->
+          <button (click)="nextCommentsPage()" [disabled]="commentsCurrentPage === commentsTotalPages"> <!-- This button navigates to the next page of comments, disabled if on the last page. -->
+            {{ 'NEXT' | translate }} <!-- This displays the next button text, with the text translated. -->
+          </button> <!-- This closes the next button. -->
+        </div> <!-- This closes the pagination div. -->
+        <p *ngIf="userComments.length === 0" class="no-content">{{ 'NO_COMMENTS' | translate }}</p> <!-- This paragraph displays a message if there are no comments, with the text translated. -->
+      </div> <!-- This closes the content-section div for comments. -->
+    </div> <!-- This closes the main-content div. -->
+  </div> <!-- This closes the profile-container div. -->
+</div> <!-- This closes the history-wrapper div. -->

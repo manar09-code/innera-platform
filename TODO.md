@@ -1,40 +1,69 @@
-# Firebase Issues Fix Progress
+# TODO: Add Comments to All Project Files for Presentation Clarity
 
-## ✅ COMPLETED
-- [x] Update firestore.rules to add rules for messages collection
-- [x] Fix invalid document reference in auth.service.ts line 242
-- [x] Complete getAdminNameForCommunity method with proper Firestore query
-- [x] Fix webhook URL key mismatches in environment.prod.ts (makeMessageSentWebhook -> messageSent, etc.)
-- [x] Deploy firestore.rules to Firebase successfully
-- [x] Fix messages index error by changing orderBy('createdAt', 'asc') to 'desc' in listenToConversation
-- [x] Enable real webhook HTTP calls in webhook.service.ts
+## Core App Files
+- [ ] src/app/app.ts - Add comments to imports, component decorator, and class
+- [ ] src/app/app.config.ts - Comment configuration setup
+- [ ] src/app/app.routes.ts - Explain routing configuration
+- [ ] src/app/app.html - Comment template structure
+- [ ] src/app/app.css - Add style explanations
 
-## 🔄 READY FOR TESTING
-- [ ] Test messaging functionality (should no longer have permission denied errors)
-- [ ] Test profile editing (should save successfully)
-- [ ] Verify webhook integrations (check for ERR_NAME_NOT_RESOLVED issues)
-- [ ] Test admin name retrieval for communities
-- [ ] Test posts loading (should no longer have failed-precondition index errors)
-- [ ] Verify messages index is correct (conversationId + createdAt)
+## Services
+- [ ] src/app/services/auth.service.ts - Comment authentication methods
+- [ ] src/app/services/config.service.ts - Explain configuration handling
+- [ ] src/app/services/message.service.ts - Comment message-related functions
+- [ ] src/app/services/post.service.ts - Explain post management
+- [ ] src/app/services/webhook.service.ts - Comment webhook interactions
+- [ ] src/app/services/ai.service.ts - Explain AI service logic
+- [ ] src/app/services/seed.service.ts - Comment seeding functions
+- [ ] src/app/services/translation.service.ts - Explain translation handling
 
-## ⚠️ FIREBASE INDEX RECREATION REQUIRED
-- [ ] Go to Firebase Console → Firestore → Indexes
-- [ ] Delete existing posts index (communityName + time)
-- [ ] Create new posts index: communityName (Asc) + createdAt (Desc)
-- [ ] Wait 2-3 minutes for index deployment
-- [ ] Test posts functionality after index recreation
+## Components
+- [ ] src/app/components/navbar/navbar.ts - Comment navbar component
+- [ ] src/app/components/navbar/navbar.html - Explain navbar template
+- [ ] src/app/components/navbar/navbar.css - Add style comments
+- [ ] src/app/components/webhook-test/webhook-test.component.ts - Comment webhook test component
+- [ ] src/app/components/webhook-test/webhook-test.component.html - Explain template
+- [ ] src/app/components/webhook-test/webhook-test.component.css - Add style comments
 
-## ⚡ OPTIONAL
-- [ ] Convert profile forms from template-driven to reactive forms for better control
+## Pages
+- [ ] src/app/pages/ai-assistant/ai-assistant.ts - Comment AI assistant page
+- [ ] src/app/pages/ai-assistant/ai-assistant.html - Explain template
+- [ ] src/app/pages/ai-assistant/ai-assistant.css - Add style comments
+- [ ] src/app/pages/feed/feed.ts - Comment feed page
+- [ ] src/app/pages/feed/feed.html - Explain template
+- [ ] src/app/pages/feed/feed.css - Add style comments
+- [ ] src/app/pages/history/history.ts - Comment history page
+- [ ] src/app/pages/history/history.html - Explain template
+- [ ] src/app/pages/history/history.css - Add style comments
+- [ ] src/app/pages/message/message.ts - Comment message page
+- [ ] src/app/pages/message/message.html - Explain template
+- [ ] src/app/pages/message/message.css - Add style comments
+- [ ] src/app/pages/profile/profile.ts - Comment profile page
+- [ ] src/app/pages/profile/profile.html - Explain template
+- [ ] src/app/pages/profile/profile.css - Add style comments
+- [ ] src/app/pages/register-user/register-user.ts - Comment register user page
+- [ ] src/app/pages/register-user/register-user.html - Explain template
+- [ ] src/app/pages/register-user/register-user.css - Add style comments
+- [ ] Additional pages: admin-message, config-ai, forgot-password, home, image-post, login-admin, login-user, register-admin, reset-password, stats, user-management, user-profile, write-post
 
-## 📋 TESTING INSTRUCTIONS
-1. **Messaging**: Try sending messages between users - should work without Firestore permission errors
-2. **Profile Editing**: Edit user profile fields - should save to Firestore and trigger webhooks
-3. **Admin Functions**: Check if getAdminNameForCommunity returns proper admin names
-4. **Webhooks**: Monitor console for webhook errors - URLs should resolve properly now
+## Guards
+- [ ] src/app/guards/admin.guard.ts - Comment admin guard logic
+- [ ] src/app/guards/auth.guard.ts - Explain auth guard
 
-## 🎯 EXPECTED RESULTS
-- No more "permission-denied" errors in Firestore operations
-- Messages can be sent and received successfully
-- Profile updates save correctly
-- Webhook calls succeed (or fail gracefully without ERR_NAME_NOT_RESOLVED)
+## Pipes
+- [ ] src/app/pipes/translate.pipe.ts - Comment translation pipe
+
+## Environments
+- [ ] src/environments/environment.ts - Comment environment config
+- [ ] src/environments/environment.prod.ts - Explain production config
+
+## Firebase Functions
+- [ ] functions/src/index.ts - Comment Firebase functions
+- [ ] functions/src/seed-posts.ts - Explain seeding logic
+
+## Config Files
+- [ ] firestore.rules - Comment Firestore security rules
+
+## Verification
+- [ ] Run the app to ensure no syntax errors from comments
+- [ ] Review all files for completeness of comments

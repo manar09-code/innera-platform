@@ -1,6 +1,6 @@
-import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
-import { App } from './app/app';
-import './app/firebase.config'; // Initialize Firebase
-
-bootstrapApplication(App, appConfig).catch((err) => console.error(err));
+// This file is located in the src folder, which contains the source code for the Angular application, including components, services, pages, and configuration files. This file serves as the entry point for the Angular application. Its role is to bootstrap the application, initialize Firebase, and handle any bootstrap errors. It interacts with './app/app.config' for application configuration, './app/app' for the root App component, and './app/firebase.config' for Firebase initialization.
+import { bootstrapApplication } from '@angular/platform-browser'; // This line imports the bootstrapApplication function from the '@angular/platform-browser' module, which is needed to start the Angular application by bootstrapping the root component.
+import { appConfig } from './app/app.config'; // This line imports the appConfig object from './app/app.config', which contains the configuration settings for the Angular application, such as providers and routing.
+import { App } from './app/app'; // This line imports the App component from './app/app', which is the root component of the Angular application that serves as the starting point for the app's component tree.
+import './app/firebase.config'; // This line imports the Firebase configuration from './app/firebase.config' to initialize Firebase services, which is necessary for features like authentication and database interactions. // Initialize Firebase
+bootstrapApplication(App, appConfig).catch((err) => console.error(err)); // This line calls the bootstrapApplication function with the App component and appConfig to start the Angular application, and catches any errors that occur during the bootstrap process, logging them to the console.

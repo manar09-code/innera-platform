@@ -6,6 +6,7 @@ import { firestore } from '../firebase.config';
   providedIn: 'root'
 })
 export class ConfigService {
+  [x: string]: any;
 
   constructor() { }
 
