@@ -3,6 +3,7 @@ import { initializeApp } from 'firebase/app'; // This line imports the initializ
 import { getAuth } from 'firebase/auth'; // This line imports the getAuth function from the 'firebase/auth' module, which is needed to get the Firebase Authentication service instance.
 import { getFunctions } from 'firebase/functions'; // This line imports the getFunctions function from the 'firebase/functions' module, which is needed to get the Firebase Cloud Functions service instance.
 import { getFirestore } from 'firebase/firestore'; // This line imports the getFirestore function from the 'firebase/firestore' module, which is needed to get the Firestore database service instance.
+import { getStorage } from 'firebase/storage'; // This line imports the getStorage function from the 'firebase/storage' module, which is needed to get the Firebase Storage service instance.
 import { getAnalytics } from 'firebase/analytics'; // This line imports the getAnalytics function from the 'firebase/analytics' module, which is needed to get the Firebase Analytics service instance.
 
 const firebaseConfig = { // This line declares a constant object named firebaseConfig that holds the configuration settings for Firebase, including API keys and project identifiers.
@@ -19,4 +20,5 @@ const app = initializeApp(firebaseConfig); // This line calls the initializeApp 
 export const auth = getAuth(app); // This line exports a constant named auth that holds the Firebase Authentication service instance obtained by calling getAuth with the app instance, allowing other parts of the app to use authentication features.
 export const functions = getFunctions(app, 'us-central1'); // This line exports a constant named functions that holds the Firebase Cloud Functions service instance obtained by calling getFunctions with the app instance and the region 'us-central1', allowing other parts of the app to call server-side functions.
 export const firestore = getFirestore(app); // This line exports a constant named firestore that holds the Firestore database service instance obtained by calling getFirestore with the app instance, allowing other parts of the app to interact with the database.
+export const storage = getStorage(app); // This line exports a constant named storage that holds the Firebase Storage service instance, allowing other parts of the app to upload and download files.
 export const analytics = getAnalytics(app); // This line exports a constant named analytics that holds the Firebase Analytics service instance obtained by calling getAnalytics with the app instance, allowing other parts of the app to track user interactions and events.

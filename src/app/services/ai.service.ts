@@ -64,6 +64,33 @@ export class AiService {
             let systemInstructions = `You are the AI assistant of the Innera Platform. ${context.aiInstructions || ''}`;
             if (context.news) systemInstructions += `\nLatest News: ${context.news}`;
 
+            // ISSUE 3: Inject live statistics for grounding
+            if (context.stats) {
+                systemInstructions += `\n\nLive Community Stats for ${context.communityName}:` +
+                    `\n- Total Posts: ${context.stats.totalPosts}` +
+                    `\n- Total Likes: ${context.stats.totalLikes}` +
+                    `\n- Total Comments: ${context.stats.totalComments}` +
+                    `\n- Image Posts: ${context.stats.totalImagePosts}` +
+                    `\n- Text Posts: ${context.stats.totalTextPosts}`;
+            }
+
+            if (context.trending && context.trending.length > 0) {
+                systemInstructions += `\n\nPopular Posts (Most Liked/Commented):` +
+                    context.trending.map((p: any) => `\n- "${p.content.substring(0, 50)}..." by ${p.author} (${p.likes} likes, ${p.comments?.length || p.commentCount || 0} comments)`).join('');
+            }
+
+            if (context.members && context.members.length > 0) {
+                systemInstructions += `\n\nMost Active Members:` +
+                    context.members.map((m: any) => `\n- ${m.name} (${m.count} posts)`).join('');
+            }
+
+            if (context.feedPosts && context.feedPosts.length > 0) {
+                systemInstructions += `\n\nRecent Feed Posts:` +
+                    context.feedPosts.map((p: any) => `\n- "${p.content.substring(0, 50)}..." by ${p.author} [Tags: ${p.tags.join(', ')}]`).join('');
+            }
+
+            systemInstructions += `\n\nRules: Only answer based on the data above. If you don't know, say you don't know. Do not hallucinate statistics. Provide specific names/numbers when asked.`;
+
             const fullPrompt = `${systemInstructions}\n\nUser Question: ${message}`;
             const body = { contents: [{ parts: [{ text: fullPrompt }] }] };
             const headers = new HttpHeaders({ 'Content-Type': 'application/json' });

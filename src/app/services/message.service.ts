@@ -14,6 +14,7 @@ export interface Message { // This line defines the Message interface, which spe
     senderRole: string; // This line defines the required senderRole property, which is a string representing the role of the sender ('user' or 'admin').
     receiverId: string; // This line defines the required receiverId property, which is a string representing the ID of the recipient ('admin' for user->admin, or userId for admin->user).
     conversationId: string; // This line defines the required conversationId property, which is a string representing the conversation identifier (usually userId for 1:1 with admin).
+    communityName: string; // ISSUE 3: Added community name for filtering in admin panel
     createdAt: Timestamp; // This line defines the required createdAt property, which is a Timestamp representing the time when the message was created.
 } // This closes the Message interface, completing the definition of the message structure.
 
@@ -21,6 +22,13 @@ export interface Message { // This line defines the Message interface, which spe
     providedIn: 'root' // This line specifies that the service is provided in the root injector, making it a singleton instance available app-wide.
 }) // This closes the Injectable decorator configuration.
 export class MessageService { // This line exports the MessageService class, which is the main message service class that handles messaging operations between users and admins.
+
+    // ISSUE 6: Normalize community names for consistency
+    // This private method normalizes a given community name by trimming whitespace and converting it to lowercase.
+    // It ensures consistency in community names stored and queried, handling null or empty inputs gracefully.
+    private normalizeCommunityName(name: string): string {
+        return name ? name.trim().toLowerCase() : '';
+    }
 
     constructor(private authService: AuthService, private webhookService: WebhookService) { // This line defines the constructor for the MessageService class, which takes AuthService and WebhookService instances as parameters for dependency injection, used to access authentication and webhook functionality.
         // this.testMessagesIndex(); // This line is a commented out call to the testMessagesIndex method, which is used for debugging Firestore index issues.
@@ -56,7 +64,23 @@ export class MessageService { // This line exports the MessageService class, whi
             } // This closes the if-else block for email check.
         } // This closes the if block for user check.
 
-        const userName = localStorage.getItem('userName') || 'User'; // This line gets the user name from local storage, defaulting to 'User' if not found.
+        const storedName = localStorage.getItem('userName');
+        const userName = storedName || 'User'; // Prioritize stored name for continuity
+
+        // ISSUE 6 & 10: Ensure community name is normalized and never empty
+        // Attempt to get community name from AuthService.
+        let rawComm = this.authService.getCommunityName();
+        // If AuthService doesn't provide a valid community name, try localStorage.
+        if (!rawComm || rawComm === 'Unknown' || rawComm === '') {
+            rawComm = localStorage.getItem('communityName') || 'Unknown';
+        }
+        // Normalize the obtained community name for consistency.
+        const communityName = this.normalizeCommunityName(rawComm);
+
+        // Log a warning if the community name is still 'unknown' after all attempts.
+        if (communityName === 'unknown') {
+            console.warn('[MessageService] Sending message with "unknown" community. Visibility might be limited.');
+        }
 
         const message: any = { // This line creates a message object with the message details.
             content, // This line sets the content property.
@@ -65,6 +89,7 @@ export class MessageService { // This line exports the MessageService class, whi
             senderRole: 'user', // This line sets the senderRole to 'user'.
             receiverId: 'admin', // This line sets the receiverId to 'admin'.
             conversationId: user.email, // This line sets the conversationId to the user's email.
+            communityName, // ISSUE 3 & 6: Normalized association with community
             createdAt: serverTimestamp() // This line sets the createdAt to the server timestamp.
         }; // This closes the message object.
 
@@ -78,6 +103,10 @@ export class MessageService { // This line exports the MessageService class, whi
     } // This closes the sendMessageToAdmin method.
 
     async sendReplyToUser(userId: string, content: string): Promise<void> { // This line defines the async sendReplyToUser method, which takes userId and content parameters of type string and returns Promise<void>, used to send a reply message from the admin to a specific user.
+        // ISSUE 6: Normalize community name for the reply
+        // Retrieves the community name from AuthService and normalizes it before use.
+        const communityName = this.normalizeCommunityName(this.authService.getCommunityName());
+
         const message: any = { // This line creates a message object for the reply.
             content, // This line sets the content property.
             senderId: 'admin', // This line sets the senderId to 'admin'.
@@ -85,9 +114,13 @@ export class MessageService { // This line exports the MessageService class, whi
             senderRole: 'admin', // This line sets the senderRole to 'admin'.
             receiverId: userId, // This line sets the receiverId to the provided userId.
             conversationId: userId, // This line sets the conversationId to the provided userId.
+            communityName, // ISSUE 3 & 6: Normalized association
             createdAt: serverTimestamp() // This line sets the createdAt to the server timestamp.
         }; // This closes the message object.
         await addDoc(collection(firestore, 'messages'), message); // This line adds the reply message document to the 'messages' collection in Firestore.
+
+        // ISSUE 6: Small delay to let snapshot catch up
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Automation Hook: Send reply notification to user // This line is a comment indicating the automation hook for sending reply notification.
         this.triggerAutomation('sendReply', { // This line calls the triggerAutomation method with the 'sendReply' event.
@@ -97,27 +130,36 @@ export class MessageService { // This line exports the MessageService class, whi
     } // This closes the sendReplyToUser method.
 
     listenToConversation(conversationId: string, callback: (messages: Message[]) => void): () => void { // This line defines the listenToConversation method, which takes conversationId parameter of type string and callback parameter of type function, and returns a function to unsubscribe, used to listen to real-time updates for messages in a specific conversation.
-        console.log('[DEBUG] Messages query:', { collection: 'messages', where: ['conversationId', '==', conversationId], orderBy: ['createdAt', 'desc'] }); // This line logs a debug message with the query details.
+        // conversationId is usually user email, but let's be safe
+        console.log('[DEBUG] Messages query for conversation:', conversationId);
         const q = query( // This line creates a query for the 'messages' collection.
             collection(firestore, 'messages'), // This line specifies the collection to query.
             where('conversationId', '==', conversationId), // This line adds a filter for conversationId equal to the provided conversationId.
-            // orderBy('createdAt', 'desc') // This line is a commented out orderBy clause for sorting by createdAt in descending order.
         ); // This closes the query.
-        return onSnapshot(q, (snapshot) => { // This line sets up a real-time listener on the query, executing the callback with the snapshot.
-            const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)); // This line maps the snapshot documents to Message objects with id.
-            callback(messages); // This line calls the callback function with the messages array.
-        }); // This closes the onSnapshot callback.
+        return onSnapshot(q,
+            (snapshot) => { // This line sets up a real-time listener on the query, executing the callback with the snapshot.
+                const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)); // This line maps the snapshot documents to Message objects with id.
+                callback(messages); // This line calls the callback function with the messages array.
+            },
+            (error) => {
+                console.error('[MessageService] listenToConversation error:', error);
+            }
+        ); // This closes the onSnapshot call.
     } // This closes the listenToConversation method.
 
     listenToAllMessages(callback: (messages: Message[]) => void): () => void { // This line defines the listenToAllMessages method, which takes callback parameter of type function and returns a function to unsubscribe, used to listen to real-time updates for all messages.
         const q = query( // This line creates a query for the 'messages' collection.
             collection(firestore, 'messages'), // This line specifies the collection to query.
-            // orderBy('createdAt', 'desc') // This line is a commented out orderBy clause for sorting by createdAt in descending order.
         ); // This closes the query.
-        return onSnapshot(q, (snapshot) => { // This line sets up a real-time listener on the query, executing the callback with the snapshot.
-            const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)); // This line maps the snapshot documents to Message objects with id.
-            callback(messages); // This line calls the callback function with the messages array.
-        }); // This closes the onSnapshot callback.
+        return onSnapshot(q,
+            (snapshot) => { // This line sets up a real-time listener on the query, executing the callback with the snapshot.
+                const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)); // This line maps the snapshot documents to Message objects with id.
+                callback(messages); // This line calls the callback function with the messages array.
+            },
+            (error) => {
+                console.error('[MessageService] listenToAllMessages error:', error);
+            }
+        ); // This closes the onSnapshot call.
     } // This closes the listenToAllMessages method.
 
     // PASTE YOUR MAKE.COM WEBHOOK URL HERE // This line is a comment indicating where to paste the Make.com webhook URL.
@@ -126,7 +168,15 @@ export class MessageService { // This line exports the MessageService class, whi
     private triggerAutomation(event: string, data: any) { // This line defines the private triggerAutomation method, which takes event and data parameters and returns void, used to trigger automation based on the event type.
         console.log(`[Automation Triggered] Event: ${event}, Data:`, data); // This line logs a message to the console indicating that automation has been triggered.
 
-        const adminEmail = environment.adminEmail || 'admin@innera-platform.com'; // This line gets the admin email from the environment, defaulting to 'admin@innera-platform.com'.
+        const adminEmail = environment.adminEmail || 'admin@innera-platform.com'; // This line        const adminEmail = environment.adminEmail || 'admin@innera-platform.com';
+
+        // ISSUE 1 & 10: Get community context for automation webhooks
+        // Attempt to get community name from AuthService.
+        let rawComm = this.authService.getCommunityName();
+        // If AuthService doesn't provide a valid community name, try localStorage.
+        if (!rawComm || rawComm === 'Unknown' || rawComm === '') rawComm = localStorage.getItem('communityName') || 'Unknown';
+        // Normalize the obtained community name for consistency.
+        const communityName = this.normalizeCommunityName(rawComm);
 
         if (event === 'sendMessage') { // This line checks if the event is 'sendMessage'.
             const userEmail = data.email; // This line gets the user email from the data.
@@ -134,14 +184,14 @@ export class MessageService { // This line exports the MessageService class, whi
             const messageContent = data.message; // This line gets the message content from the data.
 
             // Trigger webhook for message received by admin // This line is a comment indicating the webhook trigger for message received by admin.
-            this.webhookService.triggerMessageReceived(userEmail, userName, 'admin', adminEmail, 'Admin', messageContent); // This line calls the webhook service to trigger a message received webhook.
+            this.webhookService.triggerMessageReceived(userEmail, userName, 'admin', adminEmail, 'Admin', messageContent, communityName); // Added communityName
         } else if (event === 'sendReply') { // This line checks if the event is 'sendReply'.
             const userId = data.userId; // This line gets the userId from the data.
             const messageContent = data.message; // This line gets the message content from the data.
             const userEmail = userId; // This line sets userEmail to userId, as in this app, userId is often the email.
 
             // Trigger webhook for message sent confirmation to user // This line is a comment indicating the webhook trigger for message sent confirmation to user.
-            this.webhookService.triggerMessageSent(userEmail, 'User', userId, adminEmail, 'Admin', messageContent); // This line calls the webhook service to trigger a message sent webhook.
+            this.webhookService.triggerMessageSent(userEmail, 'User', userId, adminEmail, 'Admin', messageContent, communityName); // Added communityName
         } // This closes the if-else block.
     } // This closes the triggerAutomation method.
 } // This closes the MessageService class.

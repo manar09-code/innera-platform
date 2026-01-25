@@ -19,6 +19,12 @@ export class WritePostComponent {
   selectedPost: any = null;
 
   constructor(private router: Router, private authService: AuthService, private postService: PostService) {
+    this.initSync();
+  }
+
+  async initSync() {
+    // ISSUE 9 FIX: Wait for profile restoration
+    await this.authService.isInitialized;
     this.loadPosts();
   }
 
@@ -31,11 +37,15 @@ export class WritePostComponent {
       const userEmail = localStorage.getItem('userEmail') || '';
       const userRole = localStorage.getItem('userRole') || 'user';
 
+      // STEP 7: Extract hashtags automatically
+      const hashtagRegex = /#\w+/g;
+      const tags = this.postContent.match(hashtagRegex) || [];
+
       await this.postService.createPost({
         author: userName,
         avatar: userName.charAt(0).toUpperCase(),
         content: this.postContent.trim(),
-        tags: [],
+        tags: tags,
         type: 'text',
         userId: userEmail,
         communityName: communityName,

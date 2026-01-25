@@ -47,7 +47,6 @@ export class WebhookService {
       user_name: userName,
       platform: 'web'
     };
-    }; // This closes the payload object.
 
     this.sendWebhook(this.webhookUrls.userLogin, 'userLogin', payload);
   }
@@ -78,12 +77,10 @@ export class WebhookService {
       .join('\n');
   }
 
-
-
   /**
    * Trigger webhook for message sent confirmation to user
    */
-  triggerMessageSent(userEmail: string, userName: string, userId: string, adminEmail: string, adminName: string, messageContent: string): void {
+  triggerMessageSent(userEmail: string, userName: string, userId: string, adminEmail: string, adminName: string, messageContent: string, communityName: string): void {
     const payload = {
       action: 'message_sent',
       timestamp: new Date().toISOString(),
@@ -93,15 +90,17 @@ export class WebhookService {
       admin_email: adminEmail,
       admin_name: adminName,
       message_content: messageContent,
+      community_name: communityName, // ISSUE 1: Added community context to notification
       platform: 'web'
     };
+
     this.sendWebhook(this.webhookUrls.messageSent, 'messageSent', payload);
   }
 
   /**
    * Trigger webhook for message received notification to admin
    */
-  triggerMessageReceived(userEmail: string, userName: string, userId: string, adminEmail: string, adminName: string, messageContent: string): void {
+  triggerMessageReceived(userEmail: string, userName: string, userId: string, adminEmail: string, adminName: string, messageContent: string, communityName: string): void {
     const payload = {
       action: 'message_received',
       timestamp: new Date().toISOString(),
@@ -111,6 +110,7 @@ export class WebhookService {
       admin_email: adminEmail,
       admin_name: adminName,
       message_content: messageContent,
+      community_name: communityName, // ISSUE 1: Added community context to notification
       platform: 'web'
     };
 
@@ -135,7 +135,7 @@ export class WebhookService {
           if (error.status === 0) {
             console.error(`[Webhook Network Error] Cannot reach: ${url}`);
           } else if (error.status === 200) {
-            // Some webhooks return text which causes JSON parsing error if not handled, 
+            // Some webhooks return text which causes JSON parsing error if not handled,
             // but we use { responseType: 'text' } so 200 is always fine.
             console.log(`[Webhook Success] ${event}: Request completed.`);
           } else {
@@ -146,4 +146,3 @@ export class WebhookService {
       ).subscribe();
   }
 }
-      platform: 'web' // This line sets the platform to 'web'.

@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService, Message } from '../../services/message.service'; // Import service
+import { AuthService } from '../../services/auth.service'; // ISSUE 1 FIX: Direct import for injection
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
 interface Conversation {
@@ -25,8 +26,13 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
   selectedConversation: Conversation | null = null;
   newMessage: string = '';
   private unsubscribe: (() => void) | null = null;
+  private communitySubscription: any;
 
-  constructor(private router: Router, private messageService: MessageService) { }
+  constructor(
+    private router: Router,
+    private messageService: MessageService,
+    public authService: AuthService // ISSUE 1 FIX: Public for template access
+  ) { }
 
   ngOnInit() {
     this.loadConversations();
@@ -34,52 +40,104 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.unsubscribe) this.unsubscribe();
+    if (this.communitySubscription) this.communitySubscription.unsubscribe();
   }
 
   loadConversations() {
-    this.unsubscribe = this.messageService.listenToAllMessages((messages) => {
-      const grouped: { [key: string]: Conversation } = {};
-
-      messages.forEach(msg => {
-        // Determine conversation key (user email)
-        const convKey = msg.conversationId;
-
-        if (!grouped[convKey]) {
-          grouped[convKey] = {
-            userEmail: convKey,
-            userName: msg.senderRole === 'user' ? msg.senderName : 'User',
-            messages: [],
-            lastMessage: '',
-            lastTimestamp: 0
-          };
-        }
-
-        // Update username if we find a user message (in case first msg was admin)
-        if (msg.senderRole === 'user') {
-          grouped[convKey].userName = msg.senderName;
-        }
-
-        grouped[convKey].messages.push(msg); // already sorted desc by query, but let's re-sort if needed
-
-        // Sort messages asc for display
-        grouped[convKey].messages.sort((a: any, b: any) => a.createdAt?.toMillis() - b.createdAt?.toMillis());
-
-        // Last message info (since iteration order might vary or query order, let's pick last from sorted)
-        const lastMsg = grouped[convKey].messages[grouped[convKey].messages.length - 1];
-        grouped[convKey].lastMessage = lastMsg.content;
-        grouped[convKey].lastTimestamp = lastMsg.createdAt;
-      });
-
-      this.conversations = Object.values(grouped).sort((a: any, b: any) => b.lastTimestamp?.toMillis() - a.lastTimestamp?.toMillis());
-
-      // Re-select conversation if active
-      if (this.selectedConversation) {
-        const updated = this.conversations.find(c => c.userEmail === this.selectedConversation!.userEmail);
-        if (updated) {
-          this.selectedConversation = updated;
-          this.autoScrollBottom();
-        }
+    // ISSUE 1 & 5 FIX: Reactive community subscription
+    // This ensures that even if AuthService takes a moment to load the profile,
+    // the UI will update as soon as the community name resolved.
+    this.communitySubscription = this.authService.communityName$.subscribe((community) => {
+      if (!community) {
+        console.log('[AdminMessage] Waiting for community name to resolve...');
+        return;
       }
+
+      console.log('[AdminMessage] Resolved community for filtering:', community);
+
+      // Clean up previous listener if it exists
+      if (this.unsubscribe) this.unsubscribe();
+
+      this.unsubscribe = this.messageService.listenToAllMessages((messages) => {
+        console.log('[AdminMessage] Received global messages count:', messages.length);
+        const grouped: { [key: string]: Conversation } = {};
+
+        // ISSUE 3: Filter all messages to only show those for the admin's current community
+        // Optimization: Use case-insensitive trim to prevent string mismatch bugs
+        // LEGACY FALLBACK: If communityName is missing, we assume it belongs to the admin's primary community
+        const targetComm = community.toLowerCase().trim();
+        console.log('[AdminMessage] Filtering for community:', `"${targetComm}"`);
+
+        const filteredMessages = messages.filter(msg => {
+          const msgComm = (msg.communityName || '').toLowerCase().trim();
+          const isMatch = msgComm === targetComm || !msgComm; // LEGACY SAFETY: Allow empty communityName
+
+          if (!isMatch) {
+            console.log(`[AdminMessage] Message Hidden: Content="${msg.content.substring(0, 15)}..." FromComm="${msgComm}"`);
+          }
+          return isMatch;
+        });
+
+        console.log('[AdminMessage] Filter Result:', {
+          total: messages.length,
+          visible: filteredMessages.length,
+          target: targetComm
+        });
+
+        console.log('[AdminMessage] Filtered messages count:', filteredMessages.length);
+
+        filteredMessages.forEach(msg => {
+          // Determine conversation key (user email)
+          const convKey = msg.conversationId || 'unknown';
+
+          if (!grouped[convKey]) {
+            grouped[convKey] = {
+              userEmail: convKey,
+              userName: msg.senderRole === 'user' ? msg.senderName : 'User',
+              messages: [],
+              lastMessage: '',
+              lastTimestamp: null
+            };
+          }
+
+          // Update username if we find a user message (in case first msg was admin)
+          if (msg.senderRole === 'user' && msg.senderName) {
+            grouped[convKey].userName = msg.senderName;
+          }
+
+          grouped[convKey].messages.push(msg);
+
+          // Sort messages asc for display - Safe handling for null server timestamps
+          grouped[convKey].messages.sort((a: any, b: any) => {
+            const timeA = a.createdAt?.toMillis() || Date.now();
+            const timeB = b.createdAt?.toMillis() || Date.now();
+            return timeA - timeB;
+          });
+
+          // Last message info
+          const lastMsg = grouped[convKey].messages[grouped[convKey].messages.length - 1];
+          grouped[convKey].lastMessage = lastMsg.content;
+          grouped[convKey].lastTimestamp = lastMsg.createdAt;
+        });
+
+        // Filter out 'unknown' if any
+        this.conversations = Object.values(grouped)
+          .filter(c => c.userEmail !== 'unknown')
+          .sort((a: any, b: any) => {
+            const timeA = a.lastTimestamp?.toMillis() || 0;
+            const timeB = b.lastTimestamp?.toMillis() || 0;
+            return timeB - timeA;
+          });
+
+        // Re-select conversation if active
+        if (this.selectedConversation) {
+          const updated = this.conversations.find(c => c.userEmail === this.selectedConversation!.userEmail);
+          if (updated) {
+            this.selectedConversation = updated;
+            this.autoScrollBottom();
+          }
+        }
+      });
     });
   }
 

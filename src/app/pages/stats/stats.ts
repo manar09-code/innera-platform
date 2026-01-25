@@ -32,7 +32,10 @@ export class StatsComponent implements OnInit {
     private postService: PostService
   ) { }
 
-  ngOnInit() {
+  async ngOnInit() {
+    // ISSUE 9 FIX: Wait for auth before stats calc
+    await this.authService.isInitialized;
+
     this.isAdmin = localStorage.getItem('userRole') === 'admin';
     this.loadStats();
   }

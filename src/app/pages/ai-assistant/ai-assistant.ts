@@ -174,15 +174,23 @@ export class AiAssistantComponent // This line exports the AiAssistantComponent 
     const communityName = localStorage.getItem('communityName') || ''; // This line gets the community name from local storage.
 
     let feedPosts: FeedPostSummary[] = []; // This line initializes an array for feed post summaries.
+    let communityMetrics = null; // Placeholder for aggregated stats
+    let popularPosts: any[] = []; // Placeholder for popular posts
+    let activeAuthors: any[] = []; // Placeholder for active members
 
     try { // This line starts a try block for error handling.
+      // Load real statistics for AI grounding
+      communityMetrics = await this.postService.getCommunityStats(communityName); // Fetches community statistics.
+      popularPosts = await this.postService.getPopularPosts(communityName); // Fetches popular posts.
+      activeAuthors = await this.postService.getActiveAuthors(communityName); // Fetches active authors.
+
       const posts = await this.postService.getPosts(communityName); // This line fetches posts from the post service.
       feedPosts = posts.slice(0, 10).map((post: any) => ({ // This line maps the first 10 posts to summaries.
         author: post.author, // This line sets the author.
         content: post.content, // This line sets the content.
-        time: post.time?.toDate?.() || new Date(), // This line sets the time.
+        time: post.createdAt?.toDate?.() || new Date(), // This line sets the time.
         likes: post.likes || 0, // This line sets the likes.
-        comments: post.comments?.length || 0, // This line sets the comments count.
+        comments: post.commentCount || post.comments?.length || 0, // This line sets the comments count.
         tags: post.tags || [] // This line sets the tags.
       })); // This closes the map call.
     } catch (err) { // This line starts a catch block.
@@ -196,6 +204,10 @@ export class AiAssistantComponent // This line exports the AiAssistantComponent 
       communityName, // This line sets the communityName.
       aiInstructions: config.instructions, // This line sets the aiInstructions.
       news: config.news, // This line sets the news.
+      // Grounding data for better AI responses
+      stats: communityMetrics, // Includes community statistics in the context.
+      trending: popularPosts, // Includes popular posts in the context.
+      members: activeAuthors, // Includes active authors in the context.
       feedPosts // This line sets the feedPosts.
     }; // This closes the return object.
   } // This closes the buildContext method.

@@ -6,9 +6,13 @@ import { AuthService } from '../services/auth.service';
   providedIn: 'root',
 })
 export class AuthGuard implements CanActivate {
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) { }
 
-  canActivate(): boolean {
+  async canActivate(): Promise<boolean> {
+    // ISSUE 4 FIX: Wait for Firebase Auth to initialize before checking status.
+    // This prevents the application from redirecting to login on page refresh.
+    await this.authService.isInitialized;
+
     if (this.authService.isAuthenticated()) {
       return true;
     } else {

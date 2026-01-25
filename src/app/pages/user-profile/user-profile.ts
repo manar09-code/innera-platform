@@ -59,7 +59,10 @@ export class UserProfileComponent implements OnInit {
 
   constructor(private router: Router, private authService: AuthService) { }
 
-  ngOnInit() {
+  async ngOnInit() {
+    // ISSUE 9 FIX: Wait for profile recovery
+    await this.authService.isInitialized;
+
     this.loadUserData();
     this.loadUserActivity();
   }

@@ -27,7 +27,10 @@ export class MessageComponent implements OnInit, OnDestroy {
     private webhookService: WebhookService
   ) { }
 
-  ngOnInit() {
+  async ngOnInit() {
+    // ISSUE 10 FIX: Wait for AuthService to restore profile from Firestore
+    await this.authService.isInitialized;
+
     this.currentUserEmail = localStorage.getItem('userEmail') || '';
     if (this.currentUserEmail) {
       // Listen to conversation (conversationId = userId)
@@ -62,23 +65,29 @@ export class MessageComponent implements OnInit, OnDestroy {
       // 2. Show UI success
       this.showToast('✅ Message sent to admin!');
 
+      // ISSUE 1 FIX: Capture content for notification BEFORE clearing it
+      const contentToNotify = messageText;
+
       // 3. Clear input
       this.createMessageContent = '';
 
       // 4. Send Make AI webhook (non-blocking)
-      this.sendMessageNotification();
+      this.sendMessageNotification(contentToNotify);
 
     } catch (error) {
       this.showError('Failed to send message');
     }
   }
 
-  private async sendMessageNotification() {
+  private async sendMessageNotification(messageText: string) {
     try {
       const user = this.authService.getCurrentUser();
       if (!user || !user.email) return;
 
-      const messageText = this.createMessageContent.trim();
+      // ISSUE 1: Get community context for notifications
+      const communityName = this.authService.getCommunityName() || 'Unknown';
+
+      // Use the passed messageText instead of reading from cleared component state
 
       // Send to USER (confirmation)
       await this.webhookService.triggerMessageSent(
@@ -87,7 +96,8 @@ export class MessageComponent implements OnInit, OnDestroy {
         user.uid,
         'admin@innera-platform.com',
         'Community Admin',
-        messageText
+        messageText,
+        communityName
       );
 
       // Send to ADMIN (alert)
@@ -97,7 +107,8 @@ export class MessageComponent implements OnInit, OnDestroy {
         user.uid,
         'admin@innera-platform.com',
         'Community Admin',
-        messageText
+        messageText,
+        communityName
       );
 
     } catch (error) {

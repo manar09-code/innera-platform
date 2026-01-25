@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Firestore, collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, query, where, onSnapshot, Timestamp, collectionGroup, orderBy } from 'firebase/firestore';
-import { firestore } from '../firebase.config';
+import { firestore, storage } from '../firebase.config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export interface Comment {
   id: string;
@@ -37,14 +38,125 @@ export interface Post {
 })
 export class PostService {
 
+  // ISSUE 6: Internal normalization for Firestore query consistency
+  private normalizeCommunityName(name: string): string {
+    return name ? name.trim().toLowerCase() : '';
+  }
+
   constructor() { }
+
+  // ISSUE 2 FIX: Helper to upload image to Firebase Storage
+  async uploadImage(file: File): Promise<string> {
+    try {
+      console.log('[PostService] Starting image upload for file:', file.name);
+
+      // Check for valid storage bucket references
+      if (!storage) {
+        throw new Error('Firebase Storage not initialized. Please check firebase.config.ts');
+      }
+
+      const storageRef = ref(storage, `posts/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+
+      console.log('[PostService] Upload successful, getting download URL...');
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      console.log('[PostService] Download URL obtained:', downloadURL);
+      return downloadURL;
+    } catch (error: any) {
+      console.error('[PostService] Error uploading image to Storage:', error);
+      // Log specific error codes if available
+      if (error.code === 'storage/unauthorized') {
+        throw new Error('Upload failed: Unauthorized. Check Firebase Storage rules.');
+      }
+      throw error;
+    }
+  }
+
+  // ISSUE 3: Get stats for a community
+  async getCommunityStats(communityName: string): Promise<any> {
+    try {
+      // ISSUE 6: Normalize community name for consistent querying
+      const normalized = this.normalizeCommunityName(communityName);
+      const posts = await this.getPosts(normalized);
+      const totalPosts = posts.length;
+      // Calculate total likes and comments
+      const totalLikes = posts.reduce((sum, post) => sum + (post.likes || 0), 0);
+      const totalComments = posts.reduce((sum, post) => sum + (post.commentCount || 0), 0); // Using commentCount for efficiency
+
+      // Find the most active author
+      const authorActivity = new Map<string, number>();
+      posts.forEach(post => {
+        authorActivity.set(post.author, (authorActivity.get(post.author) || 0) + 1);
+      });
+      let mostActiveAuthor = { name: 'N/A', postCount: 0 };
+      if (authorActivity.size > 0) {
+        const sortedAuthors = Array.from(authorActivity.entries()).sort((a, b) => b[1] - a[1]);
+        mostActiveAuthor = { name: sortedAuthors[0][0], postCount: sortedAuthors[0][1] };
+      }
+
+      return {
+        totalPosts,
+        totalLikes,
+        totalComments,
+        mostActiveAuthor
+      };
+    } catch (e) {
+      console.error('[PostService] Error getting community stats:', e);
+      return { totalPosts: 0, totalLikes: 0, totalComments: 0, mostActiveAuthor: { name: 'N/A', postCount: 0 } };
+    }
+  }
+
+  // ISSUE 3: Get top 5 most liked/commented posts
+  async getPopularPosts(communityName: string): Promise<Post[]> {
+    try {
+      // ISSUE 6: Normalize community name for consistent querying
+      const normalized = this.normalizeCommunityName(communityName);
+      const posts = await this.getPosts(normalized);
+      return posts
+        .sort((a, b) => ((b.likes || 0) + (b.comments?.length || 0)) - ((a.likes || 0) + (a.comments?.length || 0)))
+        .slice(0, 5);
+    } catch (e) {
+      console.error('[PostService] Error getting popular posts:', e);
+      return [];
+    }
+  }
+
+  // ISSUE 3: Get top 5 most active authors
+  async getActiveAuthors(communityName: string): Promise<any[]> {
+    try {
+      // ISSUE 6: Normalize community name for consistent querying
+      const normalized = this.normalizeCommunityName(communityName);
+      const posts = await this.getPosts(normalized);
+      const authorMap = new Map<string, { count: number, avatar: string }>();
+
+      posts.forEach(p => {
+        const stats = authorMap.get(p.author) || { count: 0, avatar: p.avatar || '👤' };
+        stats.count++;
+        authorMap.set(p.author, stats);
+      });
+
+      return Array.from(authorMap.entries())
+        .map(([name, stats]) => ({ name, count: stats.count, avatar: stats.avatar }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+    } catch (e) {
+      console.error('[PostService] Error getting active authors:', e);
+      return [];
+    }
+  }
 
   // Create a new post
   async createPost(postData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments' | 'likedBy'>): Promise<string> {
     try {
       const postsRef = collection(firestore, 'posts');
+
+      // ISSUE 6: Normalize community name before storage
+      const normalizedComm = this.normalizeCommunityName(postData.communityName);
+
       const docRef = await addDoc(postsRef, {
         ...postData,
+        communityName: normalizedComm,
         createdAt: Timestamp.now(),
         likes: 0,
         comments: [],
@@ -62,7 +174,9 @@ export class PostService {
   async getPosts(communityName: string): Promise<Post[]> {
     try {
       const postsRef = collection(firestore, 'posts');
-      const q = query(postsRef, where('communityName', '==', communityName));
+      // ISSUE 6: Normalize community name for consistent querying
+      const normalized = this.normalizeCommunityName(communityName);
+      const q = query(postsRef, where('communityName', '==', normalized));
       const querySnapshot = await getDocs(q);
       const posts: Post[] = [];
       for (const docSnap of querySnapshot.docs) {
@@ -181,13 +295,17 @@ export class PostService {
     }
   }
 
-  // Listen to real-time updates for posts
   listenToPosts(communityName: string, callback: (posts: Post[]) => void): () => void {
     const postsRef = collection(firestore, 'posts');
+    // ISSUE 10: Use normalization
+    const normalized = this.normalizeCommunityName(communityName);
+
+    // ISSUE 10 HARDENING: Removed orderBy from query to avoid index requirements.
+    // If an index is missing, the entire query fails silently in some SDK versions.
+    // We sort in-memory instead.
     const q = query(
       postsRef,
-      where('communityName', '==', communityName),
-      orderBy('createdAt', 'desc')
+      where('communityName', '==', normalized)
     );
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const posts: Post[] = [];
@@ -280,39 +398,4 @@ export class PostService {
     }
   }
 
-  // Get all stats
-  async getCommunityStats(communityName: string): Promise<any> {
-    try {
-      const postsRef = collection(firestore, 'posts');
-      const q = query(postsRef, where('communityName', '==', communityName));
-      const snapshot = await getDocs(q);
-
-      let totalPosts = 0;
-      let totalImagePosts = 0;
-      let totalTextPosts = 0;
-      let totalLikes = 0;
-      let totalComments = 0;
-
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
-        totalPosts++;
-        if (data['type'] === 'image') totalImagePosts++;
-        else totalTextPosts++;
-
-        totalLikes += (data['likes'] || 0);
-        totalComments += (data['commentCount'] || 0); // Use the new field
-      });
-
-      return {
-        totalPosts,
-        totalImagePosts,
-        totalTextPosts,
-        totalLikes,
-        totalComments
-      };
-    } catch (e) {
-      console.error(e);
-      return { totalPosts: 0, totalImagePosts: 0, totalTextPosts: 0, totalLikes: 0, totalComments: 0 };
-    }
-  }
-}
+} // This closes the PostService class.

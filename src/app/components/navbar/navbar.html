@@ -1,8 +1,8 @@
 <!-- Admin Navigation Menu -->
 <div class="navbar" *ngIf="userRole === 'admin'">
   <button class="nav-btn" (click)="navigateToProfile()">👤 {{ 'PROFILE' | translate }}</button>
-  <button class="nav-btn" (click)="navigateToWritePost()">📝 {{ 'POSTS' | translate }}</button>
-  <button class="nav-btn" (click)="navigateToImagePost()">🖼️ Image Post</button>
+  <button class="nav-btn" (click)="navigateToWritePost()">📝 Create Post</button>
+  <button class="nav-btn" (click)="navigateToImagePost()">🖼️ Create Image Post</button>
   <button class="nav-btn" (click)="navigateToAdminMessages()">📨 Messages</button>
   <button class="nav-btn" (click)="toggleLanguage()">🌐 {{ currentLang === 'en' ? 'FR' : 'EN' }}</button>
 </div>
@@ -10,8 +10,8 @@
 <!-- User Navigation Menu -->
 <div class="navbar" *ngIf="userRole === 'user'">
   <button class="nav-btn" (click)="navigateToProfile()">👤 {{ 'PROFILE' | translate }}</button>
-  <button class="nav-btn" (click)="navigateToWritePost()">📝 {{ 'POSTS' | translate }}</button>
-  <button class="nav-btn" (click)="navigateToImagePost()">🖼️ Image Post</button>
+  <button class="nav-btn" (click)="navigateToWritePost()">📝 Create Post</button>
+  <button class="nav-btn" (click)="navigateToImagePost()">🖼️ Create Image Post</button>
   <button class="nav-btn" (click)="navigateToMessage()">💬 {{ 'MESSAGES' | translate }}</button>
   <button class="nav-btn" (click)="toggleLanguage()">🌐 {{ currentLang === 'en' ? 'FR' : 'EN' }}</button>
 </div>
