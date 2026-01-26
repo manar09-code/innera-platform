@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { Firestore, collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, query, where, onSnapshot, Timestamp, collectionGroup, orderBy } from 'firebase/firestore';
 import { firestore, storage } from '../firebase.config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -43,7 +43,7 @@ export class PostService {
     return name ? name.trim().toLowerCase() : '';
   }
 
-  constructor() { }
+  constructor(private zone: NgZone) { }
 
   // ISSUE 2 FIX: Helper to upload image to Firebase Storage
   async uploadImage(file: File): Promise<string> {
@@ -297,29 +297,33 @@ export class PostService {
 
   listenToPosts(communityName: string, callback: (posts: Post[]) => void): () => void {
     const postsRef = collection(firestore, 'posts');
-    // ISSUE 10: Use normalization
+    // Filter posts by community name
     const normalized = this.normalizeCommunityName(communityName);
-
-    // ISSUE 10 HARDENING: Removed orderBy from query to avoid index requirements.
-    // If an index is missing, the entire query fails silently in some SDK versions.
-    // We sort in-memory instead.
-    const q = query(
-      postsRef,
-      where('communityName', '==', normalized)
-    );
+    const q = query(postsRef, where('communityName', '==', normalized), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const posts: Post[] = [];
-      querySnapshot.forEach((doc) => {
-        const postData = doc.data() as Omit<Post, 'id'>;
-        posts.push({
-          id: doc.id,
-          ...postData,
-          createdAt: postData.createdAt as Timestamp
+      this.zone.run(() => {
+        const posts: Post[] = [];
+        querySnapshot.forEach((doc) => {
+          const postData = doc.data() as Omit<Post, 'id'>;
+          posts.push({
+            id: doc.id,
+            ...postData,
+            createdAt: postData.createdAt as Timestamp
+          });
         });
+
+        // Safe sort: handle null/missing createdAt
+        posts.sort((a, b) => {
+          const timeA = a.createdAt?.toMillis() || 0;
+          const timeB = b.createdAt?.toMillis() || 0;
+          return timeB - timeA;
+        });
+
+        console.log('[PostService] Fetched posts count:', posts.length);
+        callback(posts);
       });
-      // Sort posts by createdAt descending
-      posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-      callback(posts);
+    }, (error) => {
+      console.error('[PostService] onSnapshot Error:', error);
     });
     return unsubscribe;
   }

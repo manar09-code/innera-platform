@@ -48,9 +48,11 @@ export class FeedComponent implements OnInit, OnDestroy {
   private routerSubscription!: Subscription;
 
   async ngOnInit() {
-    // ISSUE 7 FIX: Wait for AuthService to fully restore the profile from Firestore
-    // before we try to load posts or determine admin status.
-    await this.authService.isInitialized;
+    // Wait for AuthService to fully restore the profile, but don't block non-admin data
+    this.authService.isInitialized.then(() => {
+      this.userRole = localStorage.getItem('userRole') || '';
+      this.isAdmin = this.userRole === 'admin';
+    });
 
     this.communityName = this.authService.getCommunityName() || 'innera platform';
     this.userName = localStorage.getItem('userName') || '';
@@ -61,22 +63,28 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.isAdmin = this.userRole === 'admin';
 
 
-    // Load posts immediately
-    this.loadPostsFromFirestore();
     this.loadWelcomeCardState();
 
-    try {
-      this.adminName = await this.authService.getAdminNameForCommunity(this.communityName);
-    } catch (e) {
-      console.warn('Could not fetch admin name:', e);
-    }
+    // Subscribe to community changes to reload posts
+    this.authService.communityName$.subscribe(async (community) => {
+      if (community) {
+        this.communityName = community;
+        this.loadPostsFromFirestore();
 
-    this.initializePopularPosts();
-    this.initializeActiveMembers();
+        try {
+          this.adminName = await this.authService.getAdminNameForCommunity(this.communityName);
+        } catch (e) {
+          console.warn('Could not fetch admin name:', e);
+        }
+
+        this.initializePopularPosts();
+        this.initializeActiveMembers();
+      }
+    });
 
     // Subscribe to router events to reload posts when navigating back to feed
     this.routerSubscription = this.router.events.subscribe(event => {
-      if (event instanceof NavigationEnd && event.url === '/feed') {
+      if (event instanceof NavigationEnd && (event.url === '/feed' || event.urlAfterRedirects === '/feed')) {
         this.loadPostsFromFirestore();
         this.initializePopularPosts();
       }

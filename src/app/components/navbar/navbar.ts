@@ -24,9 +24,6 @@ export class NavbarComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    // ISSUE 9 FIX: Wait for AuthService to restore profile from Firestore
-    await this.authService.isInitialized;
-
     // Subscribe to reactive subjects to ensure UI updates instantly
     this.authService.userName$.subscribe((name: string) => this.userName = name);
     this.authService.userRole$.subscribe((role: string) => this.userRole = role);

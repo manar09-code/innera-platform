@@ -31,11 +31,11 @@ export class AuthService { // This line exports the AuthService class, which is 
   private communityNameSubject = new BehaviorSubject<string>('');
   public communityName$: Observable<string> = this.communityNameSubject.asObservable();
 
-  private userRoleSubject = new BehaviorSubject<string>(''); // This line declares a private BehaviorSubject for the user's role, allowing components to reactively subscribe to role changes.
-  public userRole$: Observable<string> = this.userRoleSubject.asObservable(); // This line exposes the userRoleSubject as an Observable, providing a public stream for user role.
+  private userRoleSubject: BehaviorSubject<string>;
+  public userRole$: Observable<string>;
 
-  private userNameSubject = new BehaviorSubject<string>(''); // This line declares a private BehaviorSubject for the user's name, allowing components to reactively subscribe to name changes.
-  public userName$: Observable<string> = this.userNameSubject.asObservable(); // This line exposes the userNameSubject as an Observable, providing a public stream for user name.
+  private userNameSubject: BehaviorSubject<string>;
+  public userName$: Observable<string>;
 
   private currentUser: FirebaseUser | null = null; // This line declares a private property currentUser of type FirebaseUser or null, initialized to null, used to store the currently authenticated user.
 
@@ -49,6 +49,19 @@ export class AuthService { // This line exports the AuthService class, which is 
   }
 
   constructor(private webhookService: WebhookService) { // This line defines the constructor for the AuthService class, which takes a WebhookService instance as a parameter for dependency injection, used to trigger webhooks.
+    // Initialize subjects from localStorage immediately to prevent UI flickering
+    const storedRole = localStorage.getItem('userRole') || '';
+    const storedName = localStorage.getItem('userName') || '';
+    const rawComm = localStorage.getItem('communityName') || '';
+
+    this.userRoleSubject = new BehaviorSubject<string>(storedRole || 'user'); // Fallback to 'user' to ensure navbar visibility
+    this.userRole$ = this.userRoleSubject.asObservable();
+    this.userNameSubject = new BehaviorSubject<string>(storedName || 'Guest');
+    this.userName$ = this.userNameSubject.asObservable();
+    this.communityName = this.normalizeCommunityName(rawComm);
+    this.communityNameSubject = new BehaviorSubject<string>(this.communityName);
+    this.communityName$ = this.communityNameSubject.asObservable();
+
     // Create the initialization promise
     this.isInitialized = new Promise((resolve) => {
       this.resolveInit = resolve;
@@ -257,8 +270,9 @@ export class AuthService { // This line exports the AuthService class, which is 
         localStorage.setItem('userEmail', email);
         localStorage.setItem('userName', userData.username || '');
 
-        // ACCEPT the community name typed in the login form as the current context
-        this.setCommunityName(normalizedComm);
+        // ISSUE 8 FIX: Use the community name from the DB if it exists, fallback to form input
+        const resolvedComm = userData.communityName || normalizedComm;
+        this.setCommunityName(resolvedComm);
 
         // ISSUE 1 FIX: Trigger login notification email
         this.webhookService.triggerUserLogin(email, userData.username || '');
@@ -292,8 +306,9 @@ export class AuthService { // This line exports the AuthService class, which is 
         localStorage.setItem('userEmail', email);
         localStorage.setItem('userName', userData.adminName || '');
 
-        // ACCEPT the typed community name as the new admin dashboard context
-        this.setCommunityName(normalizedComm);
+        // ISSUE 8 FIX: Use the community name from the DB if it exists, fallback to form input
+        const resolvedComm = userData.communityName || normalizedComm;
+        this.setCommunityName(resolvedComm);
 
         // ISSUE 1 FIX: Trigger login notification email
         this.webhookService.triggerUserLogin(email, userData.adminName || '');

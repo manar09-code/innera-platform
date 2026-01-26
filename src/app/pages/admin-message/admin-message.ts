@@ -45,6 +45,7 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
 
   loadConversations() {
     // ISSUE 1 & 5 FIX: Reactive community subscription
+    // Subscribe to reactive subjects to ensure UI updates instantly
     // This ensures that even if AuthService takes a moment to load the profile,
     // the UI will update as soon as the community name resolved.
     this.communitySubscription = this.authService.communityName$.subscribe((community) => {
@@ -58,35 +59,11 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
       // Clean up previous listener if it exists
       if (this.unsubscribe) this.unsubscribe();
 
-      this.unsubscribe = this.messageService.listenToAllMessages((messages) => {
-        console.log('[AdminMessage] Received global messages count:', messages.length);
+      this.unsubscribe = this.messageService.listenToMessagesForCommunity(community, (messages) => {
+        console.log('[AdminMessage] Received messages for community:', messages.length);
         const grouped: { [key: string]: Conversation } = {};
 
-        // ISSUE 3: Filter all messages to only show those for the admin's current community
-        // Optimization: Use case-insensitive trim to prevent string mismatch bugs
-        // LEGACY FALLBACK: If communityName is missing, we assume it belongs to the admin's primary community
-        const targetComm = community.toLowerCase().trim();
-        console.log('[AdminMessage] Filtering for community:', `"${targetComm}"`);
-
-        const filteredMessages = messages.filter(msg => {
-          const msgComm = (msg.communityName || '').toLowerCase().trim();
-          const isMatch = msgComm === targetComm || !msgComm; // LEGACY SAFETY: Allow empty communityName
-
-          if (!isMatch) {
-            console.log(`[AdminMessage] Message Hidden: Content="${msg.content.substring(0, 15)}..." FromComm="${msgComm}"`);
-          }
-          return isMatch;
-        });
-
-        console.log('[AdminMessage] Filter Result:', {
-          total: messages.length,
-          visible: filteredMessages.length,
-          target: targetComm
-        });
-
-        console.log('[AdminMessage] Filtered messages count:', filteredMessages.length);
-
-        filteredMessages.forEach(msg => {
+        messages.forEach((msg: Message) => {
           // Determine conversation key (user email)
           const convKey = msg.conversationId || 'unknown';
 
@@ -120,9 +97,8 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
           grouped[convKey].lastTimestamp = lastMsg.createdAt;
         });
 
-        // Filter out 'unknown' if any
+        // Show all conversations
         this.conversations = Object.values(grouped)
-          .filter(c => c.userEmail !== 'unknown')
           .sort((a: any, b: any) => {
             const timeA = a.lastTimestamp?.toMillis() || 0;
             const timeB = b.lastTimestamp?.toMillis() || 0;

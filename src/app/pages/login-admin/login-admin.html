@@ -65,7 +65,7 @@
 
       <!-- Submit Button -->
       <button type="submit" class="btn-primary btn-login" [disabled]="isLoading">
-        {{ isLoading ? 'Connecting...' : 'Se Connecter' }}
+        {{ isLoading ? ('CONNECTING' | translate) : ('LOG_IN' | translate) }}
       </button>
     </form>
 
