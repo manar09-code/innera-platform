@@ -22,4 +22,25 @@ import { AiAssistantComponent } from './pages/ai-assistant/ai-assistant';
 export class App {
   // A signal (reactive variable) that holds the app's title, protected so only this class can change it, readonly means it can't be directly modified
   protected readonly title = signal('innera-platform');
+
+  constructor() {
+    this.runAppDiagnostic();
+  }
+
+  async runAppDiagnostic() {
+    try {
+      const { firestore } = await import('./firebase.config');
+      const { getDocs, collection, query, limit } = await import('firebase/firestore');
+
+      console.log('--- ROOT APP DIAGNOSTIC ---');
+      console.log('Project ID:', firestore.app.options.projectId);
+      console.log('API Key:', firestore.app.options.apiKey);
+
+      const snap = await getDocs(query(collection(firestore, 'posts'), limit(1)));
+      console.log('Connection Test:', snap.empty ? 'SUCCESS (But collection empty)' : 'SUCCESS (Data found!)');
+    } catch (e: any) {
+      console.error('--- ROOT APP DIAGNOSTIC FAILED ---');
+      console.error('Error:', e.message);
+    }
+  }
 }

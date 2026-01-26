@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -12,7 +12,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
   templateUrl: './stats.html',
   styleUrls: ['./stats.css'],
 })
-export class StatsComponent implements OnInit {
+export class StatsComponent implements OnInit, OnDestroy {
   totalUsers: number = 0;
   totalLikesAndComments: number = 0;
   totalMessages: number = 0;
@@ -26,6 +26,8 @@ export class StatsComponent implements OnInit {
   myLikeCount: number = 0;
   isAdmin: boolean = false;
 
+  private unsubs: (() => void)[] = [];
+
   constructor(
     private router: Router,
     private authService: AuthService,
@@ -33,11 +35,13 @@ export class StatsComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    // ISSUE 9 FIX: Wait for auth before stats calc
     await this.authService.isInitialized;
-
     this.isAdmin = localStorage.getItem('userRole') === 'admin';
     this.loadStats();
+  }
+
+  ngOnDestroy() {
+    this.unsubs.forEach(unsub => unsub());
   }
 
   async loadStats() {
@@ -49,28 +53,30 @@ export class StatsComponent implements OnInit {
     const members = await this.authService.getMembers();
     this.totalUsers = members.length;
 
-    // Community Stats from Posts
-    const stats = await this.postService.getCommunityStats(communityName);
-    this.totalPosts = stats.totalPosts;
-    this.totalImagePosts = stats.totalImagePosts;
-    this.totalTextPosts = stats.totalTextPosts;
-    this.totalLikesAndComments = stats.totalLikes + stats.totalComments;
+    // Real-time Community Stats
+    if (communityName) {
+      this.unsubs.push(this.postService.listenToCommunityStats(communityName, (stats) => {
+        this.totalPosts = stats.totalPosts;
+        this.totalImagePosts = stats.totalImagePosts;
+        this.totalTextPosts = stats.totalTextPosts;
+        this.totalLikesAndComments = stats.totalLikes + stats.totalComments;
+      }));
+    }
 
-    // User specific stats
+    // Real-time User specific stats
     if (userEmail) {
-      try {
-        const posts = await this.postService.getUserPosts(userEmail);
+      this.unsubs.push(this.postService.listenToUserPosts(userEmail, (posts) => {
         this.myPostCount = posts.length;
+      }));
 
-        const comments = await this.postService.getUserComments(userEmail);
+      this.unsubs.push(this.postService.listenToUserComments(userEmail, (comments) => {
         this.myCommentCount = comments.length;
+      }));
 
-        if (userName) {
-          const liked = await this.postService.getUserLikedPosts(userName);
+      if (userName) {
+        this.unsubs.push(this.postService.listenToUserLikedPosts(userName, (liked) => {
           this.myLikeCount = liked.length;
-        }
-      } catch (e) {
-        console.error('Error loading user stats:', e);
+        }));
       }
     }
 
@@ -78,6 +84,10 @@ export class StatsComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/profile']);
+    if (this.isAdmin) {
+      this.router.navigate(['/profile']);
+    } else {
+      this.router.navigate(['/user-profile']);
+    }
   }
 }

@@ -1,27 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
-
-interface Comment {
-  username: string;
-  text: string;
-  time: string;
-}
-
-interface Post {
-  id: number;
-  author: string;
-  avatar: string;
-  content: string;
-  time: string;
-  likes: number;
-  comments: Comment[];
-  tags: string[];
-  type: string;
-  likedBy: string[];
-}
+import { PostService } from '../../services/post.service';
+import { Firestore, doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
+import { firestore } from '../../firebase.config';
 
 @Component({
   selector: 'app-user-profile',
@@ -30,7 +14,7 @@ interface Post {
   templateUrl: './user-profile.html',
   styleUrls: ['./user-profile.css'],
 })
-export class UserProfileComponent implements OnInit {
+export class UserProfileComponent implements OnInit, OnDestroy {
   userName: string = '';
   userEmail: string = '';
   communityName: string = '';
@@ -39,155 +23,154 @@ export class UserProfileComponent implements OnInit {
   backgroundImage: string = 'url(https://via.placeholder.com/800x200)'; // Placeholder background
   isAdmin: boolean = false;
 
-  // Mock data for likes, comments, posts (in real app, fetch from service)
-  userLikes: Post[] = [];
-  userComments: Comment[] = [];
-  userPosts: Post[] = [];
+  userLikes: any[] = [];
+  userComments: any[] = [];
+  userPosts: any[] = [];
 
-  // Edit modes
   editingUsername: boolean = false;
   editingEmail: boolean = false;
   editingCommunity: boolean = false;
   editingPassword: boolean = false;
 
-  // Temp values for editing
   tempUsername: string = '';
   tempEmail: string = '';
   tempCommunity: string = '';
   tempPassword: string = '';
   userRole!: string;
 
-  constructor(private router: Router, private authService: AuthService) { }
+  private unsubs: (() => void)[] = [];
+
+  constructor(private router: Router, private authService: AuthService, private postService: PostService) { }
 
   async ngOnInit() {
-    // ISSUE 9 FIX: Wait for profile recovery
     await this.authService.isInitialized;
-
+    this.userRole = localStorage.getItem('userRole') || 'user';
     this.loadUserData();
     this.loadUserActivity();
   }
 
+  ngOnDestroy() {
+    this.unsubs.forEach(unsub => unsub());
+  }
+
   goBack() {
-    if (this.userRole === 'admin') {
-      this.router.navigate(['/feed']);
-    } else {
-      this.router.navigate(['/feed']);
+    this.router.navigate(['/feed']);
+  }
+
+  async loadUserData() {
+    const user = this.authService.getCurrentUser();
+    if (!user) return;
+
+    try {
+      const role = localStorage.getItem('userRole') || 'user';
+      const community = this.authService.getCommunityName();
+      const profileId = `${user.uid}_${role}_${community}`;
+
+      let userDoc = await getDoc(doc(firestore, 'users', profileId));
+      let userData = userDoc.data();
+
+      if (!userDoc.exists()) {
+        const q = query(collection(firestore, 'users'), where('id', '==', user.uid), where('role', '==', role));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          userData = querySnapshot.docs[0].data();
+        }
+      }
+
+      if (userData) {
+        this.userName = userData['username'] || userData['adminName'] || user.displayName || 'Guest';
+        this.userEmail = userData['email'] || user.email || '';
+        this.communityName = userData['communityName'] || community || '';
+        this.userRole = userData['role'] || 'user';
+        this.isAdmin = this.userRole === 'admin';
+
+        this.tempUsername = this.userName;
+        this.tempEmail = this.userEmail;
+        this.tempCommunity = this.communityName;
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
     }
   }
-  loadUserData() {
-    this.userName = localStorage.getItem('userName') || '';
-    this.userEmail = localStorage.getItem('userEmail') || '';
-    this.communityName = this.authService.getCommunityName() || '';
-    this.isAdmin = localStorage.getItem('userRole') === 'admin';
-    this.tempUsername = this.userName;
-    this.tempEmail = this.userEmail;
-    this.tempCommunity = this.communityName;
+
+  get displayCommunityName(): string {
+    if (!this.communityName) return 'My Community';
+    return this.communityName
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
-  loadUserActivity() {
-    // Mock data - in real app, fetch from backend or shared service
-    const mockPosts: Post[] = [
-      {
-        id: 1,
-        author: this.userName,
-        avatar: this.profilePicture,
-        content: 'My first post!',
-        time: '1 day ago',
-        likes: 5,
-        comments: [],
-        tags: [],
-        type: 'text',
-        likedBy: [],
-      },
-    ];
+  async loadUserActivity() {
+    const email = localStorage.getItem('userEmail');
+    const name = localStorage.getItem('userName');
 
-    this.userPosts = mockPosts.filter((p) => p.author === this.userName);
+    if (!email) return;
 
-    // Mock likes and comments
-    this.userLikes = mockPosts.filter((p) => p.likedBy.includes(this.userName));
-    this.userComments = mockPosts.flatMap((p) =>
-      p.comments.filter((c) => c.username === this.userName)
-    );
+    try {
+      this.unsubs.push(this.postService.listenToUserPosts(email, (posts: any[]) => {
+        this.userPosts = posts;
+      }));
+
+      if (name) {
+        this.unsubs.push(this.postService.listenToUserLikedPosts(name, (likes: any[]) => {
+          this.userLikes = likes;
+        }));
+      }
+
+      this.unsubs.push(this.postService.listenToUserComments(email, (comments: any[]) => {
+        this.userComments = comments;
+      }));
+    } catch (error) {
+      console.error('Error loading user activity:', error);
+    }
   }
 
   startEdit(field: string) {
-    switch (field) {
-      case 'Username':
-        this.editingUsername = true;
-        break;
-      case 'Email':
-        this.editingEmail = true;
-        break;
-      case 'Community':
-        this.editingCommunity = true;
-        break;
-      case 'Password':
-        this.editingPassword = true;
-        break;
-    }
+    if (field === 'Username') this.editingUsername = true;
+    if (field === 'Email') this.editingEmail = true;
+    if (field === 'Community') this.editingCommunity = true;
+    if (field === 'Password') this.editingPassword = true;
   }
 
   async saveEdit(field: string) {
     let tempValue: string;
     try {
-      switch (field) {
-        case 'Username':
-          tempValue = this.tempUsername;
-          if (tempValue.trim()) {
-            await this.authService.updateUserProfile('username', tempValue);
-            this.userName = tempValue;
-          }
-          this.editingUsername = false;
-          break;
-        case 'Email':
-          tempValue = this.tempEmail;
-          if (tempValue.trim()) {
-            await this.authService.updateUserProfile('email', tempValue);
-            this.userEmail = tempValue;
-          }
-          this.editingEmail = false;
-          break;
-        case 'Community':
-          tempValue = this.tempCommunity;
-          if (tempValue.trim()) {
-            await this.authService.updateUserProfile('communityName', tempValue);
-            this.communityName = tempValue;
-          }
-          this.editingCommunity = false;
-          break;
-        case 'Password':
-          tempValue = this.tempPassword;
-          if (tempValue.trim()) {
-            this.userPassword = tempValue;
-            // In real app, hash and save password via service
-          }
-          this.editingPassword = false;
-          break;
+      if (field === 'Username') {
+        tempValue = this.tempUsername;
+        await this.authService.updateUserProfile('username', tempValue);
+        this.userName = tempValue;
+        this.editingUsername = false;
+      } else if (field === 'Email') {
+        tempValue = this.tempEmail;
+        await this.authService.updateUserProfile('email', tempValue);
+        this.userEmail = tempValue;
+        this.editingEmail = false;
+      } else if (field === 'Community') {
+        tempValue = this.tempCommunity;
+        await this.authService.updateUserProfile('communityName', tempValue);
+        this.communityName = tempValue;
+        this.editingCommunity = false;
+      } else if (field === 'Password') {
+        this.editingPassword = false;
       }
     } catch (error) {
       console.error(`Error saving ${field}:`, error);
-      alert(`Failed to update ${field}. Please try again.`);
     }
   }
 
   cancelEdit(field: string) {
-    switch (field) {
-      case 'Username':
-        this.tempUsername = this.userName;
-        this.editingUsername = false;
-        break;
-      case 'Email':
-        this.tempEmail = this.userEmail;
-        this.editingEmail = false;
-        break;
-      case 'Community':
-        this.tempCommunity = this.communityName;
-        this.editingCommunity = false;
-        break;
-      case 'Password':
-        this.tempPassword = this.userPassword;
-        this.editingPassword = false;
-        break;
+    if (field === 'Username') {
+      this.tempUsername = this.userName;
+      this.editingUsername = false;
+    } else if (field === 'Email') {
+      this.tempEmail = this.userEmail;
+      this.editingEmail = false;
+    } else if (field === 'Community') {
+      this.tempCommunity = this.communityName;
+      this.editingCommunity = false;
+    } else if (field === 'Password') {
+      this.editingPassword = false;
     }
   }
 

@@ -27,7 +27,11 @@ export class MessageService { // This line exports the MessageService class, whi
     // This private method normalizes a given community name by trimming whitespace and converting it to lowercase.
     // It ensures consistency in community names stored and queried, handling null or empty inputs gracefully.
     private normalizeCommunityName(name: string): string {
-        return name ? name.trim().toLowerCase() : '';
+        if (!name) return '';
+        return name
+            .trim()
+            .toLowerCase()
+            .replace(/[-_]/g, ' '); // Unify "tunisia-hood" and "tunisia hood"
     }
 
     constructor(private authService: AuthService, private webhookService: WebhookService) { // This line defines the constructor for the MessageService class, which takes AuthService and WebhookService instances as parameters for dependency injection, used to access authentication and webhook functionality.

@@ -28,16 +28,41 @@ export class WritePostComponent {
     this.loadPosts();
   }
 
+  selectedFile: File | null = null;
+  imagePreview: string | null = null;
+  isUploading: boolean = false;
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file.');
+        return;
+      }
+      this.selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.imagePreview = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
   async createPost() {
-    if (!this.postContent.trim()) return;
+    if (!this.postContent.trim() && !this.selectedFile) return;
 
     try {
+      this.isUploading = true;
       const communityName = this.authService.getCommunityName() || 'Innera Platform';
       const userName = localStorage.getItem('userName') || 'Anonymous';
       const userEmail = localStorage.getItem('userEmail') || '';
       const userRole = localStorage.getItem('userRole') || 'user';
 
-      // STEP 7: Extract hashtags automatically
+      let imageUrl: string | undefined;
+      if (this.selectedFile) {
+        imageUrl = await this.postService.uploadImage(this.selectedFile);
+      }
+
       const hashtagRegex = /#\w+/g;
       const tags = this.postContent.match(hashtagRegex) || [];
 
@@ -46,17 +71,20 @@ export class WritePostComponent {
         avatar: userName.charAt(0).toUpperCase(),
         content: this.postContent.trim(),
         tags: tags,
-        type: 'text',
+        type: this.selectedFile ? 'image' : 'text',
         userId: userEmail,
         communityName: communityName,
-        authorRole: userRole as 'admin' | 'user'
+        authorRole: userRole as 'admin' | 'user',
+        imageData: imageUrl
       });
 
       this.postContent = '';
-
-      // Navigate back to feed to see the new post
+      this.selectedFile = null;
+      this.imagePreview = null;
+      this.isUploading = false;
       this.router.navigate(['/feed']);
     } catch (error) {
+      this.isUploading = false;
       console.error('Error creating post:', error);
       alert('Error creating post. Please try again.');
     }

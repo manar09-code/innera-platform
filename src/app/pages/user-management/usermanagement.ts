@@ -1,16 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { PostService, Post, Comment } from '../../services/post.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
-
-interface Member {
-  id: string | number;
-  name: string;
-  email: string;
-  isBlocked?: boolean;
-}
 
 @Component({
   selector: 'app-user-management',
@@ -19,18 +13,25 @@ interface Member {
   templateUrl: './usermanagement.html',
   styleUrls: ['./usermanagement.css'],
 })
-export class UserManagementComponent implements OnInit {
-  members: Member[] = [];
+export class UserManagementComponent implements OnInit, OnDestroy {
+  members: any[] = [];
   newMemberName: string = '';
   newMemberEmail: string = '';
   communityName: string = '';
   joinLink: string = '';
   userRole!: string;
 
-  constructor(private authService: AuthService, private router: Router) { }
+  private unsubs: (() => void)[] = [];
+
+  constructor(private authService: AuthService, private router: Router, private postService: PostService) { }
 
   ngOnInit() {
+    this.userRole = localStorage.getItem('userRole') || 'user';
     this.loadData();
+  }
+
+  ngOnDestroy() {
+    this.unsubs.forEach(unsub => unsub());
   }
 
   goBack() {
@@ -42,26 +43,47 @@ export class UserManagementComponent implements OnInit {
   }
 
   async loadData() {
-    this.userRole = localStorage.getItem('userRole') || 'user';
     this.communityName = this.authService.getCommunityName() || 'My Community';
     this.joinLink = 'https://example.com/join/' + this.communityName.toLowerCase().replace(/\s+/g, '-');
 
-    // Load members from AuthService
-    try {
-      const members = await this.authService.getMembers();
-      this.members = members.map(m => ({
-        id: m.id, // Ensure ID mismatch is handled (string vs number)
-        name: m.username || m.adminName || 'Unknown',
-        email: m.email,
-        isBlocked: m.isBlocked
+    const unsubMembers = this.authService.listenToMembers((users) => {
+      // Clear old activity unsubs to avoid leaks when member list changes
+      this.unsubs.forEach((u, i) => { if (i > 0) u(); }); // Keep member unsub at index 0
+      this.unsubs = this.unsubs.slice(0, 1);
+
+      this.members = users.map(u => ({
+        id: u.id,
+        name: u.username || u.adminName || 'Unknown',
+        email: u.email,
+        isBlocked: u.isBlocked,
+        loginCount: u.loginCount || 0,
+        postCount: 0,
+        likeCount: 0,
+        commentCount: 0
       }));
-    } catch (e) {
-      console.error("Error loading members", e);
-    }
+
+      // Set up activity listeners for each member
+      this.members.forEach(member => {
+        this.unsubs.push(this.postService.listenToUserPosts(member.email, (posts) => {
+          member.postCount = posts.length;
+        }));
+
+        this.unsubs.push(this.postService.listenToUserComments(member.email, (comments) => {
+          member.commentCount = comments.length;
+        }));
+
+        if (member.name !== 'Unknown') {
+          this.unsubs.push(this.postService.listenToUserLikedPosts(member.name, (likes) => {
+            member.likeCount = likes.length;
+          }));
+        }
+      });
+    });
+
+    if (unsubMembers) this.unsubs.push(unsubMembers);
   }
 
   addMember() {
-    // This would typically involve cloud functions to create auth accounts
     alert("To add a member, they must register via the registration page.");
   }
 

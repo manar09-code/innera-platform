@@ -47,18 +47,40 @@ export class FeedComponent implements OnInit, OnDestroy {
   isAdmin: boolean = false;
   private routerSubscription!: Subscription;
 
+  get displayCommunityName(): string {
+    if (!this.communityName) return 'My Community';
+    return this.communityName
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
   async ngOnInit() {
-    this.communityName = this.authService.getCommunityName() || 'Innera Platform';
+    // ISSUE 9 FIX: Wait for profile restoration from localStorage/Firestore
+    await this.authService.isInitialized;
+
+    // Subscribe to community changes to keep feed in sync
+    this.routerSubscription = this.authService.communityName$.subscribe(name => {
+      if (name) {
+        this.communityName = name;
+        this.loadPostsFromFirestore();
+        this.initializePopularPosts();
+      }
+    });
+
     this.userName = localStorage.getItem('userName') || '';
     this.userEmail = localStorage.getItem('userEmail') || '';
     this.userRole = localStorage.getItem('userRole') || '';
     this.isAdmin = this.userRole === 'admin';
+
     if (this.communityName === 'Tunisia Hood') {
       this.isAdmin = true;
     }
 
-    // Load posts immediately
-    this.loadPostsFromFirestore();
+    if (this.communityName) {
+      this.loadPostsFromFirestore();
+    }
+
     this.loadWelcomeCardState();
 
     try {
@@ -70,13 +92,13 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.initializePopularPosts();
     this.initializeActiveMembers();
 
-    // Subscribe to router events to reload posts when navigating back to feed
-    this.routerSubscription = this.router.events.subscribe(event => {
-      if (event instanceof NavigationEnd && event.url === '/feed') {
+    // routerSubscription also handles navigation back to feed
+    this.routerSubscription.add(this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd && (event.url === '/feed' || event.urlAfterRedirects === '/feed')) {
         this.loadPostsFromFirestore();
         this.initializePopularPosts();
       }
-    });
+    }));
   }
 
   popularPosts: Post[] = [];
@@ -86,52 +108,107 @@ export class FeedComponent implements OnInit, OnDestroy {
 
   constructor(private router: Router, private authService: AuthService, private postService: PostService, private seedService: SeedService) { }
 
-  async loadPostsFromFirestore() {
+  isSeeding = false;
+  async seedCommunity() {
+    if (this.isSeeding) return;
+    this.isSeeding = true;
     try {
-      console.log('Loading posts for community:', this.communityName);
-      console.log('[DEBUG] Posts query:', { collection: 'posts', where: ['communityName', '==', this.communityName], orderBy: ['createdAt', 'desc'] });
+      await this.seedService.seedInitialPosts(this.communityName);
+      // Stats/feed will auto-refresh due to real-time listeners
+    } catch (e) {
+      console.error('Seed failed', e);
+    } finally {
+      this.isSeeding = false;
+    }
+  }
 
-      // Unsubscribe from previous listener if exists
+  async loadPostsFromFirestore() {
+    if (!this.communityName) {
+      this.communityName = this.authService.getCommunityName();
+    }
+
+    if (!this.communityName) {
+      console.warn('[FeedComponent] Cannot load posts: communityName is empty');
+      return;
+    }
+
+    try {
+      console.log(`[FeedComponent] Loading feed for: "${this.communityName}"`);
+
+      // Cleanup previous listener
       if (this.postsUnsubscribe) {
         this.postsUnsubscribe();
       }
 
       // Listen to real-time updates
-      this.postsUnsubscribe = this.postService.listenToPosts(this.communityName, (posts: Post[]) => {
+      this.postsUnsubscribe = this.postService.listenToPosts(this.communityName, async (posts: Post[]) => {
         // Clean up old comment listeners
         this.commentUnsubscribers.forEach(unsubscribe => unsubscribe());
         this.commentUnsubscribers.clear();
 
-        // Sort posts: pinned first, then by createdAt
+        // Sort posts: pinned first, then by createdAt (handling different date fields via the service map)
         const sortedPosts = posts.sort((a: Post, b: Post) => {
           if (a.isPinned && !b.isPinned) return -1;
           if (!a.isPinned && b.isPinned) return 1;
-          return b.createdAt.toMillis() - a.createdAt.toMillis(); // Newest first
+          return b.createdAt.toMillis() - a.createdAt.toMillis();
         });
 
         this.posts = sortedPosts;
-        this.applyFilter(); // Filter posts based on tag
+        this.applyFilter();
 
         this.initializePopularPosts();
         this.initializeActiveMembers();
 
-        // Start listening to comments for each post
+        // Refresh comment listeners
         this.posts.forEach(post => {
           const unsubscribe = this.postService.listenToComments(post.id, (comments: Comment[]) => {
             post.comments = this.buildCommentTree(comments);
-            // Re-sort popular posts as comments change
             this.initializePopularPosts();
           });
           this.commentUnsubscribers.set(post.id, unsubscribe);
         });
 
+        // RECOVERY LOGIC if feed is totally empty
         if (this.posts.length === 0) {
-          // ... (seeding logic remains same)
-          this.seedInitialPosts();
+          console.log('[FeedComponent] Feed empty, running automatic recovery...');
+
+          let recoveredCount = 0;
+
+          // 1. Try to recover by Hashtag (User requested)
+          // If in "Tunisia Hood", look for posts with #Tunisia tags
+          const communityKey = this.communityName.split(' ')[0].toLowerCase();
+          const allPosts = await this.postService.getPosts(this.communityName); // Already includes variations
+
+          if (this.userEmail) {
+            const userHistory = await this.postService.getUserPosts(this.userEmail);
+            const orphaned = userHistory.filter(p => {
+              const pComm = p.communityName.toLowerCase().replace(/[-_]/g, ' ');
+              const cComm = this.communityName.toLowerCase().replace(/[-_]/g, ' ');
+
+              // Match by name or by specific hashtag
+              const hasMatchingTag = p.tags && p.tags.some((t: string) => t.toLowerCase().includes(communityKey));
+
+              return (pComm === cComm || hasMatchingTag) && p.communityName !== this.communityName;
+            });
+
+            if (orphaned.length > 0) {
+              console.log(`[FeedComponent] Automatically migrating ${orphaned.length} posts for recovery.`);
+              for (const p of orphaned) {
+                await this.postService.updatePost(p.id, { communityName: this.communityName });
+                recoveredCount++;
+              }
+              if (recoveredCount > 0) return; // New snap will trigger
+            }
+          }
+
+          // 2. If STILL empty, seed default posts
+          if (this.posts.length === 0) {
+            this.seedInitialPosts();
+          }
         }
       });
     } catch (error) {
-      console.error('Error loading posts from Firestore:', error);
+      console.error('[FeedComponent] Error in loadPostsFromFirestore:', error);
     }
   }
 
@@ -310,57 +387,60 @@ export class FeedComponent implements OnInit, OnDestroy {
     return this.posts.reduce((total, post) => total + post.comments.length, 0);
   }
 
-  async handlePostSubmit(): Promise<void> {
-    if (this.postText.trim()) {
-      try {
-        await this.postService.createPost({
-          author: this.userName || 'Anonymous',
-          avatar: this.userName.charAt(0).toUpperCase(),
-          content: this.postText,
-          tags: [],
-          type: this.currentTab === 'post' ? 'text' : 'image',
-          userId: this.userEmail,
-          communityName: this.communityName,
-          authorRole: this.userRole as 'admin' | 'user'
-        });
-        this.postText = ''; // Clear the input
-      } catch (error) {
-        console.error('Error creating post:', error);
-        this.showNotification('Error creating post', 'error');
-      }
+  selectedFile: File | null = null;
+  imagePreview: string | null = null;
+  isUploading: boolean = false;
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.imagePreview = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
     }
-  }
-
-  async seedPosts(): Promise<void> {
-    try {
-      const success = await this.seedService.seedInitialPosts(this.communityName);
-      if (success) {
-        this.showNotification('Sample posts added successfully!', 'success');
-      } else {
-        this.showNotification('Error seeding posts', 'error');
-      }
-    } catch (error) {
-      console.error('Error seeding posts:', error);
-      this.showNotification('Error seeding posts', 'error');
-    }
-  }
-
-  savePostsToStorage(): void {
-    const communityName = this.authService.getCommunityName() || '';
-    const feedPostsKey = `feed_posts_${communityName}`;
-    localStorage.setItem(feedPostsKey, JSON.stringify(this.posts));
-  }
-
-  onPostInput(): void {
-    // Stub for input handling
   }
 
   switchTabUI(tab: string): void {
     this.currentTab = tab;
-    if (tab === 'post') {
-      this.navigateToWritePost();
-    } else if (tab === 'image') {
-      this.navigateToImagePost();
+    // Removed automatic navigation to separate pages
+    this.imagePreview = null;
+    this.selectedFile = null;
+  }
+
+  async handlePostSubmit(): Promise<void> {
+    if (!this.postText.trim() && !this.selectedFile) return;
+
+    try {
+      this.isUploading = true;
+      let imageUrl: string | undefined;
+
+      if (this.currentTab === 'image' && this.selectedFile) {
+        imageUrl = await this.postService.uploadImage(this.selectedFile);
+      }
+
+      await this.postService.createPost({
+        author: this.userName || 'Anonymous',
+        avatar: this.userName.charAt(0).toUpperCase(),
+        content: this.postText.trim(),
+        tags: this.postText.match(/#\w+/g) || [],
+        type: this.currentTab === 'post' ? 'text' : 'image',
+        userId: this.userEmail,
+        communityName: this.communityName,
+        authorRole: this.userRole as 'admin' | 'user',
+        imageData: imageUrl
+      });
+
+      this.postText = '';
+      this.imagePreview = null;
+      this.selectedFile = null;
+      this.isUploading = false;
+    } catch (error) {
+      this.isUploading = false;
+      console.error('Error creating post:', error);
+      this.showNotification('Error creating post', 'error');
     }
   }
 
@@ -370,14 +450,14 @@ export class FeedComponent implements OnInit, OnDestroy {
 
   removeWelcomeCard(): void {
     this.showWelcomeCard = false;
-    const welcomeCardKey = `welcome_card_${this.userEmail}`;
-    localStorage.setItem(welcomeCardKey, 'hidden');
+    const welcomeCardKey = `welcome_card_hidden_${this.userEmail}`; // Session specific
+    sessionStorage.setItem(welcomeCardKey, 'true');
   }
 
   loadWelcomeCardState(): void {
-    const welcomeCardKey = `welcome_card_${this.userEmail}`;
-    const hidden = localStorage.getItem(welcomeCardKey);
-    this.showWelcomeCard = hidden !== 'hidden';
+    const welcomeCardKey = `welcome_card_hidden_${this.userEmail}`;
+    const isHidden = sessionStorage.getItem(welcomeCardKey);
+    this.showWelcomeCard = isHidden !== 'true';
   }
 
   toggleReplyInput(commentId: string): void {

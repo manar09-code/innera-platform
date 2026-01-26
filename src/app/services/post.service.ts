@@ -38,9 +38,25 @@ export interface Post {
 })
 export class PostService {
 
-  // ISSUE 6: Internal normalization for Firestore query consistency
+  // ISSUE 6 FIX: Robust normalization replacing hyphens/underscores with spaces
   private normalizeCommunityName(name: string): string {
-    return name ? name.trim().toLowerCase() : '';
+    if (!name) return '';
+    return name
+      .trim()
+      .toLowerCase()
+      .replace(/[-_]/g, ' '); // Unify "tunisia-hood" and "tunisia hood"
+  }
+
+  // Helper to get Timestamp from various possible fields (createdAt, time)
+  private getPostTimestamp(data: any): Timestamp {
+    if (data.createdAt && data.createdAt.toMillis) return data.createdAt;
+    if (data.time && data.time.toMillis) return data.time;
+
+    // Fallback if it's already a Date or partial object
+    if (data.createdAt?.seconds) return new Timestamp(data.createdAt.seconds, data.createdAt.nanoseconds || 0);
+    if (data.time?.seconds) return new Timestamp(data.time.seconds, data.time.nanoseconds || 0);
+
+    return Timestamp.now(); // Final fallback
   }
 
   constructor() { }
@@ -73,38 +89,52 @@ export class PostService {
     }
   }
 
-  // ISSUE 3: Get stats for a community
+  // ISSUE 3 & Real-time: Listen to stats for a community
+  listenToCommunityStats(communityName: string, callback: (stats: any) => void): () => void {
+    return this.listenToPosts(communityName, (posts) => {
+      const stats = this.calculateCommunityStats(posts);
+      callback(stats);
+    });
+  }
+
+  // ISSUE 3: Get one-shot stats for a community (Grounding for AI)
   async getCommunityStats(communityName: string): Promise<any> {
     try {
-      // ISSUE 6: Normalize community name for consistent querying
       const normalized = this.normalizeCommunityName(communityName);
       const posts = await this.getPosts(normalized);
-      const totalPosts = posts.length;
-      // Calculate total likes and comments
-      const totalLikes = posts.reduce((sum, post) => sum + (post.likes || 0), 0);
-      const totalComments = posts.reduce((sum, post) => sum + (post.commentCount || 0), 0); // Using commentCount for efficiency
-
-      // Find the most active author
-      const authorActivity = new Map<string, number>();
-      posts.forEach(post => {
-        authorActivity.set(post.author, (authorActivity.get(post.author) || 0) + 1);
-      });
-      let mostActiveAuthor = { name: 'N/A', postCount: 0 };
-      if (authorActivity.size > 0) {
-        const sortedAuthors = Array.from(authorActivity.entries()).sort((a, b) => b[1] - a[1]);
-        mostActiveAuthor = { name: sortedAuthors[0][0], postCount: sortedAuthors[0][1] };
-      }
-
-      return {
-        totalPosts,
-        totalLikes,
-        totalComments,
-        mostActiveAuthor
-      };
+      return this.calculateCommunityStats(posts);
     } catch (e) {
       console.error('[PostService] Error getting community stats:', e);
       return { totalPosts: 0, totalLikes: 0, totalComments: 0, mostActiveAuthor: { name: 'N/A', postCount: 0 } };
     }
+  }
+
+  private calculateCommunityStats(posts: Post[]): any {
+    const totalPosts = posts.length;
+    const totalLikes = posts.reduce((sum, post) => sum + (post.likes || 0), 0);
+    const totalComments = posts.reduce((sum, post) => sum + (post.commentCount || (post.comments?.length || 0)), 0);
+
+    const totalImagePosts = posts.filter(p => p.type === 'image').length;
+    const totalTextPosts = posts.filter(p => p.type === 'text').length;
+
+    const authorActivity = new Map<string, number>();
+    posts.forEach(post => {
+      authorActivity.set(post.author, (authorActivity.get(post.author) || 0) + 1);
+    });
+    let mostActiveAuthor = { name: 'N/A', postCount: 0 };
+    if (authorActivity.size > 0) {
+      const sortedAuthors = Array.from(authorActivity.entries()).sort((a, b) => b[1] - a[1]);
+      mostActiveAuthor = { name: sortedAuthors[0][0], postCount: sortedAuthors[0][1] };
+    }
+
+    return {
+      totalPosts,
+      totalLikes,
+      totalComments,
+      totalImagePosts,
+      totalTextPosts,
+      mostActiveAuthor
+    };
   }
 
   // ISSUE 3: Get top 5 most liked/commented posts
@@ -174,18 +204,27 @@ export class PostService {
   async getPosts(communityName: string): Promise<Post[]> {
     try {
       const postsRef = collection(firestore, 'posts');
-      // ISSUE 6: Normalize community name for consistent querying
       const normalized = this.normalizeCommunityName(communityName);
-      const q = query(postsRef, where('communityName', '==', normalized));
+      const variations = [normalized];
+      const hyphenated = normalized.replace(/\s+/g, '-');
+      if (hyphenated !== normalized) variations.push(hyphenated);
+      const capitalized = normalized.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      if (capitalized !== normalized && !variations.includes(capitalized)) variations.push(capitalized);
+      const firstCap = normalized.charAt(0).toUpperCase() + normalized.slice(1);
+      if (firstCap !== normalized && !variations.includes(firstCap)) variations.push(firstCap);
+      const allCaps = normalized.toUpperCase();
+      if (allCaps !== normalized && !variations.includes(allCaps)) variations.push(allCaps);
+
+      const q = query(postsRef, where('communityName', 'in', variations));
       const querySnapshot = await getDocs(q);
       const posts: Post[] = [];
       for (const docSnap of querySnapshot.docs) {
-        const postData = docSnap.data() as Omit<Post, 'id'>;
+        const postData = docSnap.data();
         posts.push({
           id: docSnap.id,
           ...postData,
-          createdAt: postData.createdAt as Timestamp
-        });
+          createdAt: this.getPostTimestamp(postData)
+        } as Post);
       }
       // Sort posts by createdAt descending
       posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
@@ -300,42 +339,66 @@ export class PostService {
     // ISSUE 10: Use normalization
     const normalized = this.normalizeCommunityName(communityName);
 
-    // ISSUE 10 HARDENING: Removed orderBy from query to avoid index requirements.
-    // If an index is missing, the entire query fails silently in some SDK versions.
-    // We sort in-memory instead.
+    // Create variations to "bring back" posts
+    const variations = [normalized];
+
+    // Hyphenated version (e.g. "tunisia-hood")
+    const hyphenated = normalized.replace(/\s+/g, '-');
+    if (hyphenated !== normalized) variations.push(hyphenated);
+
+    // Capitalized version (e.g. "Tunisia Hood")
+    const capitalized = normalized.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    if (capitalized !== normalized && !variations.includes(capitalized)) variations.push(capitalized);
+
+    // First-letter capitalized only (e.g. "Tunisia hood")
+    const firstCap = normalized.charAt(0).toUpperCase() + normalized.slice(1);
+    if (firstCap !== normalized && !variations.includes(firstCap)) variations.push(firstCap);
+
+    // ALL CAPS version (e.g. "TUNISIA HOOD")
+    const allCaps = normalized.toUpperCase();
+    if (allCaps !== normalized && !variations.includes(allCaps)) variations.push(allCaps);
+
+    console.log(`[PostService] Listening to posts with robust variations:`, variations);
+
     const q = query(
       postsRef,
-      where('communityName', '==', normalized)
+      where('communityName', 'in', variations)
     );
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const posts: Post[] = [];
-      querySnapshot.forEach((doc) => {
-        const postData = doc.data() as Omit<Post, 'id'>;
-        posts.push({
-          id: doc.id,
-          ...postData,
-          createdAt: postData.createdAt as Timestamp
+    const unsubscribe = onSnapshot(q,
+      (querySnapshot) => {
+        const posts: Post[] = [];
+        querySnapshot.forEach((doc) => {
+          const postData = doc.data();
+          posts.push({
+            id: doc.id,
+            ...postData,
+            createdAt: this.getPostTimestamp(postData)
+          } as Post);
         });
-      });
-      // Sort posts by createdAt descending
-      posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-      callback(posts);
-    });
+        // Sort posts by createdAt descending
+        posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+        callback(posts);
+      },
+      (error) => {
+        console.error('[PostService] Error in listenToPosts onSnapshot:', error);
+      }
+    );
     return unsubscribe;
   }
 
-  // Listen to real-time updates for comments on a post
   listenToComments(postId: string, callback: (comments: Comment[]) => void): () => void {
     const commentsRef = collection(firestore, 'posts', postId, 'comments');
     const q = query(commentsRef);
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const comments: Comment[] = [];
       querySnapshot.forEach((doc) => {
-        const commentData = doc.data() as Omit<Comment, 'id'>;
+        const commentData = doc.data() as any;
         comments.push({
           id: doc.id,
           ...commentData,
-          time: commentData.time as Timestamp
+          time: (commentData.time && typeof commentData.time.toMillis === 'function')
+            ? commentData.time
+            : Timestamp.now()
         });
       });
       // Sort comments by time ascending
@@ -344,58 +407,79 @@ export class PostService {
     });
     return unsubscribe;
   }
-  // Get posts authored by a specific user
+  // Listen to posts authored by a specific user
+  listenToUserPosts(userEmail: string, callback: (posts: Post[]) => void): () => void {
+    const postsRef = collection(firestore, 'posts');
+    const q = query(postsRef, where('userId', '==', userEmail));
+    return onSnapshot(q, (snapshot) => {
+      const posts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: this.getPostTimestamp(doc.data())
+      } as Post));
+      callback(posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis()));
+    }, (error) => console.error('[PostService] listenToUserPosts error:', error));
+  }
+
+  // Listen to posts liked by user
+  listenToUserLikedPosts(username: string, callback: (posts: Post[]) => void): () => void {
+    const postsRef = collection(firestore, 'posts');
+    const q = query(postsRef, where('likedBy', 'array-contains', username));
+    return onSnapshot(q, (snapshot) => {
+      const posts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: this.getPostTimestamp(doc.data())
+      } as Post));
+      callback(posts);
+    }, (error) => console.error('[PostService] listenToUserLikedPosts error:', error));
+  }
+
+  // Listen to comments by user
+  listenToUserComments(userId: string, callback: (comments: Comment[]) => void): () => void {
+    const q = query(collectionGroup(firestore, 'comments'), where('userId', '==', userId));
+    return onSnapshot(q, (snapshot) => {
+      const comments = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        time: (doc.data() as any).time as Timestamp
+      } as Comment));
+      callback(comments.sort((a, b) => b.time.toMillis() - a.time.toMillis()));
+    }, (error) => console.error('[PostService] listenToUserComments error:', error));
+  }
+
+  // One-shot Fetchers for recovery/initialization logic
   async getUserPosts(userEmail: string): Promise<Post[]> {
-    try {
-      const postsRef = collection(firestore, 'posts');
-      const q = query(postsRef, where('userId', '==', userEmail));
-      const querySnapshot = await getDocs(q);
-      const posts: Post[] = [];
-      querySnapshot.forEach((doc) => {
-        const postData = doc.data() as Omit<Post, 'id'>;
-        posts.push({ id: doc.id, ...postData, createdAt: postData.createdAt as Timestamp });
-      });
-      return posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-    } catch (error) {
-      console.error("Error getting user posts:", error);
-      return [];
-    }
+    const postsRef = collection(firestore, 'posts');
+    const q = query(postsRef, where('userId', '==', userEmail));
+    const snap = await getDocs(q);
+    const posts = snap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: this.getPostTimestamp(doc.data())
+    } as Post));
+    return posts.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
   }
 
-  // Get posts liked by user
   async getUserLikedPosts(username: string): Promise<Post[]> {
-    try {
-      const postsRef = collection(firestore, 'posts');
-      const q = query(postsRef, where('likedBy', 'array-contains', username));
-      const querySnapshot = await getDocs(q);
-      const posts: Post[] = [];
-      querySnapshot.forEach((doc) => {
-        const postData = doc.data() as Omit<Post, 'id'>;
-        posts.push({ id: doc.id, ...postData, createdAt: postData.createdAt as Timestamp });
-      });
-      return posts;
-    } catch (error) {
-      console.error("Error getting liked posts:", error);
-      return [];
-    }
+    const postsRef = collection(firestore, 'posts');
+    const q = query(postsRef, where('likedBy', 'array-contains', username));
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: this.getPostTimestamp(doc.data())
+    } as Post));
   }
 
-  // Get comments by user
   async getUserComments(userId: string): Promise<Comment[]> {
-    try {
-      const q = query(collectionGroup(firestore, 'comments'), where('userId', '==', userId));
-      const querySnapshot = await getDocs(q);
-      const comments: Comment[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data() as Omit<Comment, 'id'>;
-        comments.push({ id: doc.id, ...data, time: data.time as Timestamp });
-      });
-      return comments.sort((a, b) => b.time.toMillis() - a.time.toMillis());
-    } catch (error) {
-      console.error("Error getting user comments:", error);
-      // NOTE: This might require an index error in console, link provided by Firebase must be clicked
-      return [];
-    }
+    const q = query(collectionGroup(firestore, 'comments'), where('userId', '==', userId));
+    const snap = await getDocs(q);
+    const comments = snap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      time: (doc.data() as any).time as Timestamp
+    } as Comment));
+    return comments.sort((a, b) => b.time.toMillis() - a.time.toMillis());
   }
-
-} // This closes the PostService class.
+}

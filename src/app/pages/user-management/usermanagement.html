@@ -13,6 +13,12 @@
           <div class="member-info">
             <span class="member-name">{{ member.name }}</span>
             <span class="member-email">({{ member.email }})</span>
+            <div class="member-stats">
+              <span>📝 {{ member.postCount }}</span>
+              <span>❤️ {{ member.likeCount }}</span>
+              <span>💬 {{ member.commentCount }}</span>
+              <span>🔑 {{ member.loginCount }}</span>
+            </div>
             <span class="blocked-badge" *ngIf="member.isBlocked">{{ 'BLOCKED' | translate }}</span>
           </div>
           <div class="member-actions">

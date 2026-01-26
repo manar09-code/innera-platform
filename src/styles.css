@@ -1,3 +1,17 @@
+:root {
+  --primary-bg: linear-gradient(135deg, #0f0a1e 0%, #2d1b4e 50%, #4a2c6b 100%);
+  --accent-orange: #FFB84D;
+  --accent-orange-hover: #FF9800;
+  --accent-purple: #8A2BE2;
+  --glass-bg: rgba(45, 27, 78, 0.8);
+  --glass-border: rgba(255, 182, 77, 0.2);
+  --text-primary: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.7);
+  --shadow-sm: 0 4px 15px rgba(255, 184, 77, 0.2);
+  --shadow-lg: 0 8px 30px rgba(255, 184, 77, 0.3);
+  --transition: all 0.3s ease;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -6,10 +20,10 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #0f0a1e 0%, #2d1b4e 50%, #4a2c6b 100%);
+  background: var(--primary-bg);
   background-attachment: fixed;
   min-height: 100vh;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 body::before {
@@ -19,7 +33,7 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: 
+  background-image:
     radial-gradient(circle at 20% 50%, rgba(255, 182, 77, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 40% 20%, rgba(138, 43, 226, 0.1) 0%, transparent 50%);
@@ -65,7 +79,8 @@ button {
   background: rgba(255, 182, 77, 0.3);
 }
 
-input, textarea {
+input,
+textarea {
   width: 100%;
   padding: 12px 15px;
   background: rgba(255, 255, 255, 0.05);
@@ -77,18 +92,22 @@ input, textarea {
   transition: all 0.3s ease;
 }
 
-input::placeholder, textarea::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: rgba(255, 255, 255, 0.5);
 }
 
-input:focus, textarea:focus {
+input:focus,
+textarea:focus {
   outline: none;
   background: rgba(255, 255, 255, 0.1);
   border-color: #FFB84D;
   box-shadow: 0 0 15px rgba(255, 184, 77, 0.2);
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   color: #FFB84D;
 }
 

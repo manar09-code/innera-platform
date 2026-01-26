@@ -10,10 +10,8 @@
     <div class="main-section">
       <h3>Main Section</h3>
       <div class="upload-options">
-        <input type="file" id="fileInput" accept="image/*" (change)="onFileSelected($event)" />
-        <label for="fileInput">
-          <button type="button">Upload Image</button>
-        </label>
+        <input type="file" #fileInput hidden accept="image/*" (change)="onFileSelected($event)" />
+        <button type="button" (click)="fileInput.click()">Upload Image</button>
         <button type="button" (click)="takePhoto()">Take Photo</button>
       </div>
       <div class="image-preview" *ngIf="imagePreview">

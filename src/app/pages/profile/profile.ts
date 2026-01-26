@@ -3,7 +3,8 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
-import { Firestore, doc, getDoc } from 'firebase/firestore';
+import { SeedService } from '../../services/seed.service';
+import { Firestore, doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import { firestore } from '../../firebase.config';
 
 interface Comment {
@@ -62,9 +63,10 @@ export class ProfileComponent implements OnInit {
   userPosts: Post[] = [];
   userRole!: string;
 
-  constructor(private router: Router, private authService: AuthService) {}
+  constructor(private router: Router, private authService: AuthService, private seedService: SeedService) { }
 
   async ngOnInit() {
+    this.loadUserData();
     await this.loadCurrentProfile();
   }
 
@@ -88,25 +90,58 @@ export class ProfileComponent implements OnInit {
 
   async loadCurrentProfile() {
     const user = this.authService.getCurrentUser();
-    if (!user) return;
+    if (!user) {
+      console.warn('No authenticated user found in ProfileComponent');
+      return;
+    }
 
     try {
-      const userDoc = await getDoc(doc(firestore, 'users', user.uid));
-      const userData = userDoc.data();
+      // Reconstruct the composite ID used in AuthService
+      const role = localStorage.getItem('userRole') || 'user';
+      const community = this.authService.getCommunityName();
+      const profileId = `${user.uid}_${role}_${community}`;
 
-      this.userName = userData?.['username'] || userData?.['adminName'] || user.displayName || user.email?.split('@')[0] || 'Guest';
-      this.userEmail = userData?.['email'] || user.email || '';
-      this.communityName = userData?.['communityName'] || this.authService.getCommunityName() || '';
-      this.isAdmin = userData?.['role'] === 'admin';
-      this.userRole = userData?.['role'] || 'user';
+      console.log(`[ProfileComponent] Loading profile for ID: ${profileId}`);
+      let userDoc = await getDoc(doc(firestore, 'users', profileId));
+      let userData = userDoc.data();
 
-      // Set temp values
-      this.tempUsername = this.userName;
-      this.tempEmail = this.userEmail;
-      this.tempCommunity = this.communityName;
+      // Fallback: search by UID field if composite ID fails
+      if (!userDoc.exists()) {
+        console.warn(`[ProfileComponent] Composite profile ${profileId} not found, trying fallback...`);
+        const q = query(collection(firestore, 'users'), where('id', '==', user.uid), where('role', '==', role));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          userData = querySnapshot.docs[0].data();
+          console.log('[ProfileComponent] Profile recovered via query fallback');
+        }
+      }
+
+      if (userData) {
+        this.userName = userData['username'] || userData['adminName'] || user.displayName || 'Guest';
+        this.userEmail = userData['email'] || user.email || '';
+        this.communityName = userData['communityName'] || community || '';
+        this.isAdmin = userData['role'] === 'admin';
+        this.userRole = userData['role'] || 'user';
+
+        // Set temp values for editing
+        this.tempUsername = this.userName;
+        this.tempEmail = this.userEmail;
+        this.tempCommunity = this.communityName;
+      } else {
+        console.error('[ProfileComponent] Could not find user data for UID:', user.uid);
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
     }
+  }
+
+  // Helper to display prettier community name
+  get displayCommunityName(): string {
+    if (!this.communityName) return 'My Community';
+    return this.communityName
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   startEdit(field: string) {
@@ -215,29 +250,6 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  private updateRegisteredUser(field: string, value: string) {
-    const currentEmail = localStorage.getItem('userEmail');
-    const currentRole = localStorage.getItem('userRole');
-
-    // For admins, map 'username' to 'adminName'
-    const actualField = currentRole === 'admin' && field === 'username' ? 'adminName' : field;
-
-    if (currentRole === 'user') {
-      const users = this.authService['getRegisteredUsers']();
-      const userIndex = users.findIndex((u: any) => u.email === currentEmail);
-      if (userIndex !== -1) {
-        (users[userIndex] as any)[actualField] = value;
-        this.authService['setRegisteredUsers'](users);
-      }
-    } else if (currentRole === 'admin') {
-      const admins = this.authService['getRegisteredAdmins']();
-      const adminIndex = admins.findIndex((a: any) => a.email === currentEmail);
-      if (adminIndex !== -1) {
-        (admins[adminIndex] as any)[actualField] = value;
-        this.authService['setRegisteredAdmins'](admins);
-      }
-    }
-  }
 
   cancelEdit(field: string) {
     switch (field) {
@@ -274,7 +286,7 @@ export class ProfileComponent implements OnInit {
   }
 
   navigateToDashboard() {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/user-management']);
   }
 
   navigateToFeed() {
@@ -283,5 +295,17 @@ export class ProfileComponent implements OnInit {
 
   navigateToConfigAi() {
     this.router.navigate(['/config-ai']);
+  }
+
+  async restoreFeedContent() {
+    try {
+      await this.seedService.seedInitialPosts(this.communityName);
+      this.successMessage = 'Feed content restored successfully!';
+      setTimeout(() => this.successMessage = '', 3000);
+    } catch (error) {
+      console.error('Error restoring feed content:', error);
+      this.successMessage = 'Failed to restore feed content. Please try again.';
+      setTimeout(() => this.successMessage = '', 3000);
+    }
   }
 }

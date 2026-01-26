@@ -62,14 +62,13 @@ export class AdminMessageComponent implements OnInit, OnDestroy {
         console.log('[AdminMessage] Received global messages count:', messages.length);
         const grouped: { [key: string]: Conversation } = {};
 
-        // ISSUE 3: Filter all messages to only show those for the admin's current community
-        // Optimization: Use case-insensitive trim to prevent string mismatch bugs
-        // LEGACY FALLBACK: If communityName is missing, we assume it belongs to the admin's primary community
-        const targetComm = community.toLowerCase().trim();
+        // ISSUE 3 & 6: Robust community filtering
+        const robustNormalize = (n: string) => (n || '').toLowerCase().trim().replace(/[-_]/g, ' ');
+        const targetComm = robustNormalize(community);
         console.log('[AdminMessage] Filtering for community:', `"${targetComm}"`);
 
         const filteredMessages = messages.filter(msg => {
-          const msgComm = (msg.communityName || '').toLowerCase().trim();
+          const msgComm = robustNormalize(msg.communityName);
           const isMatch = msgComm === targetComm || !msgComm; // LEGACY SAFETY: Allow empty communityName
 
           if (!isMatch) {

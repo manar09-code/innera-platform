@@ -4,11 +4,17 @@
   align-items: center;
   min-height: 100vh;
   padding: 20px;
+  background: var(--primary-bg);
 }
 
 .login-card {
   width: 100%;
   max-width: 400px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 15px;
+  padding: 40px;
+  backdrop-filter: blur(10px);
 }
 
 .logo-section {
@@ -18,7 +24,7 @@
 
 .logo-section h1 {
   font-size: 40px;
-  color: #FFB84D;
+  color: var(--accent-orange);
   text-shadow: 0 0 20px rgba(255, 184, 77, 0.5);
   letter-spacing: 4px;
   margin: 0;
@@ -28,7 +34,7 @@ h2 {
   text-align: center;
   font-size: 24px;
   margin-bottom: 25px;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .form-group {
@@ -38,7 +44,7 @@ h2 {
 .form-group label {
   display: flex;
   align-items: center;
-  color: #FFB84D;
+  color: var(--accent-orange);
   font-size: 14px;
   font-weight: bold;
   margin-bottom: 8px;
@@ -68,7 +74,7 @@ h2 {
   cursor: pointer;
   font-size: 18px;
   padding: 5px;
-  color: #FFB84D;
+  color: var(--accent-orange);
 }
 
 .btn-login {
@@ -76,6 +82,18 @@ h2 {
   margin-top: 20px;
   padding: 14px;
   font-size: 16px;
+  background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-hover) 100%);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-login:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .btn-login:disabled {
@@ -103,7 +121,7 @@ h2 {
 
 .links a {
   font-size: 13px;
-  color: #FFB84D;
+  color: var(--accent-orange);
 }
 
 .switch-user {
@@ -115,5 +133,5 @@ h2 {
 
 .switch-user a {
   font-size: 14px;
-  color: #FFB84D;
+  color: var(--accent-orange);
 }
