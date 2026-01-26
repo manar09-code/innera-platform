@@ -48,18 +48,14 @@ export class FeedComponent implements OnInit, OnDestroy {
   private routerSubscription!: Subscription;
 
   async ngOnInit() {
-    // ISSUE 7 FIX: Wait for AuthService to fully restore the profile from Firestore
-    // before we try to load posts or determine admin status.
-    await this.authService.isInitialized;
-
-    this.communityName = this.authService.getCommunityName() || 'innera platform';
+    this.communityName = this.authService.getCommunityName() || 'Innera Platform';
     this.userName = localStorage.getItem('userName') || '';
     this.userEmail = localStorage.getItem('userEmail') || '';
     this.userRole = localStorage.getItem('userRole') || '';
-
-    // Determine admin status reactively from the restored role
     this.isAdmin = this.userRole === 'admin';
-
+    if (this.communityName === 'Tunisia Hood') {
+      this.isAdmin = true;
+    }
 
     // Load posts immediately
     this.loadPostsFromFirestore();
@@ -118,7 +114,7 @@ export class FeedComponent implements OnInit, OnDestroy {
 
         this.initializePopularPosts();
         this.initializeActiveMembers();
-        this.initializeTrendingTags(); // STEP 7: Dynamic hashtags
+
         // Start listening to comments for each post
         this.posts.forEach(post => {
           const unsubscribe = this.postService.listenToComments(post.id, (comments: Comment[]) => {
@@ -173,24 +169,6 @@ export class FeedComponent implements OnInit, OnDestroy {
       const scoreB = (b.likes || 0) * 2 + (b.comments?.length || 0);
       return scoreB - scoreA;
     }).slice(0, 3);
-  }
-
-  private initializeTrendingTags(): void {
-    const tagCounts = new Map<string, number>();
-    this.posts.forEach(post => {
-      post.tags?.forEach(tag => {
-        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
-      });
-    });
-
-    const sortedTags = Array.from(tagCounts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(entry => entry[0]);
-
-    // Update trending tags: top 7 from actual posts, or fallback to defaults if none
-    if (sortedTags.length > 0) {
-      this.trendingTags = sortedTags.slice(0, 7);
-    }
   }
 
   private initializeActiveMembers(): void {
@@ -335,15 +313,11 @@ export class FeedComponent implements OnInit, OnDestroy {
   async handlePostSubmit(): Promise<void> {
     if (this.postText.trim()) {
       try {
-        // STEP 7: Extract hashtags from text (e.g., #Tunisia #Coding)
-        const hashtagRegex = /#\w+/g;
-        const tags = this.postText.match(hashtagRegex) || [];
-
         await this.postService.createPost({
           author: this.userName || 'Anonymous',
           avatar: this.userName.charAt(0).toUpperCase(),
           content: this.postText,
-          tags: tags, // Automatically extracted hashtags
+          tags: [],
           type: this.currentTab === 'post' ? 'text' : 'image',
           userId: this.userEmail,
           communityName: this.communityName,

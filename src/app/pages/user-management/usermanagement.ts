@@ -29,9 +29,7 @@ export class UserManagementComponent implements OnInit {
 
   constructor(private authService: AuthService, private router: Router) { }
 
-  async ngOnInit() {
-    // ISSUE 9 FIX: Wait for community recovery before loading members
-    await this.authService.isInitialized;
+  ngOnInit() {
     this.loadData();
   }
 

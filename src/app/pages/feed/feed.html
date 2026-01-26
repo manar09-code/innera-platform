@@ -1,5 +1,5 @@
 <div class="feed-wrapper">
-  <!-- User Profile Header: This section displays the user's profile information, including their avatar, name, role, and community name. It also includes a logout button for the user to log out. -->
+<!-- User Profile Header: This section displays the user's profile information, including their avatar, name, role, and community name. It also includes a logout button for the user to log out. -->
   <div class="user-header">
     <div class="user-profile">
       <div class="user-avatar">{{ userName.charAt(0).toUpperCase() }}</div>
@@ -14,12 +14,12 @@
     <app-navbar></app-navbar>
   </div>
 
-  <!-- Main Feed Content: This is the main content area of the feed page, containing the feed grid with posts and trends. -->
+<!-- Main Feed Content: This is the main content area of the feed page, containing the feed grid with posts and trends. -->
   <div class="feed-content">
     <div class="feed-grid">
-      <!-- Center Column: Main Feed: This column contains the main feed, including the welcome card, create post card, feed stats, and the posts feed. -->
+<!-- Center Column: Main Feed: This column contains the main feed, including the welcome card, create post card, feed stats, and the posts feed. -->
       <div class="feed-center-column">
-        <!-- Welcome Card: This card welcomes the user to the community and can be removed by the user. -->
+<!-- Welcome Card: This card welcomes the user to the community and can be removed by the user. -->
         <div class="welcome-card" *ngIf="showWelcomeCard">
           <div class="welcome-image">
             <div class="mountain-placeholder"></div>
@@ -31,13 +31,13 @@
           </div>
         </div>
 
-        <!-- Create Post Card: This card allows the user to create a new post, with tabs for text or image posts. -->
+<!-- Create Post Card: This card allows the user to create a new post, with tabs for text or image posts. -->
         <div class="create-post-card">
           <div class="create-post-header">
             <h2 class="section-title">{{ 'CREATE_POST' | translate }}</h2>
           </div>
 
-          <!-- Post Tabs: These tabs allow the user to switch between creating a text post or an image post. -->
+<!-- Post Tabs: These tabs allow the user to switch between creating a text post or an image post. -->
           <div class="post-tabs">
             <button class="tab-btn" [class.active]="currentTab === 'post'" (click)="switchTabUI('post')">
               <span class="tab-icon">📝</span>
@@ -49,28 +49,31 @@
             </button>
           </div>
 
-          <!-- Post Input: This is the textarea where the user can type their post content. -->
+<!-- Post Input: This is the textarea where the user can type their post content. -->
           <div class="post-input-container">
             <textarea class="post-textarea" placeholder="What's on your mind?" rows="4" [(ngModel)]="postText"
               (input)="onPostInput()"></textarea>
           </div>
 
-          <!-- Post Button: This button submits the post to be created. -->
+<!-- Post Button: This button submits the post to be created. -->
           <button class="post-button" (click)="handlePostSubmit()">
             {{ currentTab === 'post' ? ('POST' | translate) : ('UPLOAD_IMAGE' | translate) }}
           </button>
         </div>
 
+<!-- Feed Stats: This section shows statistics about the feed, such as number of posts, likes, and comments, visible only to admins. -->
         <div class="feed-stats" *ngIf="isAdmin">
           <div class="stats-info">
             <span>{{ getPostCount() }} {{ 'POSTS' | translate }}</span>
             <span>{{ getTotalLikes() }} {{ 'LIKES' | translate }}</span>
             <span>{{ getTotalComments() }} {{ 'COMMENTS' | translate }}</span>
           </div>
+          <button (click)="seedPosts()" class="seed-button">Seed Posts</button>
         </div>
-        <!-- Posts Feed: This section displays all the posts in the feed, filtered by tag if selected. -->
+
+<!-- Posts Feed: This section displays all the posts in the feed, filtered by tag if selected. -->
         <div class="posts-feed">
-          <!-- Filter Indicator: This indicator shows if the posts are filtered by a specific tag and allows clearing the filter. -->
+<!-- Filter Indicator: This indicator shows if the posts are filtered by a specific tag and allows clearing the filter. -->
           <div class="filter-indicator" *ngIf="currentTag"
             style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; background: rgba(138, 43, 226, 0.1); padding: 10px 20px; border-radius: 8px; border: 1px solid rgba(255, 184, 77, 0.2);">
             <span style="color: #ffb84d;">{{ 'FILTERING_BY' | translate }}: <strong>{{ currentTag }}</strong></span>
@@ -80,7 +83,7 @@
           </div>
 
           <div class="post-card" *ngFor="let post of filteredPosts; trackBy: trackByPostId">
-            <!-- Post Header: This part of the post shows the author's avatar, name, and time, with options for admins. -->
+<!-- Post Header: This part of the post shows the author's avatar, name, and time, with options for admins. -->
             <div class="post-header">
               <div class="post-avatar" (click)="navigateToProfile()">{{ post.avatar }}</div>
               <div class="post-meta" (click)="navigateToProfile()">
@@ -98,22 +101,22 @@
               </div>
             </div>
 
-            <!-- Post Content: This displays the text content of the post. -->
+<!-- Post Content: This displays the text content of the post. -->
             <p class="post-content">{{ post.content }}</p>
 
-            <!-- Image Post Content: This displays the image for image posts. -->
+<!-- Image Post Content: This displays the image for image posts. -->
             <div class="post-image" *ngIf="post.type === 'image' && post.imageData">
               <img [src]="post.imageData" alt="Post image" />
             </div>
 
-            <!-- Post Tags: This shows the tags associated with the post, clickable to filter. -->
+<!-- Post Tags: This shows the tags associated with the post, clickable to filter. -->
             <div class="post-tags">
               <span class="post-tag" *ngFor="let tag of post.tags" (click)="onHashtagClick(tag)">
                 {{ tag }}
               </span>
             </div>
 
-            <!-- Post Footer: This shows the like and comment buttons with counts. -->
+<!-- Post Footer: This shows the like and comment buttons with counts. -->
             <div class="post-footer">
               <button class="post-action" (click)="onLikePost(post)">
                 <span class="action-icon">{{ post.likedBy.includes(userName) ? '❤️' : '🤍' }}</span>
@@ -125,7 +128,7 @@
               </button>
             </div>
 
-            <!-- Comments Section: This section displays the comments on the post, with replies. -->
+<!-- Comments Section: This section displays the comments on the post, with replies. -->
             <div class="comments-section" *ngIf="post.comments.length > 0">
               <ng-container
                 *ngTemplateOutlet="commentTemplate; context: { comments: post.comments, postId: post.id, level: 0 }"></ng-container>
@@ -159,7 +162,7 @@
               </div>
             </ng-template>
 
-            <!-- Add Comment: This allows users to add a new comment to the post. -->
+<!-- Add Comment: This allows users to add a new comment to the post. -->
             <div class="add-comment">
               <textarea class="comment-input" placeholder="{{ 'WRITE_COMMENT' | translate }}"
                 [(ngModel)]="newCommentText[post.id]" rows="2"></textarea>
@@ -172,9 +175,9 @@
         </div>
       </div>
 
-      <!-- Right Column: Trends: This column shows trending tags, popular posts, and active members. -->
+<!-- Right Column: Trends: This column shows trending tags, popular posts, and active members. -->
       <div class="trends-column">
-        <!-- Trending Tags: This section shows popular hashtags that users can click to filter posts. -->
+<!-- Trending Tags: This section shows popular hashtags that users can click to filter posts. -->
         <div class="trending-section right-column-box">
           <h3 class="section-title">{{ 'TRENDING' | translate }}</h3>
           <div class="hashtags-container">
@@ -184,7 +187,7 @@
           </div>
         </div>
 
-        <!-- Popular Posts: This section shows the most popular posts based on likes and comments. -->
+<!-- Popular Posts: This section shows the most popular posts based on likes and comments. -->
         <div class="popular-posts right-column-box">
           <h3 class="section-title">{{ 'POPULAR_POSTS' | translate }}</h3>
           <div class="popular-post" *ngFor="let post of popularPosts"
@@ -195,7 +198,7 @@
           </div>
         </div>
 
-        <!-- Active Members: This section shows the most active members based on post count. -->
+<!-- Active Members: This section shows the most active members based on post count. -->
         <div class="active-members right-column-box">
           <h3 class="section-title">{{ 'ACTIVE_MEMBERS' | translate }}</h3>
           <div class="active-member" *ngFor="let member of activeMembers"

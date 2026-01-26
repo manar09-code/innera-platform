@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslationService } from '../../services/translation.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
-import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -17,20 +16,11 @@ export class NavbarComponent implements OnInit {
   userName: string = '';
   currentLang: string = 'en';
 
-  constructor(
-    private router: Router,
-    private translationService: TranslationService,
-    private authService: AuthService // ISSUE 9: Injected for reactive state
-  ) { }
+  constructor(private router: Router, private translationService: TranslationService) { }
 
-  async ngOnInit() {
-    // ISSUE 9 FIX: Wait for AuthService to restore profile from Firestore
-    await this.authService.isInitialized;
-
-    // Subscribe to reactive subjects to ensure UI updates instantly
-    this.authService.userName$.subscribe((name: string) => this.userName = name);
-    this.authService.userRole$.subscribe((role: string) => this.userRole = role);
-
+  ngOnInit() {
+    this.userRole = localStorage.getItem('userRole') || '';
+    this.userName = localStorage.getItem('userName') || '';
     this.currentLang = this.translationService.getLanguage();
   }
 
