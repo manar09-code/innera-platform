@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { Firestore, collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, query, where, onSnapshot, Timestamp, collectionGroup, orderBy } from 'firebase/firestore';
 import { firestore, storage } from '../firebase.config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -59,7 +59,7 @@ export class PostService {
     return Timestamp.now(); // Final fallback
   }
 
-  constructor() { }
+  constructor(private zone: NgZone) { }
 
   // ISSUE 2 FIX: Helper to upload image to Firebase Storage
   async uploadImage(file: File): Promise<string> {
@@ -336,7 +336,7 @@ export class PostService {
 
   listenToPosts(communityName: string, callback: (posts: Post[]) => void): () => void {
     const postsRef = collection(firestore, 'posts');
-    // ISSUE 10: Use normalization
+    // Filter posts by community name
     const normalized = this.normalizeCommunityName(communityName);
 
     // Create variations to "bring back" posts

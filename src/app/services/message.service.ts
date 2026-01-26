@@ -1,5 +1,5 @@
 // This file is located in the src/app/services folder, which contains service files that provide reusable functionality across the application, such as authentication, data management, and external integrations. This file serves as the message service. Its role is to handle messaging between users and admins, including sending messages, listening to conversations, and triggering webhooks. It interacts with Firestore for message storage, AuthService for user authentication, WebhookService for external notifications, and the environment for configuration.
-import { Injectable } from '@angular/core'; // This line imports the Injectable decorator from '@angular/core', which is needed to mark this class as a service that can be injected into other components and services.
+import { Injectable, NgZone } from '@angular/core'; // This line imports the Injectable decorator from '@angular/core', which is needed to mark this class as a service that can be injected into other components and services.
 import { Firestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, Timestamp, getDocs } from 'firebase/firestore'; // This line imports various Firestore functions and types from the 'firebase/firestore' module, which are needed for database operations like adding documents, querying collections, and listening to real-time updates.
 import { firestore } from '../firebase.config'; // This line imports the configured firestore instance from '../firebase.config', which is needed to perform database operations using the app's Firebase setup.
 import { AuthService } from './auth.service'; // This line imports the AuthService from './auth.service', which is needed to access user authentication information.
@@ -34,7 +34,7 @@ export class MessageService { // This line exports the MessageService class, whi
             .replace(/[-_]/g, ' '); // Unify "tunisia-hood" and "tunisia hood"
     }
 
-    constructor(private authService: AuthService, private webhookService: WebhookService) { // This line defines the constructor for the MessageService class, which takes AuthService and WebhookService instances as parameters for dependency injection, used to access authentication and webhook functionality.
+    constructor(private authService: AuthService, private webhookService: WebhookService, private zone: NgZone) { // This line defines the constructor for the MessageService class, which takes AuthService and WebhookService instances as parameters for dependency injection, used to access authentication and webhook functionality.
         // this.testMessagesIndex(); // This line is a commented out call to the testMessagesIndex method, which is used for debugging Firestore index issues.
     } // This closes the constructor.
 
@@ -142,11 +142,15 @@ export class MessageService { // This line exports the MessageService class, whi
         ); // This closes the query.
         return onSnapshot(q,
             (snapshot) => { // This line sets up a real-time listener on the query, executing the callback with the snapshot.
-                const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)); // This line maps the snapshot documents to Message objects with id.
-                callback(messages); // This line calls the callback function with the messages array.
+                this.zone.run(() => {
+                    const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)); // This line maps the snapshot documents to Message objects with id.
+                    callback(messages); // This line calls the callback function with the messages array.
+                });
             },
             (error) => {
-                console.error('[MessageService] listenToConversation error:', error);
+                this.zone.run(() => {
+                    console.error('[MessageService] listenToConversation error:', error);
+                });
             }
         ); // This closes the onSnapshot call.
     } // This closes the listenToConversation method.
@@ -157,14 +161,40 @@ export class MessageService { // This line exports the MessageService class, whi
         ); // This closes the query.
         return onSnapshot(q,
             (snapshot) => { // This line sets up a real-time listener on the query, executing the callback with the snapshot.
-                const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)); // This line maps the snapshot documents to Message objects with id.
-                callback(messages); // This line calls the callback function with the messages array.
+                this.zone.run(() => {
+                    const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)); // This line maps the snapshot documents to Message objects with id.
+                    console.log('[MessageService] Total messages fetched:', messages.length);
+                    callback(messages); // This line calls the callback function with the messages array.
+                });
             },
             (error) => {
-                console.error('[MessageService] listenToAllMessages error:', error);
+                this.zone.run(() => {
+                    console.error('[MessageService] listenToAllMessages error:', error);
+                });
             }
         ); // This closes the onSnapshot call.
     } // This closes the listenToAllMessages method.
+
+  listenToMessagesForCommunity(communityName: string, callback: (messages: Message[]) => void): () => void { // This line defines the listenToMessagesForCommunity method, which takes communityName and callback parameters and returns a function to unsubscribe, used to listen to real-time updates for messages in a specific community.
+        // Restored to listen to all messages without community filter
+        const q = query( // This line creates a query for the 'messages' collection.
+            collection(firestore, 'messages') // This line specifies the collection to query.
+        ); // This closes the query.
+        return onSnapshot(q,
+            (snapshot) => { // This line sets up a real-time listener on the query, executing the callback with the snapshot.
+                this.zone.run(() => {
+                    const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message)); // This line maps the snapshot documents to Message objects with id.
+                    console.log('[MessageService] Messages for community fetched:', messages.length);
+                    callback(messages); // This line calls the callback function with the messages array.
+                });
+            },
+            (error) => {
+                this.zone.run(() => {
+                    console.error('[MessageService] listenToMessagesForCommunity error:', error);
+                });
+            }
+        ); // This closes the onSnapshot call.
+    } // This closes the listenToMessagesForCommunity method.
 
     // PASTE YOUR MAKE.COM WEBHOOK URL HERE // This line is a comment indicating where to paste the Make.com webhook URL.
     private automationWebhookUrl = ''; // This line declares a private property automationWebhookUrl of type string, initialized to an empty string, used to store the webhook URL.

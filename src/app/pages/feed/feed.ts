@@ -83,14 +83,22 @@ export class FeedComponent implements OnInit, OnDestroy {
 
     this.loadWelcomeCardState();
 
-    try {
-      this.adminName = await this.authService.getAdminNameForCommunity(this.communityName);
-    } catch (e) {
-      console.warn('Could not fetch admin name:', e);
-    }
+    // Subscribe to community changes to reload posts
+    this.authService.communityName$.subscribe(async (community) => {
+      if (community) {
+        this.communityName = community;
+        this.loadPostsFromFirestore();
 
-    this.initializePopularPosts();
-    this.initializeActiveMembers();
+        try {
+          this.adminName = await this.authService.getAdminNameForCommunity(this.communityName);
+        } catch (e) {
+          console.warn('Could not fetch admin name:', e);
+        }
+
+        this.initializePopularPosts();
+        this.initializeActiveMembers();
+      }
+    });
 
     // routerSubscription also handles navigation back to feed
     this.routerSubscription.add(this.router.events.subscribe(event => {
