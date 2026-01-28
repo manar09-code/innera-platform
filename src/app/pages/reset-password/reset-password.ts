@@ -8,12 +8,12 @@ import {
   ValidationErrors,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './reset-password.html',
   styleUrls: ['./reset-password.css'],
 })

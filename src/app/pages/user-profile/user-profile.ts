@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { PostService } from '../../services/post.service';
@@ -10,7 +10,7 @@ import { firestore } from '../../firebase.config';
 @Component({
   selector: 'app-user-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './user-profile.html',
   styleUrls: ['./user-profile.css'],
 })

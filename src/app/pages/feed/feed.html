@@ -20,16 +20,18 @@
       <!-- Center Column: Main Feed: This column contains the main feed, including the welcome card, create post card, feed stats, and the posts feed. -->
       <div class="feed-center-column">
         <!-- Welcome Card: This card welcomes the user to the community and can be removed by the user. -->
-        <div class="welcome-card" *ngIf="showWelcomeCard">
-          <div class="welcome-image">
-            <div class="mountain-placeholder"></div>
-            <div class="welcome-overlay">
-              <button class="welcome-close-btn" (click)="removeWelcomeCard()" title="Remove welcome card">×</button>
-              <h1 class="welcome-title">{{ 'WELCOME_HEADER' | translate }} {{ displayCommunityName }}</h1>
-              <p class="welcome-subtitle">Share your thoughts and connect with the community</p>
+        @if (showWelcomeCard) {
+          <div class="welcome-card">
+            <div class="welcome-image">
+              <div class="mountain-placeholder"></div>
+              <div class="welcome-overlay">
+                <button class="welcome-close-btn" (click)="removeWelcomeCard()" title="Remove welcome card">×</button>
+                <h1 class="welcome-title">{{ 'WELCOME_HEADER' | translate }} {{ displayCommunityName }}</h1>
+                <p class="welcome-subtitle">Share your thoughts and connect with the community</p>
+              </div>
             </div>
           </div>
-        </div>
+        }
 
         <!-- Create Post Card: This card allows the user to create a new post, with tabs for text or image posts. -->
         <div class="create-post-card">
@@ -50,23 +52,27 @@
           </div>
 
           <!-- Image Selection (Visible for image tab) -->
-          <div class="image-upload-section" *ngIf="currentTab === 'image'" style="padding: 15px;">
-            <input type="file" #feedFileInput hidden accept="image/*" (change)="onFileSelected($event)" />
-            <button type="button" class="upload-label" (click)="feedFileInput.click()"
-              style="display: inline-block; padding: 10px 20px; background: rgba(255, 184, 77, 0.1); border: 1px dashed #ffb84d; border-radius: 8px; cursor: pointer; color: #ffb84d; width: 100%; text-align: center;">
-              {{ imagePreview ? ('CHANGE_IMAGE' | translate) : ('SELECT_IMAGE_DEVICE' | translate) }}
-            </button>
-            <div class="preview-container" *ngIf="imagePreview"
-              style="margin-top: 15px; border-radius: 8px; overflow: hidden; max-height: 200px;">
-              <img [src]="imagePreview" alt="Upload preview" style="width: 100%; object-fit: cover;" />
+          @if (currentTab === 'image') {
+            <div class="image-upload-section" style="padding: 15px;">
+              <input type="file" #feedFileInput hidden accept="image/*" (change)="onFileSelected($event)" />
+              <button type="button" class="upload-label" (click)="feedFileInput.click()"
+                style="display: inline-block; padding: 10px 20px; background: rgba(255, 184, 77, 0.1); border: 1px dashed #ffb84d; border-radius: 8px; cursor: pointer; color: #ffb84d; width: 100%; text-align: center;">
+                {{ imagePreview ? ('CHANGE_IMAGE' | translate) : ('SELECT_IMAGE_DEVICE' | translate) }}
+              </button>
+              @if (imagePreview) {
+                <div class="preview-container"
+                  style="margin-top: 15px; border-radius: 8px; overflow: hidden; max-height: 200px;">
+                  <img [src]="imagePreview" alt="Upload preview" style="width: 100%; object-fit: cover;" />
+                </div>
+              }
             </div>
-          </div>
+          }
 
           <!-- Post Input -->
           <div class="post-input-container">
             <textarea class="post-textarea"
               [placeholder]="currentTab === 'image' ? ('ADD_CAPTION' | translate) : ('WHATS_ON_YOUR_MIND' | translate)"
-              rows="4" [(ngModel)]="postText"></textarea>
+            rows="4" [(ngModel)]="postText"></textarea>
           </div>
 
           <!-- Post Button -->
@@ -78,130 +84,146 @@
         </div>
 
         <!-- Feed Stats: This section shows statistics about the feed, such as number of posts, likes, and comments, visible only to admins. -->
-        <div class="feed-stats" *ngIf="isAdmin">
-          <div class="stats-info">
-            <span>{{ getPostCount() }} {{ 'POSTS' | translate }}</span>
-            <span>{{ getTotalLikes() }} {{ 'LIKES' | translate }}</span>
-            <span>{{ getTotalComments() }} {{ 'COMMENTS' | translate }}</span>
+        @if (isAdmin) {
+          <div class="feed-stats">
+            <div class="stats-info">
+              <span>{{ getPostCount() }} {{ 'POSTS' | translate }}</span>
+              <span>{{ getTotalLikes() }} {{ 'LIKES' | translate }}</span>
+              <span>{{ getTotalComments() }} {{ 'COMMENTS' | translate }}</span>
+            </div>
           </div>
-        </div>
+        }
 
         <!-- Posts Feed: This section displays all the posts in the feed, filtered by tag if selected. -->
         <div class="posts-feed">
           <!-- Filter Indicator: This indicator shows if the posts are filtered by a specific tag and allows clearing the filter. -->
-          <div class="filter-indicator" *ngIf="currentTag"
-            style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; background: rgba(138, 43, 226, 0.1); padding: 10px 20px; border-radius: 8px; border: 1px solid rgba(255, 184, 77, 0.2);">
-            <span style="color: #ffb84d;">{{ 'FILTERING_BY' | translate }}: <strong>{{ currentTag }}</strong></span>
-            <button (click)="onHashtagClick(currentTag)"
-              style="background: none; border: none; color: white; cursor: pointer;">✕ {{ 'CLEAR' | translate
+          @if (currentTag) {
+            <div class="filter-indicator"
+              style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; background: rgba(138, 43, 226, 0.1); padding: 10px 20px; border-radius: 8px; border: 1px solid rgba(255, 184, 77, 0.2);">
+              <span style="color: #ffb84d;">{{ 'FILTERING_BY' | translate }}: <strong>{{ currentTag }}</strong></span>
+              <button (click)="onHashtagClick(currentTag)"
+                style="background: none; border: none; color: white; cursor: pointer;">✕ {{ 'CLEAR' | translate
               }}</button>
-          </div>
+            </div>
+          }
 
           <!-- Empty State -->
-          <div *ngIf="filteredPosts.length === 0" class="empty-state"
-            style="text-align: center; padding: 40px 20px; background: rgba(138, 43, 226, 0.05); border: 1px dashed rgba(255, 184, 77, 0.3); border-radius: 12px; margin-bottom: 20px;">
-            <div style="font-size: 48px; margin-bottom: 15px;">📂</div>
-            <h3 style="color: #ffb84d; margin-bottom: 10px;">{{ 'NO_POSTS_YET' | translate }}</h3>
-            <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: 20px;">{{ 'BE_THE_FIRST_TO_POST' | translate }}
-            </p>
-
-            <button *ngIf="userRole === 'admin'" (click)="seedCommunity()" class="post-button"
-              style="max-width: 250px; margin: 0 auto; background: linear-gradient(135deg, #ffb84d, #ff6b35);">
-              🌱 {{ 'SEED_SAMPLE_POSTS' | translate }}
-            </button>
-          </div>
-
-          <div class="post-card" *ngFor="let post of filteredPosts; trackBy: trackByPostId">
-            <!-- Post Header: This part of the post shows the author's avatar, name, and time, with options for admins. -->
-            <div class="post-header">
-              <div class="post-avatar" (click)="navigateToProfile()">{{ post.avatar }}</div>
-              <div class="post-meta" (click)="navigateToProfile()">
-                <h3 class="post-author">
-                  {{ post.author }}
-                  <span class="pinned-badge" *ngIf="post.isPinned">📌 {{ 'PINNED' | translate }}</span>
-                </h3>
-                <p class="post-time">{{ post.createdAt.toDate() | date:'short' }}</p>
-              </div>
-              <div class="post-actions" *ngIf="userRole === 'admin'">
-                <button class="pin-btn" (click)="pinPost(post)" [title]="post.isPinned ? 'Unpin post' : 'Pin post'">
-                  {{ post.isPinned ? '📌' : '📍' }}
+          @if (filteredPosts.length === 0) {
+            <div class="empty-state"
+              style="text-align: center; padding: 40px 20px; background: rgba(138, 43, 226, 0.05); border: 1px dashed rgba(255, 184, 77, 0.3); border-radius: 12px; margin-bottom: 20px;">
+              <div style="font-size: 48px; margin-bottom: 15px;">📂</div>
+              <h3 style="color: #ffb84d; margin-bottom: 10px;">{{ 'NO_POSTS_YET' | translate }}</h3>
+              <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: 20px;">{{ 'BE_THE_FIRST_TO_POST' | translate }}
+              </p>
+              @if (userRole === 'admin') {
+                <button (click)="seedCommunity()" class="post-button"
+                  style="max-width: 250px; margin: 0 auto; background: linear-gradient(135deg, #ffb84d, #ff6b35);">
+                  🌱 {{ 'SEED_SAMPLE_POSTS' | translate }}
                 </button>
-                <button class="post-options" (click)="deletePost(post)">×</button>
+              }
+            </div>
+          }
+
+          @for (post of filteredPosts; track trackByPostId($index, post)) {
+            <div class="post-card">
+              <!-- Post Header: This part of the post shows the author's avatar, name, and time, with options for admins. -->
+              <div class="post-header">
+                <div class="post-avatar" (click)="navigateToProfile()">{{ post.avatar }}</div>
+                <div class="post-meta" (click)="navigateToProfile()">
+                  <h3 class="post-author">
+                    {{ post.author }}
+                    @if (post.isPinned) {
+                      <span class="pinned-badge">📌 {{ 'PINNED' | translate }}</span>
+                    }
+                  </h3>
+                  <p class="post-time">{{ post.createdAt.toDate() | date:'short' }}</p>
+                </div>
+                @if (userRole === 'admin') {
+                  <div class="post-actions">
+                    <button class="pin-btn" (click)="pinPost(post)" [title]="post.isPinned ? 'Unpin post' : 'Pin post'">
+                      {{ post.isPinned ? '📌' : '📍' }}
+                    </button>
+                    <button class="post-options" (click)="deletePost(post)">×</button>
+                  </div>
+                }
               </div>
-            </div>
-
-            <!-- Post Content: This displays the text content of the post. -->
-            <p class="post-content">{{ post.content }}</p>
-
-            <!-- Image Post Content: This displays the image for image posts. -->
-            <div class="post-image" *ngIf="post.type === 'image' && post.imageData">
-              <img [src]="post.imageData" alt="Post image" />
-            </div>
-
-            <!-- Post Tags: This shows the tags associated with the post, clickable to filter. -->
-            <div class="post-tags">
-              <span class="post-tag" *ngFor="let tag of post.tags" (click)="onHashtagClick(tag)">
-                {{ tag }}
-              </span>
-            </div>
-
-            <!-- Post Footer: This shows the like and comment buttons with counts. -->
-            <div class="post-footer">
-              <button class="post-action" (click)="onLikePost(post)">
-                <span class="action-icon">{{ post.likedBy.includes(userName) ? '❤️' : '🤍' }}</span>
-                <span class="action-count">{{ post.likes }}</span>
-              </button>
-              <button class="post-action" (click)="onCommentPost(post)">
-                <span class="action-icon">💬</span>
-                <span class="action-count">{{ post.comments.length }}</span>
-              </button>
-            </div>
-
-            <!-- Comments Section: This section displays the comments on the post, with replies. -->
-            <div class="comments-section" *ngIf="post.comments.length > 0">
-              <ng-container
-                *ngTemplateOutlet="commentTemplate; context: { comments: post.comments, postId: post.id, level: 0 }"></ng-container>
-            </div>
-
-            <ng-template #commentTemplate let-comments="comments" let-postId="postId" let-level="level">
-              <div class="comment" *ngFor="let comment of comments" [style.margin-left.px]="level * 20">
-                <div class="comment-header">
-                  <strong>{{ comment.username }}</strong>
-                  <span class="comment-time" *ngIf="comment.time && comment.time.toDate">{{ comment.time.toDate() |
-                    date:'short' }}</span>
+              <!-- Post Content: This displays the text content of the post. -->
+              <p class="post-content">{{ post.content }}</p>
+              <!-- Image Post Content: This displays the image for image posts. -->
+              @if (post.type === 'image' && post.imageData) {
+                <div class="post-image">
+                  <img [src]="post.imageData" alt="Post image" />
                 </div>
-                <p class="comment-text">{{ comment.text }}</p>
-                <button class="reply-btn" (click)="toggleReplyInput(comment.id)"
-                  style="background:none; border:none; color: #ffb84d; font-size:12px; cursor:pointer; margin-top:5px;">reply</button>
-                <div class="reply-input" *ngIf="showReplyInput[comment.id]" style="margin-top:10px;">
-                  <textarea class="comment-input" placeholder="{{ 'WRITE_REPLY' | translate }}"
-                    [(ngModel)]="newReplyText[comment.id]" rows="2"></textarea>
-                  <button class="comment-submit-btn" (click)="submitReply(comment, postId)"
-                    [disabled]="!newReplyText[comment.id]?.trim()"
-                    style="margin-top:5px; padding: 5px 15px; font-size: 12px;">
-                    {{ 'SEND' | translate }}
-                  </button>
-                </div>
-                <!-- Replies -->
-                <ng-container
-                  *ngIf="comment.replies && comment.replies.length > 0; then repliesTemplate"></ng-container>
-                <ng-template #repliesTemplate>
+              }
+              <!-- Post Tags: This shows the tags associated with the post, clickable to filter. -->
+              <div class="post-tags">
+                @for (tag of post.tags; track tag) {
+                  <span class="post-tag" (click)="onHashtagClick(tag)">
+                    {{ tag }}
+                  </span>
+                }
+              </div>
+              <!-- Post Footer: This shows the like and comment buttons with counts. -->
+              <div class="post-footer">
+                <button class="post-action" (click)="onLikePost(post)">
+                  <span class="action-icon">{{ post.likedBy.includes(userName) ? '❤️' : '🤍' }}</span>
+                  <span class="action-count">{{ post.likes }}</span>
+                </button>
+                <button class="post-action" (click)="onCommentPost(post)">
+                  <span class="action-icon">💬</span>
+                  <span class="action-count">{{ post.comments.length }}</span>
+                </button>
+              </div>
+              <!-- Comments Section: This section displays the comments on the post, with replies. -->
+              @if (post.comments.length > 0) {
+                <div class="comments-section">
                   <ng-container
-                    *ngTemplateOutlet="commentTemplate; context: { comments: comment.replies, postId: postId, level: level + 1 }"></ng-container>
-                </ng-template>
-              </div>
-            </ng-template>
-
-            <!-- Add Comment: This allows users to add a new comment to the post. -->
-            <div class="add-comment">
-              <textarea class="comment-input" placeholder="{{ 'WRITE_COMMENT' | translate }}"
+                  *ngTemplateOutlet="commentTemplate; context: { comments: post.comments, postId: post.id, level: 0 }"></ng-container>
+                </div>
+              }
+              <ng-template #commentTemplate let-comments="comments" let-postId="postId" let-level="level">
+                @for (comment of comments; track comment) {
+                  <div class="comment" [style.margin-left.px]="level * 20">
+                    <div class="comment-header">
+                      <strong>{{ comment.username }}</strong>
+                      @if (comment.time && comment.time.toDate) {
+                        <span class="comment-time">{{ comment.time.toDate() |
+                        date:'short' }}</span>
+                      }
+                    </div>
+                    <p class="comment-text">{{ comment.text }}</p>
+                    <button class="reply-btn" (click)="toggleReplyInput(comment.id)"
+                    style="background:none; border:none; color: #ffb84d; font-size:12px; cursor:pointer; margin-top:5px;">reply</button>
+                    @if (showReplyInput[comment.id]) {
+                      <div class="reply-input" style="margin-top:10px;">
+                        <textarea class="comment-input" placeholder="{{ 'WRITE_REPLY' | translate }}"
+                        [(ngModel)]="newReplyText[comment.id]" rows="2"></textarea>
+                        <button class="comment-submit-btn" (click)="submitReply(comment, postId)"
+                          [disabled]="!newReplyText[comment.id]?.trim()"
+                          style="margin-top:5px; padding: 5px 15px; font-size: 12px;">
+                          {{ 'SEND' | translate }}
+                        </button>
+                      </div>
+                    }
+                    <!-- Replies -->
+                    @if (comment.replies && comment.replies.length > 0) {
+                      <ng-container
+                      *ngTemplateOutlet="commentTemplate; context: { comments: comment.replies, postId: postId, level: level + 1 }"></ng-container>
+                    }
+                  </div>
+                }
+              </ng-template>
+              <!-- Add Comment: This allows users to add a new comment to the post. -->
+              <div class="add-comment">
+                <textarea class="comment-input" placeholder="{{ 'WRITE_COMMENT' | translate }}"
                 [(ngModel)]="newCommentText[post.id]" rows="2"></textarea>
-              <button class="comment-submit-btn" (click)="submitComment(post)"
-                [disabled]="!newCommentText[post.id]?.trim()">
-                {{ 'SEND' | translate }}
-              </button>
+                <button class="comment-submit-btn" (click)="submitComment(post)"
+                  [disabled]="!newCommentText[post.id]?.trim()">
+                  {{ 'SEND' | translate }}
+                </button>
+              </div>
             </div>
-          </div>
+          }
         </div>
       </div>
 
@@ -211,34 +233,40 @@
         <div class="trending-section right-column-box">
           <h3 class="section-title">{{ 'TRENDING' | translate }}</h3>
           <div class="hashtags-container">
-            <button class="hashtag-btn" *ngFor="let tag of trendingTags" (click)="onHashtagClick(tag)">
-              {{ tag }}
-            </button>
+            @for (tag of trendingTags; track tag) {
+              <button class="hashtag-btn" (click)="onHashtagClick(tag)">
+                {{ tag }}
+              </button>
+            }
           </div>
         </div>
 
         <!-- Popular Posts: This section shows the most popular posts based on likes and comments. -->
         <div class="popular-posts right-column-box">
           <h3 class="section-title">{{ 'POPULAR_POSTS' | translate }}</h3>
-          <div class="popular-post" *ngFor="let post of popularPosts"
-            style="margin-bottom: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-            <p class="popular-post-content">{{ post.content.substring(0, 100) }}...</p>
-            <p class="popular-post-likes">❤️ {{ post.likes }} {{ 'LIKES' | translate }} • 💬 {{ post.comments.length }}
+          @for (post of popularPosts; track post) {
+            <div class="popular-post"
+              style="margin-bottom: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+              <p class="popular-post-content">{{ post.content.substring(0, 100) }}...</p>
+              <p class="popular-post-likes">❤️ {{ post.likes }} {{ 'LIKES' | translate }} • 💬 {{ post.comments.length }}
               {{ 'COMMENTS' | translate }}</p>
-          </div>
+            </div>
+          }
         </div>
 
         <!-- Active Members: This section shows the most active members based on post count. -->
         <div class="active-members right-column-box">
           <h3 class="section-title">{{ 'ACTIVE_MEMBERS' | translate }}</h3>
-          <div class="active-member" *ngFor="let member of activeMembers"
-            style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-            <div class="member-avatar">{{ member.avatar }}</div>
-            <div class="member-info">
-              <h4 class="member-name">{{ member.name }}</h4>
-              <p class="member-activity">{{ member.activity }} {{ 'POSTS' | translate }}</p>
+          @for (member of activeMembers; track member) {
+            <div class="active-member"
+              style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <div class="member-avatar">{{ member.avatar }}</div>
+              <div class="member-info">
+                <h4 class="member-name">{{ member.name }}</h4>
+                <p class="member-activity">{{ member.activity }} {{ 'POSTS' | translate }}</p>
+              </div>
             </div>
-          </div>
+          }
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { SeedService } from '../../services/seed.service';
@@ -29,7 +29,7 @@ interface Post {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './profile.html',
   styleUrls: ['./profile.css'],
 })

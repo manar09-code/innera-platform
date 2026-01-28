@@ -10,12 +10,14 @@
     <button class="close-btn" (click)="toggleChat()">×</button>
   </div>
   <div class="ai-chat-messages" #messagesContainer>
-    <div class="message" [class.user]="message.isUser" [class.ai]="!message.isUser" *ngFor="let message of messages">
-      <div class="message-content">
-        <p class="message-text">{{ message.text }}</p>
-        <small class="message-time">{{ message.time | date : 'shortTime' }}</small>
+    @for (message of messages; track message) {
+      <div class="message" [class.user]="message.isUser" [class.ai]="!message.isUser">
+        <div class="message-content">
+          <p class="message-text">{{ message.text }}</p>
+          <small class="message-time">{{ message.time | date : 'shortTime' }}</small>
+        </div>
       </div>
-    </div>
+    }
   </div>
   <div class="ai-chat-input">
     <input
@@ -24,9 +26,9 @@
       (keyup.enter)="sendMessage()"
       placeholder="Ask me anything..."
       [disabled]="isLoading"
-    />
-    <button (click)="sendMessage()" [disabled]="isLoading || !userMessage.trim()">
-      {{ isLoading ? '...' : 'Send' }}
-    </button>
+      />
+      <button (click)="sendMessage()" [disabled]="isLoading || !userMessage.trim()">
+        {{ isLoading ? '...' : 'Send' }}
+      </button>
+    </div>
   </div>
-</div>

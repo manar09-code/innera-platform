@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { firestore } from '../../firebase.config';
@@ -10,7 +10,7 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-config-ai',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './config-ai.html',
   styleUrls: ['./config-ai.css'],
 })

@@ -14,9 +14,11 @@
         <button type="button" (click)="fileInput.click()">Upload Image</button>
         <button type="button" (click)="takePhoto()">Take Photo</button>
       </div>
-      <div class="image-preview" *ngIf="imagePreview">
-        <img [src]="imagePreview" alt="Preview" />
-      </div>
+      @if (imagePreview) {
+        <div class="image-preview">
+          <img [src]="imagePreview" alt="Preview" />
+        </div>
+      }
       <textarea [(ngModel)]="caption" placeholder="Add a caption..." rows="3"></textarea>
     </div>
 
@@ -24,17 +26,27 @@
     <div class="action-section">
       <h3>Actions</h3>
       <!-- Display upload status message -->
-      <p *ngIf="isUploading" style="color: #3b82f6; font-size: 13px; margin-bottom: 10px;">
-        <b>Uploading image to cloud storage...</b>
-      </p>
-      <button (click)="createPost()" [disabled]="!imagePreview || !caption.trim() || isUploading" *ngIf="!isEditing">
-        {{ isUploading ? 'Processing...' : 'Create Image Post' }}
-      </button>
-      <button (click)="updatePost()" [disabled]="!imagePreview || !caption.trim()" *ngIf="isEditing">
-        Update Image Post
-      </button>
-      <button (click)="deletePost()" *ngIf="isEditing">Delete Image Post</button>
-      <button (click)="resetForm()" *ngIf="isEditing">Cancel</button>
+      @if (isUploading) {
+        <p style="color: #3b82f6; font-size: 13px; margin-bottom: 10px;">
+          <b>Uploading image to cloud storage...</b>
+        </p>
+      }
+      @if (!isEditing) {
+        <button (click)="createPost()" [disabled]="!imagePreview || !caption.trim() || isUploading">
+          {{ isUploading ? 'Processing...' : 'Create Image Post' }}
+        </button>
+      }
+      @if (isEditing) {
+        <button (click)="updatePost()" [disabled]="!imagePreview || !caption.trim()">
+          Update Image Post
+        </button>
+      }
+      @if (isEditing) {
+        <button (click)="deletePost()">Delete Image Post</button>
+      }
+      @if (isEditing) {
+        <button (click)="resetForm()">Cancel</button>
+      }
     </div>
 
     <!-- History Section -->
@@ -47,13 +59,15 @@
         </button>
       </div>
       <div class="post-list">
-        <div class="post-item" *ngFor="let post of posts" (click)="selectPost(post)">
-          <img [src]="post.imageData" alt="Post image" />
-          <div>
-            <p>{{ post.caption }}</p>
-            <small>{{ post.createdAt | date : 'short' }}</small>
+        @for (post of posts; track post) {
+          <div class="post-item" (click)="selectPost(post)">
+            <img [src]="post.imageData" alt="Post image" />
+            <div>
+              <p>{{ post.caption }}</p>
+              <small>{{ post.createdAt | date : 'short' }}</small>
+            </div>
           </div>
-        </div>
+        }
       </div>
     </div>
 

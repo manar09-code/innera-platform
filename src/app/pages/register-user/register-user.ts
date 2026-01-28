@@ -8,13 +8,13 @@ import {
   ValidationErrors,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-register-user',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './register-user.html',
   styleUrls: ['./register-user.css'],
 })

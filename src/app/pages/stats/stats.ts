@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { PostService } from '../../services/post.service';
@@ -8,7 +8,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 @Component({
   selector: 'app-stats',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [TranslatePipe],
   templateUrl: './stats.html',
   styleUrls: ['./stats.css'],
 })

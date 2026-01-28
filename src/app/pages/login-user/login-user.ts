@@ -1,14 +1,14 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+
 import { AuthService } from '../../services/auth.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-login-user',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, TranslatePipe],
+  imports: [FormsModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './login-user.html',
   styleUrls: ['./login-user.css'],
 })

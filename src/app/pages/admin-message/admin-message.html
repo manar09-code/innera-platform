@@ -10,45 +10,55 @@
     <!-- Left Section: List of Conversations -->
     <div class="conversations-list">
       <h3>Conversations</h3>
-      <div class="conversation-item" *ngFor="let conv of conversations" (click)="selectConversation(conv)"
-        [class.selected]="selectedConversation === conv">
-        <div class="user-info">
-          <strong>{{ conv.userName }}</strong>
-          <small>{{ conv.userEmail }}</small>
+      @for (conv of conversations; track conv) {
+        <div class="conversation-item" (click)="selectConversation(conv)"
+          [class.selected]="selectedConversation === conv">
+          <div class="user-info">
+            <strong>{{ conv.userName }}</strong>
+            <small>{{ conv.userEmail }}</small>
+          </div>
+          <p class="last-message">{{ conv.lastMessage }}</p>
+          <small class="timestamp">{{ conv.lastTimestamp | date : 'short' }}</small>
         </div>
-        <p class="last-message">{{ conv.lastMessage }}</p>
-        <small class="timestamp">{{ conv.lastTimestamp | date : 'short' }}</small>
-      </div>
-      <p *ngIf="conversations.length === 0">{{ 'NO_MESSAGES' | translate }}</p>
+      }
+      @if (conversations.length === 0) {
+        <p>{{ 'NO_MESSAGES' | translate }}</p>
+      }
     </div>
 
     <!-- Right Section: Chat Interface -->
-    <div class="chat-section" *ngIf="selectedConversation">
-      <div class="chat-header">
-        <h3>{{ selectedConversation.userName }} ({{ selectedConversation.userEmail }})</h3>
-      </div>
-      <div class="messages-list chat-messages">
-        <div class="message" *ngFor="let msg of selectedConversation.messages"
-          [class.admin]="msg.senderRole === 'admin'" [class.user]="msg.senderRole === 'user'">
-          <div class="message-content">
-            <p>{{ msg.content }}</p>
-            <small>{{ msg.createdAt.toDate() | date : 'short' }}</small>
-          </div>
+    @if (selectedConversation) {
+      <div class="chat-section">
+        <div class="chat-header">
+          <h3>{{ selectedConversation.userName }} ({{ selectedConversation.userEmail }})</h3>
+        </div>
+        <div class="messages-list chat-messages">
+          @for (msg of selectedConversation.messages; track msg) {
+            <div class="message"
+              [class.admin]="msg.senderRole === 'admin'" [class.user]="msg.senderRole === 'user'">
+              <div class="message-content">
+                <p>{{ msg.content }}</p>
+                <small>{{ msg.createdAt.toDate() | date : 'short' }}</small>
+              </div>
+            </div>
+          }
+        </div>
+        <div class="message-input-section">
+          <textarea [(ngModel)]="newMessage" placeholder="{{ 'WRITE_REPLY' | translate }}" rows="3"
+          class="message-input"></textarea>
+          <button (click)="sendMessage()" [disabled]="!newMessage.trim()" class="send-button">
+            {{ 'SEND' | translate }} Reply
+          </button>
         </div>
       </div>
-      <div class="message-input-section">
-        <textarea [(ngModel)]="newMessage" placeholder="{{ 'WRITE_REPLY' | translate }}" rows="3"
-          class="message-input"></textarea>
-        <button (click)="sendMessage()" [disabled]="!newMessage.trim()" class="send-button">
-          {{ 'SEND' | translate }} Reply
-        </button>
-      </div>
-    </div>
+    }
 
     <!-- Placeholder if no conversation selected -->
-    <div class="no-selection" *ngIf="!selectedConversation">
-      <p>Select a conversation to start chatting.</p>
-    </div>
+    @if (!selectedConversation) {
+      <div class="no-selection">
+        <p>Select a conversation to start chatting.</p>
+      </div>
+    }
 
   </div>
 </div>

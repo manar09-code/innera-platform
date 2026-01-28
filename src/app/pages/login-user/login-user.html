@@ -6,9 +6,11 @@
 
     <h2>{{ 'LOGIN_USER' | translate }}</h2>
 
-    <div *ngIf="errorMessage" class="error-box">
-      {{ errorMessage }}
-    </div>
+    @if (errorMessage) {
+      <div class="error-box">
+        {{ errorMessage }}
+      </div>
+    }
 
     <form [formGroup]="form" (ngSubmit)="login()">
       <!-- Email Field -->
@@ -18,9 +20,11 @@
           {{ 'EMAIL' | translate }}
         </label>
         <input type="email" formControlName="email" placeholder="user@innera.com" />
-        <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="error">
-          {{ 'VALID_EMAIL_REQUIRED' | translate }}
-        </div>
+        @if (form.get('email')?.invalid && form.get('email')?.touched) {
+          <div class="error">
+            {{ 'VALID_EMAIL_REQUIRED' | translate }}
+          </div>
+        }
       </div>
 
       <!--community name field-->
@@ -30,9 +34,11 @@
           {{ 'COMMUNITY_NAME' | translate }}
         </label>
         <input type="text" formControlName="communityName" placeholder="Enter your community name" />
-        <div *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched" class="error">
-          {{ 'REQUIRED' | translate }}
-        </div>
+        @if (form.get('communityName')?.invalid && form.get('communityName')?.touched) {
+          <div class="error">
+            {{ 'REQUIRED' | translate }}
+          </div>
+        }
       </div>
 
       <!-- Password Field -->
@@ -47,9 +53,11 @@
             {{ showPassword ? '👁️' : '👁️‍🗨️' }}
           </button>
         </div>
-        <div *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="error">
-          {{ 'MIN_CHARS' | translate }}
-        </div>
+        @if (form.get('password')?.invalid && form.get('password')?.touched) {
+          <div class="error">
+            {{ 'MIN_CHARS' | translate }}
+          </div>
+        }
       </div>
 
       <button type="submit" class="btn-primary btn-login" [disabled]="isLoading">

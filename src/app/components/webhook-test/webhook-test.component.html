@@ -14,23 +14,29 @@
     <button (click)="clearLogs()" class="btn-clear">Clear Logs</button>
   </div>
 
-  <div class="results-container" *ngIf="testResults.length > 0">
-    <h3>Test Results:</h3>
-    <div class="log-output">
-      <div *ngFor="let log of testResults" class="log-entry" [class.error]="log.includes('❌')" [class.success]="log.includes('✅')">
-        {{ log }}
+  @if (testResults.length > 0) {
+    <div class="results-container">
+      <h3>Test Results:</h3>
+      <div class="log-output">
+        @for (log of testResults; track log) {
+          <div class="log-entry" [class.error]="log.includes('❌')" [class.success]="log.includes('✅')">
+            {{ log }}
+          </div>
+        }
       </div>
     </div>
-  </div>
+  }
 
-  <div class="environment-info" *ngIf="environment">
-    <h3>Environment Check:</h3>
-    <div class="env-vars">
-      <div><strong>Login Webhook:</strong> {{ environment.webhooks.login || 'NOT SET' }}</div>
-      <div><strong>Profile Webhook:</strong> {{ environment.webhooks.profileUpdate || 'NOT SET' }}</div>
-      <div><strong>Message Sent Webhook:</strong> {{ environment.webhooks.messageSent || 'NOT SET' }}</div>
-      <div><strong>Message Received Webhook:</strong> {{ environment.webhooks.messageReceived || 'NOT SET' }}</div>
-      <div><strong>Admin Email:</strong> {{ environment.adminEmail || 'NOT SET' }}</div>
+  @if (environment) {
+    <div class="environment-info">
+      <h3>Environment Check:</h3>
+      <div class="env-vars">
+        <div><strong>Login Webhook:</strong> {{ environment.webhooks.login || 'NOT SET' }}</div>
+        <div><strong>Profile Webhook:</strong> {{ environment.webhooks.profileUpdate || 'NOT SET' }}</div>
+        <div><strong>Message Sent Webhook:</strong> {{ environment.webhooks.messageSent || 'NOT SET' }}</div>
+        <div><strong>Message Received Webhook:</strong> {{ environment.webhooks.messageReceived || 'NOT SET' }}</div>
+        <div><strong>Admin Email:</strong> {{ environment.adminEmail || 'NOT SET' }}</div>
+      </div>
     </div>
-  </div>
+  }
 </div>

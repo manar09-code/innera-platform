@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject } from '@angular/core';
+
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Auth } from '@angular/fire/auth';
@@ -7,7 +7,7 @@ import { Auth } from '@angular/fire/auth';
 @Component({
   selector: 'app-webhook-test',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './webhook-test.component.html',
   styleUrls: ['./webhook-test.component.css']
 })
@@ -15,11 +15,9 @@ export class WebhookTestComponent {
   testResults: string[] = [];
   isLoading = false;
   environment = environment;
+  auth = inject(Auth);
 
-  constructor(
-    private http: HttpClient,
-    private auth: Auth
-  ) {}
+  constructor(private http: HttpClient) {}
 
   // Test LOGIN webhook
   async testLoginWebhook() {
@@ -121,7 +119,7 @@ export class WebhookTestComponent {
 
   // Test with REAL current user
   async testWithRealUser() {
-    const user = this.auth.currentUser;
+    const user = this.auth.currentUser as any;
     if (!user || !user.email) {
       this.addLog('❌ No user logged in!');
       return;

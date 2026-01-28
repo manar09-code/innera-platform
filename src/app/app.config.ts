@@ -1,17 +1,18 @@
 import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { provideFirebaseApp } from '@angular/fire/app';
-import { provideFirestore } from '@angular/fire/firestore';
+import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
+import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+import { getAuth, provideAuth } from '@angular/fire/auth';
 import { routes } from './app.routes';
-import { auth, firestore } from './firebase.config';
+import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideHttpClient(),
-    // Use the singleton instance from firebase.config
-    provideFirebaseApp(() => auth.app),
-    provideFirestore(() => firestore),
+    provideFirebaseApp(() => initializeApp(environment.firebase)),
+    provideFirestore(() => getFirestore()),
+    provideAuth(() => getAuth()),
   ],
 };

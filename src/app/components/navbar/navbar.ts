@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { TranslationService } from '../../services/translation.service';
+import { AuthService } from '../../services/auth.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [TranslatePipe],
   templateUrl: './navbar.html',
   styleUrls: ['./navbar.css'],
 })
@@ -16,23 +17,16 @@ export class NavbarComponent implements OnInit {
   userName: string = '';
   currentLang: string = 'en';
 
-  constructor(private router: Router, private translationService: TranslationService) { }
-
   constructor(
     private router: Router,
     private translationService: TranslationService,
-    private authService: AuthService // ISSUE 9: Injected for reactive state
+    private authService: AuthService
   ) { }
 
   async ngOnInit() {
     // Subscribe to reactive subjects to ensure UI updates instantly
     this.authService.userName$.subscribe((name: string) => this.userName = name);
     this.authService.userRole$.subscribe((role: string) => this.userRole = role);
->>>>>>> 59d1c747cfd3e0b2b2fb785bb483edb9835920f5
-
-  ngOnInit() {
-    this.userRole = localStorage.getItem('userRole') || '';
-    this.userName = localStorage.getItem('userName') || '';
     this.currentLang = this.translationService.getLanguage();
   }
 

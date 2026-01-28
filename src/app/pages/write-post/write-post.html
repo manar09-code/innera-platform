@@ -8,7 +8,7 @@
 
     <div class="post-form">
       <textarea [(ngModel)]="postContent" placeholder="What's on your mind? (Use #hashtags to tag)" rows="4"
-        class="post-textarea"></textarea>
+      class="post-textarea"></textarea>
 
       <!-- Image Upload Section -->
       <div class="image-upload-section" style="margin-bottom: 20px;">
@@ -18,41 +18,57 @@
           {{ imagePreview ? 'Change Image' : '🖼️ Attach Image from Device' }}
         </button>
 
-        <div *ngIf="imagePreview"
-          style="margin-top: 15px; border-radius: 8px; overflow: hidden; position: relative; max-height: 200px; border: 1px solid rgba(255,255,255,0.1);">
-          <img [src]="imagePreview" alt="Upload preview" style="width: 100%; object-fit: cover;" />
-        </div>
+        @if (imagePreview) {
+          <div
+            style="margin-top: 15px; border-radius: 8px; overflow: hidden; position: relative; max-height: 200px; border: 1px solid rgba(255,255,255,0.1);">
+            <img [src]="imagePreview" alt="Upload preview" style="width: 100%; object-fit: cover;" />
+          </div>
+        }
 
-        <p *ngIf="isUploading" style="color: #ffb84d; font-size: 13px; margin-top: 10px; text-align: center;">
-          <b>📤 Uploading to cloud storage...</b>
-        </p>
+        @if (isUploading) {
+          <p style="color: #ffb84d; font-size: 13px; margin-top: 10px; text-align: center;">
+            <b>📤 Uploading to cloud storage...</b>
+          </p>
+        }
       </div>
 
       <div class="form-buttons">
-        <button *ngIf="!isEditing" (click)="createPost()" [disabled]="!postContent.trim()" class="btn btn-primary">
-          Post
-        </button>
+        @if (!isEditing) {
+          <button (click)="createPost()" [disabled]="!postContent.trim()" class="btn btn-primary">
+            Post
+          </button>
+        }
 
-        <button *ngIf="isEditing" (click)="updatePost()" [disabled]="!postContent.trim()" class="btn btn-primary">
-          Update
-        </button>
+        @if (isEditing) {
+          <button (click)="updatePost()" [disabled]="!postContent.trim()" class="btn btn-primary">
+            Update
+          </button>
+        }
 
-        <button *ngIf="isEditing" (click)="cancelEdit()" class="btn btn-secondary">Cancel</button>
+        @if (isEditing) {
+          <button (click)="cancelEdit()" class="btn btn-secondary">Cancel</button>
+        }
 
-        <button *ngIf="isEditing" (click)="deletePost()" class="btn btn-danger">Delete</button>
+        @if (isEditing) {
+          <button (click)="deletePost()" class="btn btn-danger">Delete</button>
+        }
       </div>
     </div>
 
-    <div class="posts-list" *ngIf="posts.length > 0">
-      <h3>Your Posts</h3>
-      <div class="post-item" *ngFor="let post of posts">
-        <div class="post-content">{{ post.content }}</div>
-        <div class="post-meta">
-          <small>{{ post.author }} - {{ post.createdAt | date : 'short' }}</small>
-          <button (click)="selectPost(post)" class="btn btn-sm btn-edit">Edit</button>
-        </div>
+    @if (posts.length > 0) {
+      <div class="posts-list">
+        <h3>Your Posts</h3>
+        @for (post of posts; track post) {
+          <div class="post-item">
+            <div class="post-content">{{ post.content }}</div>
+            <div class="post-meta">
+              <small>{{ post.author }} - {{ post.createdAt | date : 'short' }}</small>
+              <button (click)="selectPost(post)" class="btn btn-sm btn-edit">Edit</button>
+            </div>
+          </div>
+        }
       </div>
-    </div>
+    }
 
   </div>
 </div>

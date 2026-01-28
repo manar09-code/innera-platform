@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { PostService, Post, Comment } from '../../services/post.service';
@@ -9,7 +9,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './usermanagement.html',
   styleUrls: ['./usermanagement.css'],
 })

@@ -6,11 +6,15 @@
 
     <h2>Create User account</h2>
 
-    <div *ngIf="successMessage" class="success">✅ {{ successMessage }}</div>
+    @if (successMessage) {
+      <div class="success">✅ {{ successMessage }}</div>
+    }
 
-    <div *ngIf="errorMessage" class="error-box">
-      {{ errorMessage }}
-    </div>
+    @if (errorMessage) {
+      <div class="error-box">
+        {{ errorMessage }}
+      </div>
+    }
 
     <form [formGroup]="form" (ngSubmit)="register()">
       <!--username filed-->
@@ -20,9 +24,11 @@
           Username
         </label>
         <input type="text" formControlName="username" placeholder="Enter your username" />
-        <div *ngIf="form.get('username')?.invalid && form.get('username')?.touched" class="error">
-          Required
-        </div>
+        @if (form.get('username')?.invalid && form.get('username')?.touched) {
+          <div class="error">
+            Required
+          </div>
+        }
       </div>
 
 
@@ -33,9 +39,11 @@
           Email
         </label>
         <input type="email" formControlName="email" placeholder="user@innera.com" />
-        <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="error">
-          Valid email required
-        </div>
+        @if (form.get('email')?.invalid && form.get('email')?.touched) {
+          <div class="error">
+            Valid email required
+          </div>
+        }
       </div>
 
       <!--comunity name/link-->
@@ -45,9 +53,11 @@
           Community Name
         </label>
         <input type="text" formControlName="communityName" placeholder="Enter your community name" />
-        <div *ngIf="form.get('communityName')?.invalid && form.get('communityName')?.touched" class="error">
-          Required
-        </div>
+        @if (form.get('communityName')?.invalid && form.get('communityName')?.touched) {
+          <div class="error">
+            Required
+          </div>
+        }
       </div>
       <!-- Password Field -->
       <div class="form-group">
@@ -61,9 +71,11 @@
             {{ showPassword ? '👁️' : '👁️‍🗨️' }}
           </button>
         </div>
-        <div *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="error">
-          Min 6 characters
-        </div>
+        @if (form.get('password')?.invalid && form.get('password')?.touched) {
+          <div class="error">
+            Min 6 characters
+          </div>
+        }
       </div>
 
       <div class="form-group">
@@ -74,25 +86,29 @@
         <div class="password-input">
           <input [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword"
             placeholder="••••••" />
-          <button type="button" class="toggle-password" (click)="toggleConfirmPasswordVisibility()">
-            {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
-          </button>
+            <button type="button" class="toggle-password" (click)="toggleConfirmPasswordVisibility()">
+              {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
+            </button>
+          </div>
+          @if (form.get('confirmPassword')?.invalid && form.get('confirmPassword')?.touched) {
+            <div class="error">
+              Required
+            </div>
+          }
+          @if (form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched) {
+            <div class="error">
+              Passwords don't match
+            </div>
+          }
         </div>
-        <div *ngIf="form.get('confirmPassword')?.invalid && form.get('confirmPassword')?.touched" class="error">
-          Required
-        </div>
-        <div *ngIf="form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched" class="error">
-          Passwords don't match
-        </div>
+
+        <button type="submit" class="btn-primary btn-register" [disabled]="isLoading || form.invalid">
+          {{ isLoading ? 'Creating...' : 'Sign Up' }}
+        </button>
+      </form>
+
+      <div class="switch-login">
+        <p>Already have an account? <a (click)="goToLogin()">Login</a></p>
       </div>
-
-      <button type="submit" class="btn-primary btn-register" [disabled]="isLoading || form.invalid">
-        {{ isLoading ? 'Creating...' : 'Sign Up' }}
-      </button>
-    </form>
-
-    <div class="switch-login">
-      <p>Already have an account? <a (click)="goToLogin()">Login</a></p>
     </div>
   </div>
-</div>

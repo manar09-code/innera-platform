@@ -9,50 +9,54 @@
     <div class="top-section">
       <h2 class="section-title">{{ 'COMMUNITY_MEMBERS' | translate }}</h2>
       <ul class="members-list">
-        <li *ngFor="let member of members" class="member-item" [class.blocked]="member.isBlocked">
-          <div class="member-info">
-            <span class="member-name">{{ member.name }}</span>
-            <span class="member-email">({{ member.email }})</span>
-            <div class="member-stats">
-              <span>📝 {{ member.postCount }}</span>
-              <span>❤️ {{ member.likeCount }}</span>
-              <span>💬 {{ member.commentCount }}</span>
-              <span>🔑 {{ member.loginCount }}</span>
+        @for (member of members; track member) {
+          <li class="member-item" [class.blocked]="member.isBlocked">
+            <div class="member-info">
+              <span class="member-name">{{ member.name }}</span>
+              <span class="member-email">({{ member.email }})</span>
+              <div class="member-stats">
+                <span>📝 {{ member.postCount }}</span>
+                <span>❤️ {{ member.likeCount }}</span>
+                <span>💬 {{ member.commentCount }}</span>
+                <span>🔑 {{ member.loginCount }}</span>
+              </div>
+              @if (member.isBlocked) {
+                <span class="blocked-badge">{{ 'BLOCKED' | translate }}</span>
+              }
             </div>
-            <span class="blocked-badge" *ngIf="member.isBlocked">{{ 'BLOCKED' | translate }}</span>
-          </div>
-          <div class="member-actions">
-            <button (click)="blockMember(member.id)" [class.block-btn]="!member.isBlocked"
-              [class.unblock-btn]="member.isBlocked" class="action-btn">
-              {{ member.isBlocked ? ('UNBLOCK' | translate) : ('BLOCK' | translate) }}
-            </button>
-            <button (click)="deleteMember(member.id)" class="delete-btn">{{ 'DELETE' | translate }}</button>
-          </div>
-        </li>
+            <div class="member-actions">
+              <button (click)="blockMember(member.id)" [class.block-btn]="!member.isBlocked"
+                [class.unblock-btn]="member.isBlocked" class="action-btn">
+                {{ member.isBlocked ? ('UNBLOCK' | translate) : ('BLOCK' | translate) }}
+              </button>
+              <button (click)="deleteMember(member.id)" class="delete-btn">{{ 'DELETE' | translate }}</button>
+            </div>
+          </li>
+        }
       </ul>
       <div class="add-member">
         <input [(ngModel)]="newMemberName" placeholder="{{ 'MEMBER_NAME' | translate }}" type="text"
           class="member-input" />
-        <input [(ngModel)]="newMemberEmail" placeholder="{{ 'MEMBER_EMAIL' | translate }}" type="email"
-          class="member-input" />
-        <button (click)="addMember()" class="add-btn">{{ 'ADD_MEMBER' | translate }}</button>
+          <input [(ngModel)]="newMemberEmail" placeholder="{{ 'MEMBER_EMAIL' | translate }}" type="email"
+            class="member-input" />
+            <button (click)="addMember()" class="add-btn">{{ 'ADD_MEMBER' | translate }}</button>
+          </div>
+        </div>
+
+        <!-- Middle Section: Horizontal Separator -->
+        <hr class="separator" />
+
+        <!-- Bottom Section: Divided into 2 vertical sections -->
+        <div class="bottom-section">
+          <div class="bottom-left">
+            <h3 class="section-title">{{ 'COMMUNITY_NAME' | translate }}</h3>
+            <p class="section-content">{{ communityName }}</p>
+          </div>
+          <div class="bottom-right">
+            <h3 class="section-title">{{ 'JOIN_LINK' | translate }} / {{ 'INVITE_CODE' | translate }}</h3>
+            <p class="section-content">{{ joinLink }}</p>
+            <button (click)="copyJoinLink()" class="copy-btn">{{ 'COPY_LINK' | translate }}</button>
+          </div>
+        </div>
       </div>
     </div>
-
-    <!-- Middle Section: Horizontal Separator -->
-    <hr class="separator" />
-
-    <!-- Bottom Section: Divided into 2 vertical sections -->
-    <div class="bottom-section">
-      <div class="bottom-left">
-        <h3 class="section-title">{{ 'COMMUNITY_NAME' | translate }}</h3>
-        <p class="section-content">{{ communityName }}</p>
-      </div>
-      <div class="bottom-right">
-        <h3 class="section-title">{{ 'JOIN_LINK' | translate }} / {{ 'INVITE_CODE' | translate }}</h3>
-        <p class="section-content">{{ joinLink }}</p>
-        <button (click)="copyJoinLink()" class="copy-btn">{{ 'COPY_LINK' | translate }}</button>
-      </div>
-    </div>
-  </div>
-</div>

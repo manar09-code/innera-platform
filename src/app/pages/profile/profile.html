@@ -21,53 +21,93 @@
         <div class="info-item">
           <label>Username</label>
           <div class="info-content">
-            <span *ngIf="!editingUsername">{{ userName || 'Not set' }}</span>
-            <input *ngIf="editingUsername" [(ngModel)]="tempUsername" type="text" placeholder="Enter username" />
+            @if (!editingUsername) {
+              <span>{{ userName || 'Not set' }}</span>
+            }
+            @if (editingUsername) {
+              <input [(ngModel)]="tempUsername" type="text" placeholder="Enter username" />
+            }
           </div>
           <div class="info-actions">
-            <button class="btn-edit" *ngIf="!editingUsername" (click)="startEdit('Username')">Edit</button>
-            <button class="btn-save" *ngIf="editingUsername" (click)="saveEdit('Username')">Save</button>
-            <button class="btn-cancel" *ngIf="editingUsername" (click)="cancelEdit('Username')">Cancel</button>
+            @if (!editingUsername) {
+              <button class="btn-edit" (click)="startEdit('Username')">Edit</button>
+            }
+            @if (editingUsername) {
+              <button class="btn-save" (click)="saveEdit('Username')">Save</button>
+            }
+            @if (editingUsername) {
+              <button class="btn-cancel" (click)="cancelEdit('Username')">Cancel</button>
+            }
           </div>
         </div>
 
         <div class="info-item">
           <label>Email</label>
           <div class="info-content">
-            <span *ngIf="!editingEmail">{{ userEmail || 'Not set' }}</span>
-            <input *ngIf="editingEmail" [(ngModel)]="tempEmail" type="email" placeholder="Enter email" />
+            @if (!editingEmail) {
+              <span>{{ userEmail || 'Not set' }}</span>
+            }
+            @if (editingEmail) {
+              <input [(ngModel)]="tempEmail" type="email" placeholder="Enter email" />
+            }
           </div>
           <div class="info-actions">
-            <button class="btn-edit" *ngIf="!editingEmail" (click)="startEdit('Email')">Edit</button>
-            <button class="btn-save" *ngIf="editingEmail" (click)="saveEdit('Email')">Save</button>
-            <button class="btn-cancel" *ngIf="editingEmail" (click)="cancelEdit('Email')">Cancel</button>
+            @if (!editingEmail) {
+              <button class="btn-edit" (click)="startEdit('Email')">Edit</button>
+            }
+            @if (editingEmail) {
+              <button class="btn-save" (click)="saveEdit('Email')">Save</button>
+            }
+            @if (editingEmail) {
+              <button class="btn-cancel" (click)="cancelEdit('Email')">Cancel</button>
+            }
           </div>
         </div>
 
         <div class="info-item">
           <label>Community</label>
           <div class="info-content">
-            <span *ngIf="!editingCommunity">{{ displayCommunityName }}</span>
-            <input *ngIf="editingCommunity" [(ngModel)]="tempCommunity" type="text" placeholder="Enter community" />
+            @if (!editingCommunity) {
+              <span>{{ displayCommunityName }}</span>
+            }
+            @if (editingCommunity) {
+              <input [(ngModel)]="tempCommunity" type="text" placeholder="Enter community" />
+            }
           </div>
           <div class="info-actions">
-            <button class="btn-edit" *ngIf="!editingCommunity" (click)="startEdit('Community')">Edit</button>
-            <button class="btn-save" *ngIf="editingCommunity" (click)="saveEdit('Community')">Save</button>
-            <button class="btn-cancel" *ngIf="editingCommunity" (click)="cancelEdit('Community')">Cancel</button>
+            @if (!editingCommunity) {
+              <button class="btn-edit" (click)="startEdit('Community')">Edit</button>
+            }
+            @if (editingCommunity) {
+              <button class="btn-save" (click)="saveEdit('Community')">Save</button>
+            }
+            @if (editingCommunity) {
+              <button class="btn-cancel" (click)="cancelEdit('Community')">Cancel</button>
+            }
           </div>
         </div>
 
         <div class="info-item password-item">
           <label>Password</label>
           <div class="info-content">
-            <span *ngIf="!editingPassword">{{ userPassword }}</span>
-            <input *ngIf="editingPassword" [(ngModel)]="tempPassword" type="password"
-              placeholder="Enter new password" />
+            @if (!editingPassword) {
+              <span>{{ userPassword }}</span>
+            }
+            @if (editingPassword) {
+              <input [(ngModel)]="tempPassword" type="password"
+                placeholder="Enter new password" />
+            }
           </div>
           <div class="info-actions">
-            <button class="btn-edit" *ngIf="!editingPassword" (click)="startEdit('Password')">Edit</button>
-            <button class="btn-save" *ngIf="editingPassword" (click)="saveEdit('Password')">Save</button>
-            <button class="btn-cancel" *ngIf="editingPassword" (click)="cancelEdit('Password')">Cancel</button>
+            @if (!editingPassword) {
+              <button class="btn-edit" (click)="startEdit('Password')">Edit</button>
+            }
+            @if (editingPassword) {
+              <button class="btn-save" (click)="saveEdit('Password')">Save</button>
+            }
+            @if (editingPassword) {
+              <button class="btn-cancel" (click)="cancelEdit('Password')">Cancel</button>
+            }
           </div>
         </div>
 
@@ -82,18 +122,20 @@
           </a>
 
           <!-- Admin Sub-links nested logic -->
-          <div class="admin-controls" *ngIf="isAdmin">
-            <div class="admin-divider">Admin Dashboard</div>
-            <a href="#" (click)="$event.preventDefault(); navigateToStats()" class="sub-link stats-link">
-              <span class="icon">📊</span> Pages Stats
-            </a>
-            <a href="#" (click)="$event.preventDefault(); navigateToDashboard()" class="sub-link dashboard-link">
-              <span class="icon">👥</span> User Management
-            </a>
-            <a href="#" (click)="$event.preventDefault(); navigateToConfigAi()" class="sub-link config-ai-link">
-              <span class="icon">🤖</span> Config AI
-            </a>
-          </div>
+          @if (isAdmin) {
+            <div class="admin-controls">
+              <div class="admin-divider">Admin Dashboard</div>
+              <a href="#" (click)="$event.preventDefault(); navigateToStats()" class="sub-link stats-link">
+                <span class="icon">📊</span> Pages Stats
+              </a>
+              <a href="#" (click)="$event.preventDefault(); navigateToDashboard()" class="sub-link dashboard-link">
+                <span class="icon">👥</span> User Management
+              </a>
+              <a href="#" (click)="$event.preventDefault(); navigateToConfigAi()" class="sub-link config-ai-link">
+                <span class="icon">🤖</span> Config AI
+              </a>
+            </div>
+          }
         </div>
       </div>
     </div>

@@ -7,19 +7,23 @@
   <div class="message-container">
     <div class="chat-interface">
       <div class="messages-list">
-        <div class="message" *ngFor="let msg of messages" [class.sent]="msg.senderRole === 'user'"
-          [class.received]="msg.senderRole === 'admin'">
-          <div class="message-bubble">
-            <p>{{ msg.content }}</p>
-            <small>{{ msg.createdAt.toDate() | date:'short' }}</small>
+        @for (msg of messages; track msg) {
+          <div class="message" [class.sent]="msg.senderRole === 'user'"
+            [class.received]="msg.senderRole === 'admin'">
+            <div class="message-bubble">
+              <p>{{ msg.content }}</p>
+              <small>{{ msg.createdAt.toDate() | date:'short' }}</small>
+            </div>
           </div>
-        </div>
-        <p *ngIf="messages.length === 0" class="no-messages">{{ 'NO_MESSAGES' | translate }}</p>
+        }
+        @if (messages.length === 0) {
+          <p class="no-messages">{{ 'NO_MESSAGES' | translate }}</p>
+        }
       </div>
 
       <div class="input-area">
         <textarea [(ngModel)]="createMessageContent" placeholder="{{ 'WRITE_MESSAGE_TO_ADMIN' | translate }}..."
-          rows="3" class="message-input"></textarea>
+        rows="3" class="message-input"></textarea>
         <button (click)="sendMessage()" [disabled]="!createMessageContent.trim()" class="send-button">
           {{ 'SEND' | translate }}
         </button>
