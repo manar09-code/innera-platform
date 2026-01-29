@@ -40,8 +40,7 @@ import { HistoryComponent } from './pages/history/history';
 import { AuthGuard } from './guards/auth.guard';
 // Import guard to check if user is an admin before accessing admin pages
 import { AdminGuard } from './guards/admin.guard';
-// Import component for testing webhooks
-import { WebhookTestComponent } from './components/webhook-test/webhook-test.component';
+
 
 // Export the routes configuration as a constant array of route objects
 export const routes: Routes = [
@@ -83,8 +82,7 @@ export const routes: Routes = [
   { path: 'user-profile', component: UserProfileComponent, canActivate: [AuthGuard] },
   // Route for history, requires login, shows HistoryComponent
   { path: 'history', component: HistoryComponent, canActivate: [AuthGuard] },
-  // Route for webhook testing, shows WebhookTestComponent
-  { path: 'webhook-test', component: WebhookTestComponent },
+
   // Catch-all route: if no other route matches, redirect to home
   { path: '**', redirectTo: '/home' }
 ]; // This closes the routes array, completing the definition of all navigation routes for the application.

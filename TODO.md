@@ -1,8 +1,18 @@
-# Angular 21 Upgrade Tasks
+# TODO: Fix Angular Project Issues
 
-- [x] Install @angular/fire@21.0.0 and firebase@10.15.0
-- [x] Update src/app/app.config.ts to use new AngularFire 21 modular imports
-- [x] Fix src/app/components/navbar/navbar.ts: remove merge markers, keep single constructor with Router, TranslationService, AuthService, add AuthService import, implement single ngOnInit using authService
-- [x] Update src/app/components/webhook-test/webhook-test.component.ts to use inject(Auth) instead of constructor injection
-- [x] Add typeCheckHostBindings: true to tsconfig.json angularCompilerOptions
-- [x] Run ng serve to test the project
+## AuthService Fixes
+- [x] Update handleDeviceLogin() to handle IP fetch with fallback to '0.0.0.0'
+- [x] Ensure webhook sends regardless of IP fetch failure
+- [x] Add console.log before webhook send for debugging
+- [x] Use proper try/catch and async/await
+
+## FeedComponent Fixes
+- [x] Consolidate community name subscription to avoid multiple loadPostsFromFirestore calls
+- [x] Remove duplicate direct calls to loadPostsFromFirestore
+- [x] Ensure proper subscription cleanup on destroy
+
+## Testing
+- [ ] Verify login flow continues on IP fetch failure
+- [ ] Verify feed loads only once per query
+- [ ] Verify webhook appears in Network tab
+- [ ] Test in development and production environments

@@ -46,6 +46,7 @@ export class FeedComponent implements OnInit, OnDestroy {
 
   isAdmin: boolean = false;
   private routerSubscription!: Subscription;
+  private isLoadingPosts: boolean = false;
 
   get displayCommunityName(): string {
     if (!this.communityName) return 'My Community';
@@ -59,15 +60,6 @@ export class FeedComponent implements OnInit, OnDestroy {
     // ISSUE 9 FIX: Wait for profile restoration from localStorage/Firestore
     await this.authService.isInitialized;
 
-    // Subscribe to community changes to keep feed in sync
-    this.routerSubscription = this.authService.communityName$.subscribe(name => {
-      if (name) {
-        this.communityName = name;
-        this.loadPostsFromFirestore();
-        this.initializePopularPosts();
-      }
-    });
-
     this.userName = localStorage.getItem('userName') || '';
     this.userEmail = localStorage.getItem('userEmail') || '';
     this.userRole = localStorage.getItem('userRole') || '';
@@ -77,15 +69,11 @@ export class FeedComponent implements OnInit, OnDestroy {
       this.isAdmin = true;
     }
 
-    if (this.communityName) {
-      this.loadPostsFromFirestore();
-    }
-
     this.loadWelcomeCardState();
 
-    // Subscribe to community changes to reload posts
-    this.authService.communityName$.subscribe(async (community) => {
-      if (community) {
+    // Single consolidated subscription to community changes
+    this.routerSubscription = this.authService.communityName$.subscribe(async (community) => {
+      if (community && community !== this.communityName) {
         this.communityName = community;
         this.loadPostsFromFirestore();
 
@@ -100,11 +88,23 @@ export class FeedComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Handle initial load if community name is already set
+    const currentCommunity = this.authService.getCommunityName();
+    if (currentCommunity) {
+      this.communityName = currentCommunity;
+      this.loadPostsFromFirestore();
+      this.initializePopularPosts();
+      this.initializeActiveMembers();
+    }
+
     // routerSubscription also handles navigation back to feed
     this.routerSubscription.add(this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd && (event.url === '/feed' || event.urlAfterRedirects === '/feed')) {
-        this.loadPostsFromFirestore();
-        this.initializePopularPosts();
+        // Only reload if community has changed or not loaded yet
+        if (this.communityName && this.posts.length === 0) {
+          this.loadPostsFromFirestore();
+          this.initializePopularPosts();
+        }
       }
     }));
   }
@@ -139,6 +139,14 @@ export class FeedComponent implements OnInit, OnDestroy {
       console.warn('[FeedComponent] Cannot load posts: communityName is empty');
       return;
     }
+
+    // Prevent duplicate feed loading
+    if (this.isLoadingPosts) {
+      console.log('[FeedComponent] Feed loading already in progress, skipping duplicate call');
+      return;
+    }
+
+    this.isLoadingPosts = true;
 
     try {
       console.log(`[FeedComponent] Loading feed for: "${this.communityName}"`);
@@ -217,6 +225,8 @@ export class FeedComponent implements OnInit, OnDestroy {
       });
     } catch (error) {
       console.error('[FeedComponent] Error in loadPostsFromFirestore:', error);
+    } finally {
+      this.isLoadingPosts = false;
     }
   }
 

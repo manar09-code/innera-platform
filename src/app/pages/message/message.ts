@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { MessageService, Message } from '../../services/message.service';
-import { WebhookService } from '../../services/webhook.service';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
@@ -23,8 +22,7 @@ export class MessageComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authService: AuthService,
-    private messageService: MessageService,
-    private webhookService: WebhookService
+    private messageService: MessageService
   ) { }
 
   async ngOnInit() {
@@ -71,50 +69,14 @@ export class MessageComponent implements OnInit, OnDestroy {
       // 3. Clear input
       this.createMessageContent = '';
 
-      // 4. Send Make AI webhook (non-blocking)
-      this.sendMessageNotification(contentToNotify);
+
 
     } catch (error) {
       this.showError('Failed to send message');
     }
   }
 
-  private async sendMessageNotification(messageText: string) {
-    try {
-      const user = this.authService.getCurrentUser();
-      if (!user || !user.email) return;
 
-      // ISSUE 1: Get community context for notifications
-      const communityName = this.authService.getCommunityName() || 'Unknown';
-
-      // Use the passed messageText instead of reading from cleared component state
-
-      // Send to USER (confirmation)
-      await this.webhookService.triggerMessageSent(
-        user.email,
-        user.displayName || user.email.split('@')[0],
-        user.uid,
-        'admin@innera-platform.com',
-        'Community Admin',
-        messageText,
-        communityName
-      );
-
-      // Send to ADMIN (alert)
-      await this.webhookService.triggerMessageReceived(
-        user.email,
-        user.displayName || user.email.split('@')[0],
-        user.uid,
-        'admin@innera-platform.com',
-        'Community Admin',
-        messageText,
-        communityName
-      );
-
-    } catch (error) {
-      console.warn('Email notification failed:', error);
-    }
-  }
 
   private showToast(message: string) {
     // Simple toast implementation

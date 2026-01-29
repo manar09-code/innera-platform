@@ -3,7 +3,7 @@ import { Injectable, NgZone } from '@angular/core'; // This line imports the Inj
 import { Firestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, Timestamp, getDocs } from 'firebase/firestore'; // This line imports various Firestore functions and types from the 'firebase/firestore' module, which are needed for database operations like adding documents, querying collections, and listening to real-time updates.
 import { firestore } from '../firebase.config'; // This line imports the configured firestore instance from '../firebase.config', which is needed to perform database operations using the app's Firebase setup.
 import { AuthService } from './auth.service'; // This line imports the AuthService from './auth.service', which is needed to access user authentication information.
-import { WebhookService } from './webhook.service'; // This line imports the WebhookService from './webhook.service', which is needed to trigger external webhooks for messaging events.
+
 import { environment } from '../../environments/environment'; // This line imports the environment configuration from '../../environments/environment', which contains settings like admin email for webhook triggers.
 
 export interface Message { // This line defines the Message interface, which specifies the structure of message objects stored in Firestore, ensuring type safety and consistency.
@@ -34,7 +34,7 @@ export class MessageService { // This line exports the MessageService class, whi
             .replace(/[-_]/g, ' '); // Unify "tunisia-hood" and "tunisia hood"
     }
 
-    constructor(private authService: AuthService, private webhookService: WebhookService, private zone: NgZone) { // This line defines the constructor for the MessageService class, which takes AuthService and WebhookService instances as parameters for dependency injection, used to access authentication and webhook functionality.
+    constructor(private authService: AuthService, private zone: NgZone) { // This line defines the constructor for the MessageService class, which takes AuthService instance as parameter for dependency injection, used to access authentication functionality.
         // this.testMessagesIndex(); // This line is a commented out call to the testMessagesIndex method, which is used for debugging Firestore index issues.
     } // This closes the constructor.
 
@@ -98,12 +98,6 @@ export class MessageService { // This line exports the MessageService class, whi
         }; // This closes the message object.
 
         await addDoc(collection(firestore, 'messages'), message); // This line adds the message document to the 'messages' collection in Firestore.
-
-        // Automation Hook: Send email // This line is a comment indicating the automation hook for sending email.
-        this.triggerAutomation('sendMessage', { // This line calls the triggerAutomation method with the 'sendMessage' event.
-            email: user.email, // This line passes the user's email.
-            message: content // This line passes the message content.
-        }); // This closes the triggerAutomation call.
     } // This closes the sendMessageToAdmin method.
 
     async sendReplyToUser(userId: string, content: string): Promise<void> { // This line defines the async sendReplyToUser method, which takes userId and content parameters of type string and returns Promise<void>, used to send a reply message from the admin to a specific user.
@@ -125,12 +119,6 @@ export class MessageService { // This line exports the MessageService class, whi
 
         // ISSUE 6: Small delay to let snapshot catch up
         await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Automation Hook: Send reply notification to user // This line is a comment indicating the automation hook for sending reply notification.
-        this.triggerAutomation('sendReply', { // This line calls the triggerAutomation method with the 'sendReply' event.
-            userId: userId, // This line passes the userId.
-            message: content // This line passes the message content.
-        }); // This closes the triggerAutomation call.
     } // This closes the sendReplyToUser method.
 
     listenToConversation(conversationId: string, callback: (messages: Message[]) => void): () => void { // This line defines the listenToConversation method, which takes conversationId parameter of type string and callback parameter of type function, and returns a function to unsubscribe, used to listen to real-time updates for messages in a specific conversation.
@@ -196,36 +184,5 @@ export class MessageService { // This line exports the MessageService class, whi
         ); // This closes the onSnapshot call.
     } // This closes the listenToMessagesForCommunity method.
 
-    // PASTE YOUR MAKE.COM WEBHOOK URL HERE // This line is a comment indicating where to paste the Make.com webhook URL.
-    private automationWebhookUrl = ''; // This line declares a private property automationWebhookUrl of type string, initialized to an empty string, used to store the webhook URL.
 
-    private triggerAutomation(event: string, data: any) { // This line defines the private triggerAutomation method, which takes event and data parameters and returns void, used to trigger automation based on the event type.
-        console.log(`[Automation Triggered] Event: ${event}, Data:`, data); // This line logs a message to the console indicating that automation has been triggered.
-
-        const adminEmail = environment.adminEmail || 'admin@innera-platform.com'; // This line        const adminEmail = environment.adminEmail || 'admin@innera-platform.com';
-
-        // ISSUE 1 & 10: Get community context for automation webhooks
-        // Attempt to get community name from AuthService.
-        let rawComm = this.authService.getCommunityName();
-        // If AuthService doesn't provide a valid community name, try localStorage.
-        if (!rawComm || rawComm === 'Unknown' || rawComm === '') rawComm = localStorage.getItem('communityName') || 'Unknown';
-        // Normalize the obtained community name for consistency.
-        const communityName = this.normalizeCommunityName(rawComm);
-
-        if (event === 'sendMessage') { // This line checks if the event is 'sendMessage'.
-            const userEmail = data.email; // This line gets the user email from the data.
-            const userName = localStorage.getItem('userName') || 'User'; // This line gets the user name from local storage, defaulting to 'User'.
-            const messageContent = data.message; // This line gets the message content from the data.
-
-            // Trigger webhook for message received by admin // This line is a comment indicating the webhook trigger for message received by admin.
-            this.webhookService.triggerMessageReceived(userEmail, userName, 'admin', adminEmail, 'Admin', messageContent, communityName); // Added communityName
-        } else if (event === 'sendReply') { // This line checks if the event is 'sendReply'.
-            const userId = data.userId; // This line gets the userId from the data.
-            const messageContent = data.message; // This line gets the message content from the data.
-            const userEmail = userId; // This line sets userEmail to userId, as in this app, userId is often the email.
-
-            // Trigger webhook for message sent confirmation to user // This line is a comment indicating the webhook trigger for message sent confirmation to user.
-            this.webhookService.triggerMessageSent(userEmail, 'User', userId, adminEmail, 'Admin', messageContent, communityName); // Added communityName
-        } // This closes the if-else block.
-    } // This closes the triggerAutomation method.
 } // This closes the MessageService class.

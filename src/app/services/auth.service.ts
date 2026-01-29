@@ -2,8 +2,9 @@
 import { Injectable } from '@angular/core';
 import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { Firestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
+import { HttpClient } from '@angular/common/http';
 import { auth, firestore } from '../firebase.config';
-import { WebhookService } from './webhook.service';
+
 import { BehaviorSubject, Observable } from 'rxjs';
 
 interface UserData {
@@ -42,7 +43,72 @@ export class AuthService {
     return name.trim().toLowerCase().replace(/[-_]/g, ' ');
   }
 
-  constructor(private webhookService: WebhookService) { // This line defines the constructor for the AuthService class, which takes a WebhookService instance as a parameter for dependency injection, used to trigger webhooks.
+  private getDeviceId(): string {
+    let deviceId = localStorage.getItem('innera_device_id');
+    if (!deviceId) {
+      deviceId = crypto.randomUUID();
+      localStorage.setItem('innera_device_id', deviceId);
+    }
+    return deviceId;
+  }
+
+  private async handleDeviceLogin(uid: string, email: string, displayName: string): Promise<void> {
+    const deviceId = this.getDeviceId();
+    const deviceDocRef = doc(firestore, 'users', uid, 'devices', deviceId);
+    const deviceDoc = await getDoc(deviceDocRef);
+
+    if (!deviceDoc.exists()) {
+      // New device, create doc
+      const deviceData = {
+        deviceId,
+        deviceName: navigator.userAgent,
+        firstLogin: new Date().toISOString(),
+        lastLogin: new Date().toISOString()
+      };
+      await setDoc(deviceDocRef, deviceData);
+    } else {
+      // Existing device, update lastLogin
+      await updateDoc(deviceDocRef, { lastLogin: new Date().toISOString() });
+    }
+
+    // Get IP and location with fallback (attempt on every login)
+    let ipAddress = '0.0.0.0';
+    let location = 'Unknown';
+    try {
+      const ipResponse = await this.http.get('https://ipapi.co/json/').toPromise() as any;
+      ipAddress = ipResponse.ip || '0.0.0.0';
+      location = ipResponse.city && ipResponse.region && ipResponse.country_name
+        ? `${ipResponse.city}, ${ipResponse.region}, ${ipResponse.country_name}`
+        : 'Unknown';
+    } catch (error) {
+      console.error('Error fetching IP, using fallback:', error);
+      // IP fetch failed, but continue with fallback
+    }
+
+    const webhookData = {
+      email,
+      displayName,
+      deviceId,
+      deviceName: navigator.userAgent,
+      ipAddress,
+      location,
+      loginTime: new Date().toISOString()
+    };
+
+    // Send webhook on every login (moved outside device existence check)
+    try {
+      console.log('Sending webhook for device login:', webhookData);
+      await this.http.post('https://hook.eu1.make.com/usdu7wq6nc5cnt1hap0ah486a6o32cwf', webhookData, {
+        headers: { 'Content-Type': 'application/json' }
+      }).toPromise();
+      console.log('Webhook POST sent successfully');
+    } catch (error) {
+      console.error('Webhook POST failed:', error);
+      // Log error but don't crash the app
+    }
+  }
+
+  constructor(private http: HttpClient) { // This line defines the constructor for the AuthService class.
     // Initialize subjects from localStorage immediately to prevent UI flickering
     const storedRole = localStorage.getItem('userRole') || '';
     const storedName = localStorage.getItem('userName') || '';
@@ -174,7 +240,6 @@ export class AuthService {
       this.setCommunityName(normalizedComm);
       this.activeProfileId = profileId;
 
-      this.webhookService.triggerUserRegistration(email, username, user.uid);
       return { success: true };
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -214,7 +279,6 @@ export class AuthService {
       this.setCommunityName(normalizedComm);
       this.activeProfileId = profileId;
 
-      this.webhookService.triggerUserRegistration(email, adminName, user.uid);
       return { success: true };
     } catch (error: any) {
       console.error('Admin registration error:', error);
@@ -261,7 +325,9 @@ export class AuthService {
           await updateDoc(userRef, { loginCount: (userData.loginCount || 0) + 1 });
         } catch (e) { console.error('[AuthService] Silent loginCount update fail:', e); }
 
-        this.webhookService.triggerUserLogin(email, userData.username || '');
+        // Handle device detection
+        await this.handleDeviceLogin(user.uid, email, userData.username || '');
+
         return { success: true };
       } else {
         await signOut(auth);
@@ -314,7 +380,9 @@ export class AuthService {
           await updateDoc(userRef, { loginCount: (userData.loginCount || 0) + 1 });
         } catch (e) { console.error('[AuthService] Silent loginCount update fail:', e); }
 
-        this.webhookService.triggerUserLogin(email, userData.adminName || '');
+        // Handle device detection
+        await this.handleDeviceLogin(user.uid, email, userData.adminName || '');
+
         return { success: true };
       } else {
         await signOut(auth);
@@ -363,8 +431,6 @@ export class AuthService {
         this.setCommunityName(normalized);
       }
       await updateDoc(userDocRef, updateData);
-      const userName = localStorage.getItem('userName') || 'User';
-      this.webhookService.triggerProfileUpdate(this.currentUser.email || '', userName, this.currentUser.uid, updateData);
     } catch (error) {
       console.error('Error updating user profile:', error);
       throw error;
