@@ -1,59 +1,46 @@
 # Innera Platform
 
-![Angular](https://img.shields.io/badge/Angular-DD0031?style=flat&logo=angular&logoColor=white) ![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat&logo=firebase&logoColor=black) ![MIT License](https://img.shields.io/badge/License-MIT-green)
+A private community web application built with Angular and Firebase, developed during a full-stack internship project.
 
-Innera Platform is a **private community web app** where users and admins can share posts, like, comment, and manage profiles. Built with **Angular** and **Firebase**, it provides a secure and responsive environment for community interaction.
-
----
+Innera provides a community experience where authenticated users can create and interact with posts, manage profiles, and use administrative capabilities. The project also explores AI-assisted functionality and automation.
 
 ## Features
-
-- **Users:** Register/login, post, like, comment, manage profile, reset password  
-- **Admins:** Full access to post, like, comment, and manage users  
-- **General:** Responsive design, Firebase integration, optional AI automation
-
----
+- User registration and authentication
+- Password reset
+- Post creation and management
+- Likes and comments
+- User profiles
+- Administrative capabilities
+- Responsive interface
+- Firebase Authentication and Firestore
+- AI and automation integrations
 
 ## Tech Stack
+- Angular
+- TypeScript
+- Firebase Authentication
+- Cloud Firestore
+- Firebase Functions
+- OpenAI SDK
+- RxJS
 
-- **Frontend:** Angular, TypeScript, HTML, CSS  
-- **Backend/Database:** Firebase (Firestore & Auth)  
-- **Hosting:** Firebase Hosting  
+## Getting Started
+Prerequisites: Node.js, npm, and a configured Firebase project.
 
----
+~~~bash
+git clone https://github.com/manar09-code/innera-platform.git
+cd innera-platform
+npm install
+npm start
+~~~
 
-## Project Structure
+Configure the Firebase environment values required by the application before running it.
 
-- Components: login, register, feed, profile, etc.  
-- Services: auth, user, post, Firebase integration  
-- Assets: images, logos, icons  
-- Environments: Firebase config  
-- Angular configuration and dependencies  
+The development server uses http://localhost:4200/.
 
----
+## Context
+Innera was developed as part of my professional web-development experience and provided practical experience with Angular, Firebase, authentication, data modelling, collaborative development, and AI/automation integration.
 
-## Setup
-
-1. Clone the repository  
-2. Install dependencies  
-3. Configure Firebase in the environment file  
-4. Run locally with Angular  
-5. Open the app in the browser at localhost
-
----
-
-## Contributing
-
-Fork → Branch → Commit → Push → Pull Request
-
----
-
-## License
-
-MIT License
-
----
-
-## Contact
-
-**Manar Degachi** – manardg09@gmail.com – +216 50416574
+## Author
+Manar Degachi
+GitHub: https://github.com/manar09-code
